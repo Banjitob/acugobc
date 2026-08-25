@@ -1,0 +1,628 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<!-- ── SEO ── -->
+<meta name="description" content="What Bixcart collects, why, and how we keep your data safe. A plain-English privacy policy for Bixcart users.">
+<meta name="robots" content="index, follow">
+<link rel="canonical" href="https://bixcart.onrender.com/pages/privacy.html">
+
+<!-- Open Graph -->
+<meta property="og:type" content="website">
+<meta property="og:title" content="Privacy Policy — Bixcart">
+<meta property="og:description" content="What Bixcart collects, why, and how we keep your data safe. A plain-English privacy policy for Bixcart users.">
+<meta property="og:url" content="https://bixcart.onrender.com/pages/privacy.html">
+<meta property="og:site_name" content="Bixcart">
+<meta property="og:image" content="https://bixcart.onrender.com/og-image.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="Bixcart — ACU Student Marketplace">
+
+<!-- Twitter / X -->
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:site" content="@bixcart">
+<meta name="twitter:title" content="Privacy Policy — Bixcart">
+<meta name="twitter:description" content="What Bixcart collects, why, and how we keep your data safe. A plain-English privacy policy for Bixcart users.">
+<meta name="twitter:image" content="https://bixcart.onrender.com/og-image.png">
+<title>Privacy Policy — Bixcart</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@600;700&family=Raleway:wght@400;500;600;700;800;900&family=Nunito:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+
+/* ── RESET ── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; font-size: 16px; }
+img { max-width: 100%; display: block; }
+a { color: inherit; text-decoration: none; }
+button { cursor: pointer; }
+
+/* ── TOKENS ── */
+:root {
+  --bg:            #F7F4EF;
+  --surface:       #FFFFFF;
+  --surface-2:     #F0EDE7;
+  --border:        #E2DDD6;
+  --border-strong: #C8C2B8;
+  --ink:           #18150F;
+  --ink-2:         #4A4238;
+  --ink-3:         #7A7269;
+  --accent:        #C8522A;
+  --accent-hover:  #B04720;
+  --accent-bg:     #FDF0EB;
+  --green:         #2D7A4F;
+  --green-bg:      #EAF5EE;
+  --amber:         #B07000;
+  --amber-bg:      #FDF6E3;
+  --blue:          #1A5FA8;
+  --blue-bg:       #EBF2FC;
+  --red:           #C0312B;
+  --red-bg:        #FDECEA;
+  --shadow-sm:     0 1px 3px rgba(24,21,15,.06), 0 1px 2px rgba(24,21,15,.04);
+  --shadow-md:     0 4px 12px rgba(24,21,15,.08), 0 2px 4px rgba(24,21,15,.04);
+  --radius-sm:     0;
+  --radius-md:     0;
+  --radius-lg:     0;
+  --radius-full:   0;
+  --font-logo:     'Fredoka', sans-serif;
+  --font-display:  'Raleway', sans-serif;
+  --font-body:     'Nunito', sans-serif;
+  --nav-h:         64px;
+}
+
+body {
+  font-family: var(--font-body);
+  background: var(--bg);
+  color: var(--ink);
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+
+h1, h2, h3 {
+  font-family: var(--font-display);
+  font-weight: 800;
+  line-height: 1.15;
+  letter-spacing: -0.02em;
+}
+
+/* ── NAV ── */
+.nav {
+  position: sticky; top: 0; z-index: 200;
+  height: var(--nav-h);
+  background: rgba(247,244,239,.92);
+  backdrop-filter: blur(12px);
+  border-bottom: 1.5px solid var(--border);
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 0 32px;
+}
+.nav-logo {
+  font-family: var(--font-logo);
+  font-size: 22px; font-weight: 700; letter-spacing: -0.5px;
+  color: var(--ink);
+}
+.nav-logo span { color: var(--accent); }
+.nav-actions { display: flex; align-items: center; gap: 8px; }
+.btn {
+  display: inline-flex; align-items: center; justify-content: center;
+  padding: 8px 18px; border-radius: var(--radius-full);
+  font-family: var(--font-body); font-size: 14px; font-weight: 600;
+  border: none; cursor: pointer; transition: all .18s ease; white-space: nowrap;
+}
+.btn-ghost {
+  background: transparent; color: var(--ink);
+  border: 1.5px solid var(--border);
+}
+.btn-ghost:hover { border-color: var(--ink); background: var(--surface); }
+.btn-primary { background: var(--ink); color: #fff; }
+.btn-primary:hover { background: var(--accent); }
+
+/* ── LAYOUT ── */
+.container { max-width: 1120px; margin: 0 auto; padding: 0 32px; }
+.page { padding: 40px 0 80px; }
+.legal-wrap { max-width: 780px; margin: 0 auto; }
+
+/* ── BACK LINK ── */
+.back-link {
+  display: inline-flex; align-items: center; gap: 6px;
+  color: var(--ink-3); font-size: 14px; font-weight: 500;
+  margin-bottom: 32px; transition: color .15s;
+}
+.back-link:hover { color: var(--accent); }
+
+/* ── HERO ── */
+.legal-hero { text-align: center; padding: 48px 0 40px; }
+.eyebrow {
+  display: inline-flex; align-items: center; gap: 6px;
+  background: var(--accent-bg); color: var(--accent);
+  border: 1.5px solid rgba(200,82,42,.15);
+  border-radius: var(--radius-full);
+  padding: 5px 14px; font-size: 12px; font-weight: 700;
+  letter-spacing: .04em; text-transform: uppercase; margin-bottom: 20px;
+}
+.legal-hero h1 {
+  font-size: 48px; letter-spacing: -2px; margin-bottom: 16px;
+}
+.legal-hero .subtitle {
+  font-size: 17px; color: var(--ink-3); line-height: 1.65;
+  max-width: 500px; margin: 0 auto 24px;
+}
+.meta-row {
+  display: flex; align-items: center; justify-content: center;
+  gap: 10px; flex-wrap: wrap;
+}
+.meta-pill {
+  display: inline-flex; align-items: center; gap: 5px;
+  background: var(--surface); border: 1.5px solid var(--border);
+  border-radius: var(--radius-full); padding: 5px 12px;
+  font-size: 12px; color: var(--ink-3); font-weight: 500;
+}
+
+/* ── TABLE OF CONTENTS ── */
+.toc-card {
+  background: var(--surface); border: 1.5px solid var(--border);
+  border-radius: var(--radius-lg); padding: 28px 32px;
+  margin-bottom: 48px; box-shadow: var(--shadow-sm);
+}
+.toc-card .toc-label {
+  font-size: 11px; text-transform: uppercase; letter-spacing: .08em;
+  color: var(--ink-3); font-weight: 700; margin-bottom: 14px;
+}
+.toc-grid {
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); gap: 4px;
+}
+.toc-grid a {
+  display: flex; align-items: center; gap: 8px; padding: 8px 10px;
+  border-radius: var(--radius-sm); font-size: 13px; color: var(--ink-2);
+  font-weight: 500; transition: all .15s;
+}
+.toc-grid a:hover { background: var(--accent-bg); color: var(--accent); }
+.toc-num { font-size: 11px; font-weight: 700; color: var(--ink-3); min-width: 18px; }
+
+/* ── SECTIONS ── */
+.legal-section { margin-bottom: 52px; scroll-margin-top: 84px; }
+.section-header {
+  display: flex; align-items: center; gap: 12px;
+  margin-bottom: 18px; padding-bottom: 14px;
+  border-bottom: 1.5px solid var(--border);
+}
+.section-num {
+  background: var(--ink); color: white;
+  border-radius: var(--radius-sm); width: 32px; height: 32px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 13px; font-weight: 700; flex-shrink: 0;
+  font-family: var(--font-body);
+}
+.legal-section h2 { font-size: 21px; letter-spacing: -.4px; }
+.legal-section h3 {
+  font-size: 15px; font-weight: 700;
+  margin: 22px 0 10px; color: var(--ink);
+}
+.legal-section p {
+  margin-bottom: 12px; line-height: 1.75;
+  color: var(--ink-2); font-size: 15px;
+}
+.legal-section ul {
+  list-style: none; padding: 0;
+  display: flex; flex-direction: column; gap: 8px; margin-bottom: 14px;
+}
+.legal-section li {
+  display: flex; align-items: flex-start; gap: 10px;
+  font-size: 15px; color: var(--ink-2); line-height: 1.6;
+}
+.legal-section li::before {
+  content: '';
+  width: 6px; height: 6px; border-radius: 50%;
+  background: var(--accent); flex-shrink: 0; margin-top: 9px;
+}
+
+/* ── CALLOUTS ── */
+.callout {
+  border-radius: var(--radius-md); padding: 16px 18px;
+  margin: 18px 0; display: flex; gap: 13px;
+}
+.callout-icon { font-size: 20px; flex-shrink: 0; line-height: 1.4; }
+.callout-body { flex: 1; }
+.callout-title { font-size: 13px; font-weight: 700; margin-bottom: 4px; }
+.callout-body p { font-size: 14px; margin: 0; line-height: 1.6; color: var(--ink-2); }
+.callout-why  { background: var(--surface-2); border: 1.5px solid var(--border); border-left: 3px solid var(--accent); }
+.callout-why  .callout-title { color: var(--accent); }
+.callout-info { background: var(--blue-bg); border: 1.5px solid rgba(26,95,168,.12); border-left: 3px solid var(--blue); }
+.callout-info .callout-title { color: var(--blue); }
+.callout-warn { background: var(--amber-bg); border: 1.5px solid rgba(176,112,0,.12); border-left: 3px solid var(--amber); }
+.callout-warn .callout-title { color: var(--amber); }
+.callout-good { background: var(--green-bg); border: 1.5px solid rgba(45,122,79,.12); border-left: 3px solid var(--green); }
+.callout-good .callout-title { color: var(--green); }
+
+/* ── PROHIBITED GRID ── */
+.prohibited-grid {
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 12px; margin: 14px 0;
+}
+.prohibited-item {
+  background: var(--surface); border: 1.5px solid var(--border);
+  border-radius: var(--radius-md); padding: 16px;
+}
+.p-icon { font-size: 22px; margin-bottom: 8px; }
+.p-cat  { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .05em; color: var(--red); margin-bottom: 6px; }
+.p-desc { font-size: 13px; color: var(--ink-2); line-height: 1.55; margin-bottom: 8px; }
+.p-note { font-size: 12px; color: var(--ink-3); font-style: italic; }
+
+/* ── ALLOWED GRID ── */
+.allowed-grid {
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+  gap: 10px; margin: 14px 0;
+}
+.allowed-item {
+  display: flex; align-items: flex-start; gap: 10px; padding: 14px;
+  background: var(--green-bg); border: 1.5px solid rgba(45,122,79,.15);
+  border-radius: var(--radius-md);
+}
+.allowed-item .a-check { color: var(--green); font-size: 16px; flex-shrink: 0; margin-top: 1px; }
+.allowed-item p { margin: 0; font-size: 13px; color: var(--ink-2); line-height: 1.55; }
+
+/* ── AI LAYERS ── */
+.layer-grid {
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
+  gap: 12px; margin: 14px 0;
+}
+.layer-card {
+  background: var(--surface); border: 1.5px solid var(--border);
+  border-radius: var(--radius-md); padding: 18px; text-align: center;
+}
+.layer-card .l-icon  { font-size: 26px; margin-bottom: 10px; }
+.layer-card .l-label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; color: var(--ink-3); margin-bottom: 4px; }
+.layer-card .l-name  { font-size: 15px; font-weight: 700; color: var(--ink); margin-bottom: 6px; }
+.layer-card .l-desc  { font-size: 13px; color: var(--ink-3); line-height: 1.5; margin: 0; }
+
+/* ── VIOLATION TIERS ── */
+.tier-list { display: flex; flex-direction: column; gap: 10px; margin: 14px 0; }
+.tier-item {
+  display: flex; align-items: flex-start; gap: 12px; padding: 14px 16px;
+  background: var(--surface); border: 1.5px solid var(--border); border-radius: var(--radius-md);
+}
+.tier-badge {
+  padding: 3px 10px; border-radius: var(--radius-full);
+  font-size: 11px; font-weight: 700; white-space: nowrap; flex-shrink: 0;
+  font-family: var(--font-body);
+}
+.tier-badge.t-red   { background: var(--red-bg);   color: var(--red); }
+.tier-badge.t-amber { background: var(--amber-bg);  color: var(--amber); }
+.tier-badge.t-blue  { background: var(--blue-bg);   color: var(--blue); }
+.tier-badge.t-ink   { background: var(--ink);       color: white; }
+.tier-item p { margin: 0; font-size: 14px; color: var(--ink-2); line-height: 1.55; }
+
+/* ── CONTACT LIST ── */
+.contact-list { display: flex; flex-direction: column; gap: 10px; margin: 14px 0; }
+.contact-row {
+  display: flex; align-items: flex-start; gap: 14px; padding: 14px 16px;
+  background: var(--surface); border: 1.5px solid var(--border); border-radius: var(--radius-md);
+}
+.contact-row .c-icon { font-size: 20px; flex-shrink: 0; margin-top: 2px; }
+.c-label { font-size: 11px; font-weight: 700; color: var(--ink-3); text-transform: uppercase; letter-spacing: .04em; margin-bottom: 3px; }
+.c-value { font-size: 14px; color: var(--ink-2); line-height: 1.5; }
+.c-value a { color: var(--accent); font-weight: 600; }
+.c-value a:hover { text-decoration: underline; }
+
+/* ── FOOTER CALLOUT ── */
+.footer-callout {
+  background: linear-gradient(135deg, var(--accent-bg) 0%, var(--surface) 100%);
+  border: 1.5px solid rgba(200,82,42,.2); border-radius: var(--radius-lg);
+  padding: 36px; text-align: center; margin-top: 48px;
+}
+.fc-logo { font-family: var(--font-logo); font-size: 26px; font-weight: 700; color: var(--ink); margin-bottom: 8px; }
+.fc-logo span { color: var(--accent); }
+.fc-tagline { font-size: 16px; font-weight: 600; color: var(--ink); margin-bottom: 8px; }
+.fc-sub { font-size: 14px; color: var(--ink-3); }
+
+/* ── SITE FOOTER ── */
+.site-footer {
+  background: var(--ink); color: rgba(255,255,255,.85);
+  padding: 48px 0 28px; margin-top: 80px;
+}
+.footer-inner {
+  max-width: 1120px; margin: 0 auto; padding: 0 32px;
+}
+.footer-top {
+  display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 48px; margin-bottom: 40px;
+}
+.footer-brand-logo { font-family: var(--font-logo); font-size: 22px; font-weight: 700; color: white; margin-bottom: 10px; }
+.footer-brand-logo span { color: var(--accent); }
+.footer-brand p { font-size: 13px; color: rgba(255,255,255,.45); line-height: 1.7; max-width: 220px; }
+.footer-col h5 { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .1em; color: rgba(255,255,255,.35); margin-bottom: 14px; font-family: var(--font-body); }
+.footer-col ul { list-style: none; display: flex; flex-direction: column; gap: 8px; }
+.footer-col li::before { display: none; }
+.footer-col a { font-size: 13px; color: rgba(255,255,255,.55); transition: color .15s; }
+.footer-col a:hover { color: white; }
+.footer-bottom {
+  border-top: 1px solid rgba(255,255,255,.08); padding-top: 20px;
+  display: flex; justify-content: space-between; align-items: center;
+  font-size: 12px; color: rgba(255,255,255,.3);
+}
+
+/* ── RESPONSIVE ── */
+@media (max-width: 768px) {
+  .nav { padding: 0 16px; height: 56px; }
+  .nav-logo { font-size: 19px; }
+  .btn-ghost { display: none; }
+  .container { padding: 0 16px; }
+  .legal-hero h1 { font-size: 32px; letter-spacing: -1.5px; }
+  .legal-hero .subtitle { font-size: 15px; }
+  .toc-card { padding: 20px; }
+  .legal-section h2 { font-size: 18px; }
+  .footer-top { grid-template-columns: 1fr; gap: 24px; }
+  .footer-bottom { flex-direction: column; gap: 6px; text-align: center; }
+  .footer-callout { padding: 24px 20px; }
+}
+</style>
+</head>
+<body>
+
+<!-- ── NAV ── -->
+<nav class="nav">
+  <a href="/" class="nav-logo">Bix<span>cart</span></a>
+  
+</nav>
+
+<!-- ── PAGE ── -->
+<div class="container page">
+  <div class="legal-wrap">
+
+    <a href="https://bixcart.onrender.com" class="back-link">← Back to Bixcart</a>
+
+    <!-- HERO -->
+    <div class="legal-hero">
+      <div class="eyebrow">📋 Legal</div>
+      <h1>Privacy Policy</h1>
+      <p class="subtitle">What we collect, why we collect it, and what we do (and don't do) with it — explained the way we'd explain it to a friend.</p>
+      <div class="meta-row">
+        <span class="meta-pill">📅 Last updated: August 17, 2026</span>
+        <span class="meta-pill">⏱ ~5 min read</span>
+      </div>
+    </div>
+
+    <!-- TABLE OF CONTENTS -->
+    <div class="toc-card">
+      <div class="toc-label">On this page</div>
+      <div class="toc-grid">
+        <a href="#intro"><span class="toc-num">01</span> The short version</a>
+        <a href="#collect"><span class="toc-num">02</span> What we collect</a>
+        <a href="#use"><span class="toc-num">03</span> How we use it</a>
+        <a href="#sharing"><span class="toc-num">04</span> Who sees your info</a>
+        <a href="#messages"><span class="toc-num">05</span> Messages & moderation</a>
+        <a href="#storage"><span class="toc-num">06</span> Storage & security</a>
+        <a href="#choices"><span class="toc-num">07</span> Your choices</a>
+        <a href="#cookies"><span class="toc-num">08</span> Cookies & devices</a>
+        <a href="#children"><span class="toc-num">09</span> Age requirements</a>
+        <a href="#changes"><span class="toc-num">10</span> When we update this</a>
+        <a href="#contact"><span class="toc-num">11</span> Get in touch</a>
+      </div>
+    </div>
+
+    <!-- 1. INTRO -->
+    <div class="legal-section" id="intro">
+      <div class="section-header">
+        <div class="section-num">1</div>
+        <h2>The short version</h2>
+      </div>
+      <p>Bixcart is a marketplace for ACU students, run by ACU students. We collect the minimum we need to keep the platform working, safe, and useful — your account details, your listings, and the messages you send through the platform.</p>
+      <p>We don't sell your data. We're not an ad company, and nobody is going to be retargeting you with sneaker ads because you searched for a textbook. The information you share here stays within Bixcart, except in the few cases described below.</p>
+      <div class="callout callout-info">
+        <div class="callout-icon">💡</div>
+        <div class="callout-body">
+          <p class="callout-title">Why we're telling you all this</p>
+          <p>Because "we respect your privacy" means nothing without specifics. So here are the specifics — what we actually collect, why, and how long we keep it.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- 2. WHAT WE COLLECT -->
+    <div class="legal-section" id="collect">
+      <div class="section-header">
+        <div class="section-num">2</div>
+        <h2>What we collect</h2>
+      </div>
+      <p>When you sign up, you give us your name, your <strong>email address</strong>, and a password (which we store as a one-way hash — we literally can't see it). We use your email for account verification and important account communication.</p>
+      <p>When you use Bixcart, we also collect:</p>
+      <ul>
+        <li><strong>Listings</strong> — titles, descriptions, prices, categories, and any photos you upload</li>
+        <li><strong>Messages</strong> — conversations between buyers and sellers, sent through the in-app chat</li>
+        <li><strong>Profile info</strong> — your level and, depending on your account type, your hostel/room or seller shop location, plus any bio or delivery information you choose to provide</li>
+        <li><strong>Identity verification</strong> — the ID type you select and the identity documents you upload during registration (for example, an ACU School ID or NIN). These are used for account verification and safety review.</li>
+        <li><strong>Orders & payments</strong> — order details, payment references/statuses, refund information, and seller payout information needed to process marketplace transactions</li>
+        <li><strong>Activity</strong> — things like your wishlist, order history, and basic usage data (what pages you visit, when you log in)</li>
+        <li><strong>Technical bits</strong> — IP address, browser type, device info, and push-notification subscription details, mostly for security, notifications, and debugging</li>
+      </ul>
+      <p>Payment information needed to process Bixcart transactions may be handled by our payment provider. Bixcart does not need to store your card PIN or OTP. Never share your PIN or OTP with Bixcart staff or other users.</p>
+    </div>
+
+    <!-- 3. HOW WE USE IT -->
+    <div class="legal-section" id="use">
+      <div class="section-header">
+        <div class="section-num">3</div>
+        <h2>How we use it</h2>
+      </div>
+      <p>Basically, to make the marketplace work and to keep it safe:</p>
+      <ul>
+        <li>Creating and running your account, and showing your listings to other students</li>
+        <li>Connecting buyers and sellers through messages and notifications</li>
+        <li>Reviewing registration and identity information to help verify that accounts belong to legitimate Bixcart users</li>
+        <li>Automatically scanning listings and messages for prohibited content — scams, harassment, banned items</li>
+        <li>Sending you account-related emails (order updates, moderation notices, password resets)</li>
+        <li>Figuring out what's broken, what's slow, and what students actually want from the platform</li>
+      </ul>
+      <p>We don't use your data to build an advertising profile, and we don't sell or rent it to marketers, data brokers, or anyone else.</p>
+    </div>
+
+    <!-- 4. WHO SEES YOUR INFO -->
+    <div class="legal-section" id="sharing">
+      <div class="section-header">
+        <div class="section-num">4</div>
+        <h2>Who sees your info</h2>
+      </div>
+      <p>Some things are naturally visible to other students — that's the point of a marketplace. Some things never leave our servers.</p>
+      <ul>
+        <li><strong>Public on your profile/listings:</strong> your name, your listings, your ratings, and anything you choose to put in your bio</li>
+        <li><strong>Visible only to the other party:</strong> messages you send to a specific buyer or seller</li>
+        <li><strong>Never shown to other students:</strong> your email address, password (hashed, so not even we see it in plain text), identity documents, payment references, payout information, and account activity logs</li>
+      </ul>
+      <div class="callout callout-warn">
+        <div class="callout-icon">⚠️</div>
+        <div class="callout-body">
+          <p class="callout-title">When we might share more</p>
+          <p>If required by law, or to investigate fraud, abuse, or a safety issue on campus, we may share relevant information with Ajayi Crowther University administration or law enforcement. We don't do this lightly, and it's not the default — it's the exception for serious situations.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- 5. MESSAGES & MODERATION -->
+    <div class="legal-section" id="messages">
+      <div class="section-header">
+        <div class="section-num">5</div>
+        <h2>Messages & moderation</h2>
+      </div>
+      <p>Direct messages between buyers and sellers are private — other students can't read them. But they're not invisible to us. Bixcart runs automated checks on messages and listings to catch things like scam attempts, harassment, or banned items, because a marketplace without moderation falls apart fast.</p>
+      <p>These checks are automated first. If something gets flagged, a human (one of our small team) may review it as part of handling a report or appeal. We're not reading your conversations for fun — moderation exists to keep the platform usable, not to snoop.</p>
+    </div>
+
+    <!-- 6. STORAGE & SECURITY -->
+    <div class="legal-section" id="storage">
+      <div class="section-header">
+        <div class="section-num">6</div>
+        <h2>Storage & security</h2>
+      </div>
+      <p>Your data is stored on secure servers with standard protections — encrypted connections (HTTPS), hashed passwords, and access limits on who at Bixcart can see what. No system is perfectly unhackable, but we take reasonable, industry-standard steps to keep your information safe.</p>
+      <p>We keep your data for as long as your account is active. Identity documents and other verification information may be retained for as long as reasonably necessary for account safety, fraud prevention, dispute handling, and legal obligations. If you delete your account, we remove personal information from our active systems where practical, though some data such as transaction, refund, security, or legal records may be retained for a reasonable period.</p>
+    </div>
+
+    <!-- 7. YOUR CHOICES -->
+    <div class="legal-section" id="choices">
+      <div class="section-header">
+        <div class="section-num">7</div>
+        <h2>Your choices</h2>
+      </div>
+      <p>You're in control of most of this:</p>
+      <ul>
+        <li>You can edit or remove your profile info, listings, and photos at any time</li>
+        <li>You can request a copy of the data we hold about you</li>
+        <li>You can delete your account, which removes your public presence from the platform</li>
+        <li>You can ask us to correct inaccurate information about you</li>
+      </ul>
+      <p>To do any of this, just email us — see the contact section below.</p>
+    </div>
+
+    <!-- 8. COOKIES & DEVICES -->
+    <div class="legal-section" id="cookies">
+      <div class="section-header">
+        <div class="section-num">8</div>
+        <h2>Cookies & devices</h2>
+      </div>
+      <p>We use a small number of cookies and similar technologies to keep you logged in, remember your preferences, and understand how the site is being used. These are functional, not advertising cookies — we're not tracking you across other websites.</p>
+      <p>If you enable push notifications, we store the minimum device info needed to deliver them. You can turn these off anytime in your browser or device settings.</p>
+    </div>
+
+    <!-- 9. AGE REQUIREMENTS -->
+    <div class="legal-section" id="children">
+      <div class="section-header">
+        <div class="section-num">9</div>
+        <h2>Age requirements</h2>
+      </div>
+      <p>Bixcart is built for current ACU students, which in practice means everyone using it is old enough to be enrolled in university. We don't knowingly collect data from children, and the platform isn't designed for or directed at anyone under 18.</p>
+    </div>
+
+    <!-- 10. CHANGES -->
+    <div class="legal-section" id="changes">
+      <div class="section-header">
+        <div class="section-num">10</div>
+        <h2>When we update this</h2>
+      </div>
+      <p>If we make meaningful changes to how we handle your data, we'll update this page and adjust the "last updated" date at the top. For bigger changes, we'll try to give you a heads-up — through the app or by email — before they take effect.</p>
+      <p>Continuing to use Bixcart after changes means you're okay with the updated policy.</p>
+    </div>
+
+    <!-- 11. CONTACT -->
+    <div class="legal-section" id="contact">
+      <div class="section-header">
+        <div class="section-num">11</div>
+        <h2>Get in touch</h2>
+      </div>
+      <p>Questions about your data, requests to access or delete it, or anything else privacy-related — reach out and we'll sort it out.</p>
+      <div class="contact-list">
+        <div class="contact-row">
+          <div class="c-icon">📧</div>
+          <div>
+            <div class="c-label">General support</div>
+            <div class="c-value"><a href="mailto:support@bixcart.com">support@bixcart.com</a> — bugs, questions, account issues</div>
+          </div>
+        </div>
+        <div class="contact-row">
+          <div class="c-icon">⚖️</div>
+          <div>
+            <div class="c-label">Moderation appeals</div>
+            <div class="c-value"><a href="mailto:appeals@bixcart.com">appeals@bixcart.com</a> — reviewed within 48 hours</div>
+          </div>
+        </div>
+        <div class="contact-row">
+          <div class="c-icon">📝</div>
+          <div>
+            <div class="c-label">Legal & copyright</div>
+            <div class="c-value"><a href="mailto:legal@bixcart.com">legal@bixcart.com</a> — DMCA & legal matters (5–7 days)</div>
+          </div>
+        </div>
+        <div class="contact-row">
+          <div class="c-icon">📍</div>
+          <div>
+            <div class="c-label">In person</div>
+            <div class="c-value">Ajayi Crowther University, Oyo State — Student Union Building, 2nd floor</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- FOOTER CALLOUT -->
+    <div class="footer-callout">
+      <div class="fc-logo">Bix<span>cart</span></div>
+      <p class="fc-tagline">Built by ACU students, for ACU students. 🎓</p>
+      <p class="fc-sub">Keep it safe. Keep it on campus. Keep it on Bixcart.</p>
+    </div>
+
+  </div>
+</div>
+
+<!-- ── SITE FOOTER ── -->
+<footer class="site-footer">
+  <div class="footer-inner">
+    <div class="footer-top">
+      <div class="footer-brand">
+        <div class="footer-brand-logo">Bix<span>cart</span></div>
+        <p>The peer-to-peer marketplace exclusively for ACU students. Buy, sell, and connect on campus.</p>
+      </div>
+      <div class="footer-col">
+        <h5>Marketplace</h5>
+        <ul>
+          <li><a href="/pages/marketplace.html">Browse listings</a></li>
+          <li><a href="/pages/sell.html">List an item</a></li>
+          <li><a href="/pages/marketplace.html?category=Textbooks">Textbooks</a></li>
+          <li><a href="/pages/marketplace.html?category=Electronics">Electronics</a></li>
+        </ul>
+      </div>
+      <div class="footer-col">
+        <h5>Company</h5>
+        <ul>
+          <li><a href="/pages/about.html">About</a></li>
+          <li><a href="/pages/safety.html">Safety tips</a></li>
+          <li><a href="/pages/terms.html">Terms of Service</a></li>
+          <li><a href="/pages/privacy.html" style="color:rgba(255,255,255,.85);">Privacy Policy</a></li>
+          <li><a href="mailto:support@bixcart.com">Contact</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <span>© 2026 Bixcart. Built for ACU students.</span>
+      <span>🎓 Ajayi Crowther University</span>
+    </div>
+  </div>
+</footer>
+
+</body>
+</html>

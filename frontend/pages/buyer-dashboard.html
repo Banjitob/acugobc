@@ -1,0 +1,622 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<!-- ── SEO ── -->
+<meta name="description" content="Manage your Bixcart account, orders, and messages.">
+<meta name="robots" content="noindex, nofollow">
+<link rel="canonical" href="https://bixcart.onrender.com/pages/buyer-dashboard.html">
+
+<!-- Open Graph -->
+<meta property="og:type" content="website">
+<meta property="og:title" content="My Dashboard — Bixcart">
+<meta property="og:description" content="Manage your Bixcart account, orders, and messages.">
+<meta property="og:url" content="https://bixcart.onrender.com/pages/buyer-dashboard.html">
+<meta property="og:site_name" content="Bixcart">
+<meta property="og:image" content="https://bixcart.onrender.com/og-image.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="Bixcart — ACU Student Marketplace">
+
+<!-- Twitter / X -->
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:site" content="@bixcart">
+<meta name="twitter:title" content="My Dashboard — Bixcart">
+<meta name="twitter:description" content="Manage your Bixcart account, orders, and messages.">
+<meta name="twitter:image" content="https://bixcart.onrender.com/og-image.png">
+<title>My Dashboard — Bixcart</title>
+<link rel="stylesheet" href="../css/main.css">
+<style>
+  .dash-grid { display: grid; grid-template-columns: 240px 1fr; gap: 24px; align-items: start; }
+  @media(max-width: 900px) {
+    .dash-grid { grid-template-columns: 1fr; }
+  }
+  @media(max-width: 768px) {
+    .order-card {
+      flex-wrap: wrap;
+      gap: 12px;
+      padding: 14px;
+    }
+    /* Image + info side by side on top row */
+    .order-img { width: 60px; height: 60px; }
+    .order-info { flex: 1; min-width: 0; }
+    /* Actions stretch full width below image+info */
+    .order-actions {
+      flex-direction: row;
+      align-items: center;
+      justify-content: space-between;
+      width: 100%;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+    .order-actions > div:first-child { font-size: 17px; }
+  }
+
+  @media(max-width: 600px) {
+    .profile-stats { gap: 0; }
+    .saved-grid { grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); }
+    /* Stack the whole card vertically */
+    .order-card {
+      flex-direction: column;
+      gap: 10px;
+    }
+    /* Image + info side-by-side in top row */
+    .order-card-top {
+      display: flex;
+      gap: 12px;
+      width: 100%;
+      align-items: flex-start;
+    }
+    .order-img { width: 56px; height: 56px; flex-shrink: 0; }
+    .order-info { flex: 1; min-width: 0; }
+    .order-title { white-space: normal; font-size: 14px; }
+    /* Actions row: price on left, buttons on right */
+    .order-actions {
+      flex-direction: row;
+      align-items: center;
+      justify-content: space-between;
+      width: 100%;
+      flex-shrink: unset;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+  }
+  .profile-card {
+    background: var(--surface); border: 1.5px solid var(--border);
+    border-radius: var(--radius-lg); padding: 24px; text-align: center;
+    box-shadow: var(--shadow-sm);
+  }
+  .profile-avatar-wrap { position: relative; display: inline-block; margin-bottom: 14px; cursor: pointer; }
+  .profile-avatar-wrap:hover .avatar-edit-overlay { opacity: 1; }
+  .avatar-edit-overlay {
+    position: absolute; inset: 0; border-radius: 50%;
+    background: rgba(0,0,0,.5); display: flex; align-items: center; justify-content: center;
+    color: white; font-size: 10px; font-weight: 700; opacity: 0; transition: opacity .2s;
+  }
+  .profile-avatar {
+    width: 80px; height: 80px; border-radius: 50%;
+    background: var(--surface-2); display: flex; align-items: center; justify-content: center;
+    font-size: 28px; font-weight: 700; color: var(--ink-2); margin: 0 auto;
+    border: 3px solid var(--border);
+  }
+  .verified-badge {
+    position: absolute; bottom: 2px; right: 2px;
+    width: 22px; height: 22px; border-radius: 50%;
+    background: var(--green); display: flex; align-items: center; justify-content: center;
+    color: white; border: 2px solid var(--surface);
+  }
+  .profile-name { font-size: 17px; font-weight: 700; margin-bottom: 3px; }
+  .profile-uni { font-size: 13px; color: var(--ink-3); margin-bottom: 12px; }
+  .profile-stats { display: flex; justify-content: space-around; padding: 14px 0; border-top: 1.5px solid var(--border); border-bottom: 1.5px solid var(--border); margin-bottom: 14px; }
+  .profile-stat-num { font-size: 18px; font-weight: 700; }
+  .profile-stat-label { font-size: 11px; color: var(--ink-3); margin-top: 2px; }
+  .order-card {
+    background: var(--surface); border: 1.5px solid var(--border);
+    border-radius: var(--radius-lg); padding: 18px; display: flex;
+    align-items: flex-start; gap: 16px; transition: all .2s;
+  }
+  .order-card:hover { box-shadow: var(--shadow-md); }
+  .order-img {
+    width: 72px; height: 72px; border-radius: var(--radius-md);
+    background: var(--surface-2); flex-shrink: 0; overflow: hidden;
+    display: flex; align-items: center; justify-content: center; color: var(--ink-3);
+  }
+  .order-img img { width: 100%; height: 100%; object-fit: cover; }
+  .order-info { flex: 1; min-width: 0; }
+  .order-title { font-size: 15px; font-weight: 700; margin-bottom: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .order-meta { font-size: 12px; color: var(--ink-3); display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+  .order-card-top { display: flex; gap: 16px; flex: 1; min-width: 0; align-items: flex-start; }
+  .order-actions { display: flex; flex-direction: column; align-items: flex-end; gap: 8px; flex-shrink: 0; }
+  .saved-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 16px; }
+
+  /* Purchases tab header */
+  .purchases-header {
+    display: flex; justify-content: space-between; align-items: center;
+    margin-bottom: 24px; gap: 12px;
+  }
+
+  /* Scrollable filter tabs */
+  .order-tabs-scroll {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;   /* Firefox */
+    flex-shrink: 0;
+  }
+  .order-tabs-scroll::-webkit-scrollbar { display: none; }
+  .order-tabs-scroll .tab-btn { white-space: nowrap; }
+
+  @media (max-width: 600px) {
+    /* Stack header vertically */
+    .purchases-header {
+      flex-direction: column;
+      align-items: flex-start;
+      margin-bottom: 16px;
+    }
+    .purchases-header .btn { width: 100%; justify-content: center; }
+
+    /* Tighter tab buttons */
+    .order-tabs-scroll .tab-btn { padding: 8px 12px; font-size: 13px; }
+  }
+
+  /* ── Account status modals ── */
+  .status-modal-overlay {
+    position: fixed; inset: 0; background: rgba(0,0,0,.6);
+    display: flex; align-items: center; justify-content: center;
+    z-index: 9999; padding: 20px;
+  }
+  .status-modal {
+    background: #fff; border-radius: 16px;
+    padding: 32px 28px; max-width: 420px; width: 100%;
+    box-shadow: 0 20px 60px rgba(0,0,0,.25); text-align: center;
+  }
+  .status-modal .sm-icon { font-size: 42px; margin-bottom: 12px; }
+  .status-modal h2 { margin: 0 0 8px; font-size: 20px; font-weight: 700; color: #1a1a1a; }
+  .status-modal p  { margin: 0 0 20px; font-size: 14px; color: #666; line-height: 1.6; }
+  .status-modal .sm-reason {
+    background: #fff8e1; border: 1.5px solid #f0c040; border-radius: 10px;
+    padding: 14px 16px; font-size: 13px; color: #5a3e00;
+    text-align: left; margin-bottom: 20px; line-height: 1.5;
+  }
+</style>
+</head>
+<body>
+<nav class="nav"></nav>
+
+<div class="page">
+  <div class="container">
+    <div class="dash-grid">
+
+      <!-- SIDEBAR -->
+      <aside>
+        <div class="profile-card" id="profile-card">
+          <div style="display:flex;flex-direction:column;align-items:center;">
+            <div class="profile-avatar-wrap" onclick="document.getElementById('avatar-file-input').click()" title="Change profile photo">
+              <div class="profile-avatar" id="p-avatar"></div>
+              <div class="avatar-edit-overlay">Edit</div>
+              <div class="verified-badge" id="p-verified" style="display:none;"></div>
+              <input type="file" id="avatar-file-input" accept="image/*" style="display:none" onchange="uploadBuyerAvatar(this)">
+            </div>
+            <div class="profile-name" id="p-name">Loading…</div>
+            <div class="profile-uni" id="p-uni"></div>
+            <div id="p-stars" style="margin-bottom:12px;"></div>
+          </div>
+          <div class="profile-stats">
+            <div><div class="profile-stat-num" id="p-purchases">—</div><div class="profile-stat-label">Purchases</div></div>
+            <div><div class="profile-stat-num" id="p-saved">—</div><div class="profile-stat-label">Saved</div></div>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:6px;">
+            <button class="btn btn-surface btn-sm" id="notif-btn" onclick="handleNotifBtn()" title="Enable push notifications" style="display:none;">
+              🔔 Enable notifications
+            </button>
+            <button class="btn btn-ghost btn-sm" id="logout-btn" style="display:flex;color:var(--red);">Sign out</button>
+          </div>
+        </div>
+
+        <div class="dash-sidebar" style="margin-top:14px;" id="dash-nav">
+          <button class="dash-nav-item active" data-tab="purchases">
+            <span id="nav-icon-purchases"></span> My Purchases
+          </button>
+          <button class="dash-nav-item" data-tab="saved">
+            <span id="nav-icon-saved"></span> Saved Items
+          </button>
+          <div class="dash-nav-divider"></div>
+          <a class="dash-nav-item" href="settings.html" style="text-decoration:none;">
+            <span id="nav-icon-settings"></span> Account Settings
+          </a>
+        </div>
+      </aside>
+
+      <!-- MAIN -->
+      <main>
+        <!-- Purchases Tab -->
+        <div id="tab-purchases" class="tab-content">
+          <div class="purchases-header">
+            <div>
+              <h2 style="font-size:22px;font-weight:700;margin-bottom:2px;">My Purchases</h2>
+              <p class="text-sm text-muted">Track your orders and transactions</p>
+            </div>
+            <a href="marketplace.html" class="btn btn-accent btn-sm" style="flex-shrink:0;">Browse listings</a>
+          </div>
+
+          <div class="tabs order-tabs-scroll" id="order-tabs">
+            <button class="tab-btn active" data-status="all">All</button>
+            <button class="tab-btn" data-status="pending">Pending</button>
+            <button class="tab-btn" data-status="completed">Completed</button>
+            <button class="tab-btn" data-status="cancelled">Cancelled</button>
+          </div>
+
+          <div id="orders-list" style="display:flex;flex-direction:column;gap:12px;"></div>
+        </div>
+
+        <!-- Saved Tab -->
+        <div id="tab-saved" class="tab-content" style="display:none;">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:24px;">
+            <div>
+              <h2 style="font-size:22px;font-weight:700;margin-bottom:2px;">Saved Items</h2>
+              <p class="text-sm text-muted">Items you've bookmarked</p>
+            </div>
+          </div>
+          <div class="saved-grid" id="saved-list"></div>
+        </div>
+
+      </main>
+    </div>
+  </div>
+</div>
+
+<footer class="footer"></footer>
+<script src="../js/app.js"></script>
+<script>
+  if (!auth.requireAuth()) throw new Error('redirect');
+  renderNav();
+  renderFooter();
+
+  // inject nav icons
+  document.getElementById('nav-icon-purchases').innerHTML = icons.shoppingBag;
+  document.getElementById('nav-icon-saved').innerHTML = icons.heart;
+  document.getElementById('nav-icon-settings').innerHTML = icons.settings;
+
+  // Fix sidebar logout icon
+  document.querySelectorAll('.profile-card .btn').forEach(b => {
+    if (b.textContent.includes('Sign out')) b.innerHTML = icons.logout + ' Sign out';
+  });
+
+  // Tab switching
+  let currentTab = 'purchases';
+  document.querySelectorAll('.dash-nav-item[data-tab]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      currentTab = btn.dataset.tab;
+      document.querySelectorAll('.dash-nav-item').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      document.querySelectorAll('.tab-content').forEach(t => t.style.display = 'none');
+      document.getElementById(`tab-${currentTab}`).style.display = 'block';
+      if (currentTab === 'saved') loadSaved();
+    });
+  });
+
+  // Order status filter
+  let orderStatusFilter = 'all';
+  document.querySelectorAll('#order-tabs .tab-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      orderStatusFilter = btn.dataset.status;
+      document.querySelectorAll('#order-tabs .tab-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      renderOrders();
+    });
+  });
+
+  let allOrders = [];
+
+  async function loadProfile() {
+    try {
+      const user = await api.get('/auth/me');
+      const avatarEl = document.getElementById('p-avatar');
+      if (user.avatar_url) {
+        avatarEl.innerHTML = `<img src="${user.avatar_url}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">`;
+      } else {
+        avatarEl.textContent = getInitials(user.full_name);
+      }
+      document.getElementById('p-name').textContent = user.full_name;
+      document.getElementById('p-uni').textContent = user.university || 'Ajayi Crowther University';
+      document.getElementById('p-stars').innerHTML = stars(user.rating, user.rating_count);
+      if (user.is_verified) {
+        const vb = document.getElementById('p-verified');
+        vb.style.display = 'flex';
+        vb.innerHTML = `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>`;
+      }
+    } catch(e) {}
+  }
+
+  function guessImageMime(name) {
+    const ext = (name || '').split('.').pop().toLowerCase();
+    const map = {
+      jpg: 'image/jpeg', jpeg: 'image/jpeg', png: 'image/png',
+      gif: 'image/gif', webp: 'image/webp', bmp: 'image/bmp',
+      heic: 'image/heic', heif: 'image/heif',
+    };
+    return map[ext] || 'image/jpeg';
+  }
+
+  async function uploadBuyerAvatar(input) {
+    const file = input.files[0]; if (!file) return;
+    toast('Uploading photo…', 'default');
+    try {
+      // iOS Safari sometimes reports an empty file.type for HEIC photos;
+      // make sure we always send a real image MIME type or the backend
+      // rejects the upload as application/octet-stream.
+      const uploadMime = (file.type && file.type.startsWith('image/')) ? file.type : guessImageMime(file.name);
+      const arrayBuffer = await file.arrayBuffer();
+      const fileBlob = new Blob([arrayBuffer], { type: uploadMime });
+      const formData = new FormData();
+      formData.append('image', fileBlob, file.name);
+      const res = await fetch('/api/uploads/image', {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${auth.getToken()}` },
+        body: formData,
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Upload failed');
+      await api.put('/auth/profile', { avatar_url: data.url });
+      document.getElementById('p-avatar').innerHTML = `<img src="${data.url}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">`;
+      const updated = await api.get('/auth/me');
+      auth.save(auth.getToken(), updated);
+      toast('Profile photo updated', 'success');
+    } catch(e) { toast(e.message, 'error'); }
+  }
+  window.uploadBuyerAvatar = uploadBuyerAvatar;
+
+  async function loadOrders() {
+    document.getElementById('orders-list').innerHTML = Array(3).fill(0).map(() =>
+      `<div class="card" style="padding:18px;display:flex;gap:16px;">
+        <div class="skeleton" style="width:72px;height:72px;flex-shrink:0;"></div>
+        <div style="flex:1;display:flex;flex-direction:column;gap:8px;">
+          <div class="skeleton" style="height:16px;width:60%;"></div>
+          <div class="skeleton" style="height:13px;width:40%;"></div>
+          <div class="skeleton" style="height:13px;width:30%;"></div>
+        </div>
+      </div>`).join('');
+    try {
+      allOrders = await api.get('/orders/buying');
+      document.getElementById('p-purchases').textContent = allOrders.length;
+      renderOrders();
+    } catch(e) {
+      document.getElementById('orders-list').innerHTML = `<div class="empty-state"><div class="empty-state-icon">${icons.shoppingBag}</div><h3>No purchases yet</h3><p>Start browsing the marketplace to find great deals.</p><a href="marketplace.html" class="btn btn-accent">Browse listings</a></div>`;
+    }
+  }
+
+  function renderOrders() {
+    const filtered = orderStatusFilter === 'all' ? allOrders : allOrders.filter(o => orderDisplayStatus(o) === orderStatusFilter);
+    const el = document.getElementById('orders-list');
+    if (!filtered.length) {
+      el.innerHTML = `<div class="empty-state"><div class="empty-state-icon">${icons.package}</div><h3>No ${orderStatusFilter === 'all' ? '' : orderStatusFilter} orders</h3><p>Your ${orderStatusFilter === 'all' ? '' : orderStatusFilter + ' '}orders will appear here.</p></div>`;
+      return;
+    }
+    // Orders from one cart checkout share a checkout_group — count siblings so we can
+    // show "part of a 3-item order" instead of 3 disconnected-looking cards.
+    const groupCounts = {};
+    allOrders.forEach(o => { if (o.checkout_group) groupCounts[o.checkout_group] = (groupCounts[o.checkout_group] || 0) + 1; });
+
+    el.innerHTML = filtered.map(o => {
+      const stageMessage = o.status === 'paid'
+        ? '<div style="font-size:12px;color:#b45309;margin-top:6px;font-weight:600;">🔒 Waiting for the seller to accept your order.</div>'
+        : o.status === 'confirmed'
+          ? '<div style="font-size:12px;color:#b45309;margin-top:6px;font-weight:600;">📦 Seller accepted — waiting for them to ship/hand it over.</div>'
+          : o.status === 'fulfilled'
+            ? '<div style="font-size:12px;color:#065f46;margin-top:6px;font-weight:600;">✅ Seller marked this as shipped. Ask them for the code below to confirm you received it.</div>'
+            : '';
+
+      return `
+      <div class="order-card">
+        <div class="order-card-top">
+          <div class="order-img">
+            ${o.listing_images?.[0] ? `<img src="${o.listing_images[0]}" alt="">` : icons.package}
+          </div>
+          <div class="order-info">
+            <div class="order-title">${o.listing_title}</div>
+            <div class="order-meta">
+              ${statusBadge(orderDisplayStatus(o))}
+              <span style="display:flex;align-items:center;gap:4px;cursor:pointer;color:var(--accent);text-decoration:underline;text-decoration-style:dotted;" onclick="openUserProfile('${o.seller_id || ''}','${(o.seller_name||'').replace(/'/g,"\\'")}')">
+                ${icons.user} ${o.seller_name}
+              </span>
+              <span>${formatDate(o.created_at)}</span>
+            </div>
+            ${groupCounts[o.checkout_group] > 1 ? `<div style="font-size:12px;color:var(--ink-3);margin-top:6px;">Part of a ${groupCounts[o.checkout_group]}-item order</div>` : ''}
+            ${o.fulfillment === 'delivery' && o.delivery_address
+              ? `<div style="font-size:12px;color:var(--ink-3);margin-top:6px;display:flex;align-items:center;gap:4px;">${icons.truck} Delivery on ${o.delivery_address.campus || 'Ajayi Crowther University'}${o.delivery_address.note ? ' · ' + o.delivery_address.note : ''}</div>`
+              : (o.meetup_location ? `<div style="font-size:12px;color:var(--ink-3);margin-top:6px;display:flex;align-items:center;gap:4px;">${icons.mapPin} Meetup: ${o.meetup_location}</div>` : '')}
+            ${stageMessage}
+            ${o.status === 'completed' && !o.buyer_rating ? `<div style="font-size:12px;color:#059669;margin-top:6px;font-weight:600;">✓ Complete — tap ★ to rate</div>` : ''}
+            ${o.status === 'fulfilled' ? `
+              <div style="display:flex;gap:8px;margin-top:10px;">
+                <input class="form-input" id="code-input-${o.id}" placeholder="Enter code from seller" style="max-width:200px;font-size:13px;padding:8px 10px;letter-spacing:.08em;" maxlength="12">
+                <button class="btn btn-accent btn-sm" onclick="confirmDelivery('${o.id}')">Confirm receipt</button>
+              </div>` : ''}
+          </div>
+        </div>
+        <div class="order-actions">
+          <div style="font-size:18px;font-weight:700;">${formatCurrency(o.amount)}</div>
+          <div style="display:flex;gap:6px;flex-wrap:wrap;">
+            <a href="listing.html?id=${o.listing_id}" class="btn btn-ghost btn-sm">View listing</a>
+            ${o.status === 'paid' ? `<button class="btn btn-danger btn-sm" onclick="cancelOrder('${o.id}')">Cancel</button>` : ''}
+            ${o.status === 'completed' && !o.buyer_rating
+              ? `<button class="btn btn-accent btn-sm" onclick="openRatingModal('${o.id}','${(o.seller_name||'').replace(/'/g,"\\'")}')">★ Rate Seller</button>` : ''}
+            ${o.buyer_rating ? `<span style="font-size:13px;color:#d69e2e;font-weight:600;">Rated ${'★'.repeat(o.buyer_rating)}</span>` : ''}
+          </div>
+        </div>
+      </div>`;
+    }).join('');
+  }
+
+  window.confirmDelivery = async (id) => {
+    const input = document.getElementById(`code-input-${id}`);
+    const code = input?.value.trim();
+    if (!code) { toast('Enter the code the seller gave you', 'error'); return; }
+    try {
+      await api.post(`/orders/${id}/confirm-delivery`, { code });
+      toast('Delivery confirmed. Order completed.', 'success');
+      loadOrders();
+    } catch (e) { toast(e.message, 'error'); }
+  };
+
+  window.cancelOrder = async (id) => {
+    if (!confirm('Cancel this order? The listing will become available again.')) return;
+    try {
+      await api.post(`/orders/${id}/resolve`, { outcome: 'cancelled' });
+      toast('Order cancelled', 'success');
+      loadOrders();
+    } catch(e) { toast(e.message, 'error'); }
+  };
+
+  window.openRatingModal = (orderId, sellerName) => {
+    const existing = document.getElementById('rating-modal-root');
+    if (existing) existing.remove();
+    let selectedStars = 0;
+    const root = document.createElement('div');
+    root.id = 'rating-modal-root';
+    root.innerHTML = `
+      <div style="position:fixed;inset:0;background:rgba(0,0,0,.45);display:flex;align-items:center;justify-content:center;z-index:9999;padding:20px;">
+        <div style="background:var(--surface);border-radius:var(--radius-xl);padding:28px 24px;width:100%;max-width:400px;box-shadow:0 20px 60px rgba(0,0,0,.2);">
+          <div style="font-size:17px;font-weight:700;margin-bottom:4px;">Rate your experience</div>
+          <div style="font-size:13px;color:var(--ink-3);margin-bottom:20px;">How was your transaction with <strong>${sellerName}</strong>?</div>
+          <div id="star-row" style="display:flex;gap:6px;justify-content:center;margin-bottom:18px;">
+            ${[1,2,3,4,5].map(n => `<button data-star="${n}" style="font-size:32px;background:none;border:none;cursor:pointer;color:#d4d4d4;transition:color .12s;line-height:1;padding:2px;">★</button>`).join('')}
+          </div>
+          <textarea id="rating-review" placeholder="Write a short review (optional)…" style="width:100%;padding:10px 12px;border:1.5px solid var(--border);border-radius:var(--radius-md);font-family:var(--font-body);font-size:13px;resize:vertical;min-height:72px;outline:none;box-sizing:border-box;background:var(--bg);"></textarea>
+          <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:16px;">
+            <button class="btn btn-ghost btn-sm" id="rating-skip">Skip</button>
+            <button class="btn btn-accent btn-sm" id="rating-submit" disabled>Submit Rating</button>
+          </div>
+        </div>
+      </div>`;
+    document.body.appendChild(root);
+
+    const stars = root.querySelectorAll('[data-star]');
+    const submitBtn = root.querySelector('#rating-submit');
+
+    function paintStars(n) {
+      stars.forEach(s => { s.style.color = parseInt(s.dataset.star) <= n ? '#f59e0b' : '#d4d4d4'; });
+    }
+
+    stars.forEach(s => {
+      s.addEventListener('mouseenter', () => paintStars(parseInt(s.dataset.star)));
+      s.addEventListener('mouseleave', () => paintStars(selectedStars));
+      s.addEventListener('click', () => {
+        selectedStars = parseInt(s.dataset.star);
+        paintStars(selectedStars);
+        submitBtn.disabled = false;
+      });
+    });
+
+    root.querySelector('#rating-skip').addEventListener('click', () => root.remove());
+    submitBtn.addEventListener('click', async () => {
+      if (!selectedStars) return;
+      submitBtn.disabled = true; submitBtn.textContent = 'Submitting…';
+      try {
+        await api.post(`/orders/${orderId}/rate`, {
+          rating: selectedStars,
+          review: root.querySelector('#rating-review').value.trim(),
+        });
+        root.remove();
+        toast('Rating submitted — thank you!', 'success');
+        loadOrders();
+      } catch(e) {
+        toast(e.message, 'error');
+        submitBtn.disabled = false; submitBtn.textContent = 'Submit Rating';
+      }
+    });
+  };
+
+  window.openUserProfile = (userId, name) => {
+    if (!userId) return;
+    window.location.href = `user-profile.html?id=${userId}`;
+  };
+
+  async function loadSaved() {
+    const el = document.getElementById('saved-list');
+    el.innerHTML = Array(4).fill(0).map(() => `<div class="skeleton" style="height:280px;border-radius:var(--radius-xl);"></div>`).join('');
+    try {
+      const saved = await api.get('/orders/saved');
+      document.getElementById('p-saved').textContent = saved.length;
+      if (!saved.length) {
+        el.innerHTML = `<div class="empty-state" style="grid-column:1/-1;"><div class="empty-state-icon">${icons.heart}</div><h3>No saved items</h3><p>Tap the heart on any listing to save it here.</p><a href="marketplace.html" class="btn btn-accent">Browse listings</a></div>`;
+        return;
+      }
+      el.innerHTML = saved.map(l => productCardHTML(l, true)).join('');
+    } catch(e) { el.innerHTML = `<p class="text-muted">${e.message}</p>`; }
+  }
+
+
+  document.getElementById('logout-btn').addEventListener('click', () => {
+    auth.clear();
+    window.location.href = '/';
+  });
+
+  async function handleNotifBtn() {
+    const ok = await requestPushPermission();
+    if (ok) {
+      document.getElementById('notif-btn').style.display = 'none';
+      toast('Notifications enabled! You\'ll be notified for new messages.', 'success');
+    }
+  }
+
+  // Always show notification button when push hasn't been granted yet
+  const _notifBtn = document.getElementById('notif-btn');
+  if (_notifBtn) {
+    if (pushManager.canPush() && !pushManager.alreadyGranted()) {
+      _notifBtn.style.display = 'flex';
+    } else {
+      _notifBtn.style.display = 'none';
+    }
+  }
+
+
+  // ── Account status gate ────────────────────────────────────────────────────
+  (async function checkAccountStatus() {
+    try {
+      const freshUser = await api.get('/auth/me');
+      auth.save(auth.getToken(), freshUser);
+      const uid = freshUser._id || freshUser.id;
+
+      if (freshUser.account_status === 'suspended') {
+        document.body.innerHTML = `
+          <div class="status-modal-overlay">
+            <div class="status-modal">
+              <div class="sm-icon">🔒</div>
+              <h2>Account Suspended</h2>
+              <p>Your account has been suspended by an administrator and you cannot access the platform.</p>
+              ${freshUser.suspend_reason ? `<div class="sm-reason"><strong>Reason:</strong> ${freshUser.suspend_reason}</div>` : ''}
+              <p style="font-size:13px;color:#999">If you believe this is a mistake, please contact support.</p>
+            </div>
+          </div>`;
+        return;
+      }
+
+      if (freshUser.account_status === 'warned') {
+        const dismissKey = 'warn_dismissed_' + uid;
+        if (!sessionStorage.getItem(dismissKey)) {
+          const overlay = document.createElement('div');
+          overlay.className = 'status-modal-overlay';
+          overlay.innerHTML = `
+            <div class="status-modal">
+              <div class="sm-icon">⚠️</div>
+              <h2>Account Warning</h2>
+              <p>You have received a formal warning from the Bixcart admin team. Further violations may result in suspension.</p>
+              ${freshUser.warn_reason ? `<div class="sm-reason"><strong>Reason:</strong> ${freshUser.warn_reason}</div>` : ''}
+              <button class="btn btn-primary" style="width:100%" id="warn-dismiss-btn">I understand</button>
+            </div>`;
+          document.body.appendChild(overlay);
+          document.getElementById('warn-dismiss-btn').onclick = function() {
+            sessionStorage.setItem(dismissKey, '1');
+            overlay.remove();
+          };
+        }
+      }
+    } catch(e) { /* don't block if check fails */ }
+  })();
+
+  loadProfile();
+  loadOrders();
+</script>
+</body>
+</html>

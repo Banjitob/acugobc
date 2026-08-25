@@ -1,0 +1,503 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<meta name="description" content="Manage your Bixcart account settings.">
+<meta name="robots" content="noindex, nofollow">
+<link rel="canonical" href="https://bixcart.onrender.com/pages/settings.html">
+
+
+<meta property="og:type" content="website">
+<meta property="og:title" content="Account Settings — Bixcart">
+<meta property="og:description" content="Manage your Bixcart account settings.">
+<meta property="og:url" content="https://bixcart.onrender.com/pages/settings.html">
+<meta property="og:site_name" content="Bixcart">
+<meta property="og:image" content="https://bixcart.onrender.com/og-image.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="Bixcart — ACU Student Marketplace">
+
+
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:site" content="@bixcart">
+<meta name="twitter:title" content="Account Settings — Bixcart">
+<meta name="twitter:description" content="Manage your Bixcart account settings.">
+<meta name="twitter:image" content="https://bixcart.onrender.com/og-image.png">
+<title>Account Settings — Bixcart</title>
+<link rel="stylesheet" href="../css/main.css">
+<style>
+  .settings-body { max-width: 720px; margin: 0 auto; padding: 32px 24px 60px; }
+  .settings-header { margin-bottom: 24px; }
+  .settings-header h1 { font-family: var(--font-display); font-size: 26px; letter-spacing: -.8px; margin-bottom: 4px; }
+  .settings-header p { font-size: 13px; color: var(--ink-3); }
+  .settings-section { background: var(--surface); border: 1.5px solid var(--border); border-radius: var(--radius-lg); padding: 24px; margin-bottom: 20px; }
+  .settings-section h2 { font-size: 15px; font-weight: 700; margin-bottom: 4px; }
+  .settings-section .section-sub { font-size: 12px; color: var(--ink-3); margin-bottom: 18px; }
+  .settings-avatar-row { display: flex; align-items: center; gap: 16px; margin-bottom: 18px; }
+  .settings-avatar { width: 64px; height: 64px; border-radius: 50%; background: var(--surface-2); display: flex; align-items: center; justify-content: center; font-size: 22px; font-weight: 700; color: var(--ink-2); overflow: hidden; border: 2px solid var(--border); flex-shrink: 0; }
+  .settings-avatar img { width: 100%; height: 100%; object-fit: cover; }
+  .settings-grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  @media(max-width: 520px) { .settings-grid-2 { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+<nav class="nav"></nav>
+
+<div class="settings-body">
+  <div class="settings-header">
+    <h1>Account Settings</h1>
+    <p>Manage your profile information, location, and password. Do not share your password.</p>
+  </div>
+
+
+  <div class="settings-section">
+    <h2>Profile</h2>
+    <div class="section-sub">This information may be shown to other students on Bixcart.</div>
+
+    <div class="settings-avatar-row">
+      <div class="settings-avatar" id="set-avatar"></div>
+      <div>
+        <input type="file" id="avatar-file-input" accept="image/*" style="display:none" onchange="uploadAvatar(this)">
+        <button class="btn btn-surface btn-sm" onclick="document.getElementById('avatar-file-input').click()">Change photo</button>
+      </div>
+    </div>
+
+    <div class="settings-grid-2" style="margin-bottom:16px;">
+      <div class="form-group">
+        <label class="form-label">Full name</label>
+        <input class="form-input" id="s-name" type="text">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Email address</label>
+        <input class="form-input" id="s-email" type="email" disabled style="opacity:.6;">
+        <span class="form-hint">Email cannot be changed</span>
+      </div>
+    </div>
+
+    <div class="settings-grid-2" style="margin-bottom:16px;">
+      <div class="form-group">
+        <label class="form-label">University</label>
+        <input class="form-input" id="s-university" type="text" value="Ajayi Crowther University" readonly aria-readonly="true" tabindex="-1">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Location</label>
+        <input class="form-input" id="s-location" type="text" placeholder="Ajegunle, Oyo, Oyo State" readonly aria-readonly="true">
+        <span class="form-hint">Your school location.</span>
+      </div>
+    </div>
+    
+    <div id="seller-location-settings" style="display:none;margin-bottom:16px;">
+      <div class="form-group" style="margin-bottom:16px;">
+        <label class="form-label">Seller location</label>
+        <select class="form-select" id="s-location-type">
+          <option value="hostel">Hostel</option>
+          <option value="shop">Shop</option>
+        </select>
+        <span class="form-hint">Choose one location type. Sellers cannot use both.</span>
+      </div>
+    </div>
+
+    <div id="seller-hostel-settings" class="settings-grid-2" style="margin-bottom:16px;">
+      <div class="form-group">
+        <label class="form-label">Hostel name</label>
+        <select class="form-select" id="s-hostel">
+          <option value="">Select hostel</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Room number</label>
+        <input class="form-input" id="s-room" type="text" placeholder="e.g. B204">
+      </div>
+    </div>
+    <div id="seller-shop-settings" class="settings-grid-2" style="margin-bottom:16px;display:none;">
+      <div class="form-group">
+        <label class="form-label">Shop name</label>
+        <input class="form-input" id="s-shop" type="text" placeholder="e.g. Chidi's Tech Corner">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Shop number</label>
+        <input class="form-input" id="s-shop-number" type="text" placeholder="e.g. Shop 12">
+      </div>
+      <div class="form-group" style="grid-column:1/-1;">
+        <label class="form-label">Shop address</label>
+        <input class="form-input" id="s-shop-address" type="text" placeholder="e.g. Block B, ACU Mall">
+      </div>
+    </div>
+
+    <div class="form-group" style="margin-bottom:20px;">
+      <label class="form-label">Delivery info</label>
+      <textarea class="form-textarea" id="s-delivery-info" placeholder="Tell buyers where and how delivery works, e.g. meet at the school gate or drop in your hostel after 5pm."></textarea>
+    </div>
+
+    <div class="form-group" style="margin-bottom:20px;">
+      <label class="form-label">Bio</label>
+      <textarea class="form-textarea" id="s-bio" placeholder="Tell other students about yourself…"></textarea>
+    </div>
+
+    <button class="btn btn-primary" id="save-profile-btn">Save changes</button>
+  </div>
+
+  <!-- Password -->
+  <!-- Seller payment account -->
+  <div class="settings-section" id="seller-payout-settings" style="display:none;">
+    <h2>Seller payment account</h2>
+    <div class="section-sub">Connect the bank account where your Bixcart seller share will be settled through Paystack Split. Paystack verifies the account before it is connected.</div>
+
+    <div class="settings-grid-2" style="margin-bottom:16px;">
+      <div class="form-group">
+        <label class="form-label">Account number</label>
+        <input class="form-input" id="p-account-number" name="bixcart-bank-account-number" inputmode="numeric" maxlength="10" placeholder="10-digit account number" autocomplete="off" autocapitalize="off" spellcheck="false">
+        <span class="form-hint" id="p-bank-hint">Enter your account number to suggest matching banks.</span>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Bank</label>
+        <select class="form-select" id="p-bank" name="bixcart-bank-name" autocomplete="off">
+          <option value="">Select bank</option>
+        </select>
+        <span class="form-hint">The suggested bank is only a prediction. Paystack performs the final verification.</span>
+      </div>
+    </div>
+
+    <div class="form-group" style="margin-bottom:16px;">
+      <label class="form-label">Account name</label>
+      <input class="form-input" id="p-account-name" name="bixcart-bank-account-name" readonly placeholder="Will be verified automatically" autocomplete="off">
+      <span class="form-hint" id="p-account-status"></span>
+    </div>
+
+    <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
+      <button class="btn btn-primary" id="save-payout-btn">Connect Paystack account</button>
+      <span id="payout-connected" style="font-size:13px;color:var(--green);"></span>
+    </div>
+  </div>
+
+  <div class="settings-section">
+    <h2>Change password</h2>
+    <div class="section-sub">Choose a strong password with uppercase, lowercase, and a number.</div>
+
+    <div class="form-group" style="margin-bottom:16px;">
+      <label class="form-label">Current password</label>
+      <input class="form-input" id="s-current-pw" type="password" autocomplete="current-password">
+    </div>
+    <div class="settings-grid-2" style="margin-bottom:20px;">
+      <div class="form-group">
+        <label class="form-label">New password</label>
+        <input class="form-input" id="s-new-pw" type="password" autocomplete="new-password">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Confirm new password</label>
+        <input class="form-input" id="s-confirm-pw" type="password" autocomplete="new-password">
+      </div>
+    </div>
+
+    <button class="btn btn-primary" id="save-password-btn">Update password</button>
+  </div>
+
+  <!-- Account -->
+  <div class="settings-section" id="delete-account-section">
+    <h2>Delete account</h2>
+    <div class="section-sub">You can request account deletion. An administrator must approve the request. If approved, your account is disabled while Bixcart retains the associated data for one year before final removal.</div>
+    <div id="deletion-status" style="font-size:13px;color:var(--ink-3);margin-bottom:12px;"></div>
+    <button class="btn btn-ghost" id="request-delete-btn" style="color:var(--red);border-color:var(--red);">Request account deletion</button>
+  </div>
+
+  <div class="settings-section">
+    <h2>Account</h2>
+    <div class="section-sub">Sign out of Bixcart on this device.</div>
+    <button class="btn btn-ghost" id="logout-btn" style="color:var(--red);">Sign out</button>
+  </div>
+</div>
+
+<footer class="footer"></footer>
+<script src="../js/app.js"></script>
+<script>
+  if (!auth.requireAuth()) throw new Error('redirect');
+  renderNav();
+  renderFooter();
+
+  const user = auth.getUser();
+
+  async function loadHostelOptions(selected = '') {
+    try {
+      const data = await api.get('/auth/hostels');
+      const select = document.getElementById('s-hostel');
+      if (!select) return;
+      const options = ['<option value="">Select hostel</option>']
+        .concat((data.hostels || []).map(h => `<option value="${h.name}" ${selected === h.name ? 'selected' : ''}>${h.name}</option>`))
+        .join('');
+      select.innerHTML = options;
+      if (selected && !Array.from(select.options).some(o => o.value === selected)) {
+        select.innerHTML += `<option value="${selected}" selected>${selected}</option>`;
+      }
+    } catch (e) {
+      console.warn('Failed to load hostel list:', e.message);
+      const select = document.getElementById('s-hostel');
+      if (select) select.innerHTML = '<option value="">Select hostel</option><option value="Other">Other</option>';
+    }
+  }
+
+  function toggleSellerLocationSettings(type) {
+    const hostelBox = document.getElementById('seller-hostel-settings');
+    const shopBox = document.getElementById('seller-shop-settings');
+    if (!hostelBox || !shopBox) return;
+    hostelBox.style.display = type === 'hostel' ? 'grid' : 'none';
+    shopBox.style.display = type === 'shop' ? 'grid' : 'none';
+  }
+
+  document.getElementById('s-location-type')?.addEventListener('change', e => toggleSellerLocationSettings(e.target.value));
+
+  async function loadSettings() {
+    try {
+      const u = await api.get('/auth/me');
+      auth.save(auth.getToken(), u);
+      document.getElementById('s-name').value = u.full_name || '';
+      document.getElementById('s-email').value = u.email || '';
+      document.getElementById('s-university').value = u.university || 'Ajayi Crowther University';
+      document.getElementById('s-location').value = u.location || 'Ajegunle, Oyo, Oyo State';
+      await loadHostelOptions(u.hostel_name || '');
+      document.getElementById('s-room').value = u.room_number || '';
+      document.getElementById('s-shop').value = u.shop_name || '';
+      document.getElementById('s-shop-number').value = u.shop_number || '';
+      document.getElementById('s-shop-address').value = u.shop_address || '';
+      if (u.role === 'seller') {
+        document.getElementById('seller-location-settings').style.display = 'block';
+        const type = u.seller_location_type || (u.shop_name ? 'shop' : 'hostel');
+        document.getElementById('s-location-type').value = type;
+        toggleSellerLocationSettings(type);
+      }
+      document.getElementById('s-delivery-info').value = u.delivery_info || '';
+      document.getElementById('s-bio').value = u.bio || '';
+      await loadPayoutSetup(u);
+
+      const avatarEl = document.getElementById('set-avatar');
+      if (u.avatar_url) {
+        avatarEl.innerHTML = `<img src="${u.avatar_url}" alt="avatar">`;
+      } else {
+        avatarEl.textContent = getInitials(u.full_name);
+      }
+    } catch(e) { toast(e.message, 'error'); }
+  }
+
+  function guessImageMime(name) {
+    const ext = (name || '').split('.').pop().toLowerCase();
+    const map = {
+      jpg: 'image/jpeg', jpeg: 'image/jpeg', png: 'image/png',
+      gif: 'image/gif', webp: 'image/webp', bmp: 'image/bmp',
+      heic: 'image/heic', heif: 'image/heif',
+    };
+    return map[ext] || 'image/jpeg';
+  }
+
+  async function uploadAvatar(input) {
+    const file = input.files[0]; if (!file) return;
+    toast('Uploading photo…', 'default');
+    try {
+      // iOS Safari sometimes reports an empty file.type for HEIC photos;
+      // make sure we always send a real image MIME type or the backend
+      // rejects the upload as application/octet-stream.
+      const uploadMime = (file.type && file.type.startsWith('image/')) ? file.type : guessImageMime(file.name);
+      const arrayBuffer = await file.arrayBuffer();
+      const fileBlob = new Blob([arrayBuffer], { type: uploadMime });
+      const formData = new FormData();
+      formData.append('image', fileBlob, file.name);
+      const res = await fetch('/api/uploads/image', {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${auth.getToken()}` },
+        body: formData,
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Upload failed');
+      await api.put('/auth/profile', { avatar_url: data.url });
+      document.getElementById('set-avatar').innerHTML = `<img src="${data.url}" alt="avatar">`;
+      const updated = await api.get('/auth/me');
+      auth.save(auth.getToken(), updated);
+      toast('Profile photo updated', 'success');
+    } catch(e) { toast(e.message, 'error'); }
+  }
+  window.uploadAvatar = uploadAvatar;
+
+  document.getElementById('save-profile-btn').addEventListener('click', async () => {
+    const btn = document.getElementById('save-profile-btn');
+    btn.disabled = true; btn.innerHTML = icons.loader + ' Saving…';
+    try {
+      const nextLocation = (document.getElementById('s-location').value || '').trim() || 'Ajegunle, Oyo, Oyo State';
+      const updated = await api.put('/auth/profile', {
+        full_name: document.getElementById('s-name').value,
+        university: 'Ajayi Crowther University',
+        location: nextLocation,
+        seller_location_type: document.getElementById('s-location-type')?.value || '',
+        hostel_name: document.getElementById('s-hostel').value,
+        room_number: document.getElementById('s-room').value,
+        shop_name: document.getElementById('s-shop').value,
+        shop_number: document.getElementById('s-shop-number').value,
+        shop_address: document.getElementById('s-shop-address').value,
+        delivery_info: document.getElementById('s-delivery-info').value,
+        bio: document.getElementById('s-bio').value,
+      });
+      auth.save(auth.getToken(), updated);
+      toast('Profile updated!', 'success');
+    } catch(e) { toast(e.message, 'error'); }
+    btn.disabled = false; btn.innerHTML = 'Save changes';
+  });
+
+  // ─── Seller payment account setup ─────────────────────────────────────────────────
+  const payoutSection = document.getElementById('seller-payout-settings');
+  const payoutBank = document.getElementById('p-bank');
+  const payoutAccount = document.getElementById('p-account-number');
+  const payoutName = document.getElementById('p-account-name');
+  const payoutHint = document.getElementById('p-bank-hint');
+  const payoutStatus = document.getElementById('p-account-status');
+  let payoutBanks = [];
+  let payoutResolveTimer = null;
+
+  async function loadPayoutSetup(u) {
+    if (u.role !== 'seller' || u.seller_approval_status !== 'approved') return;
+    payoutSection.style.display = 'block';
+    try {
+      const data = await api.get('/auth/payout-banks');
+      payoutBanks = data.banks || [];
+      payoutBank.innerHTML = '<option value="">Select bank</option>' + payoutBanks.map(b => `<option value="${b.code}" data-name="${String(b.name || '').replace(/"/g, '&quot;')}">${b.name}</option>`).join('');
+    } catch (e) {
+      payoutHint.textContent = 'Could not load banks. Please try again.';
+    }
+    payoutAccount.value = u.account_number || '';
+    payoutName.value = u.account_name || '';
+    if (u.bank_code) payoutBank.value = u.bank_code;
+    if (u.payout_status === 'ready') document.getElementById('payout-connected').textContent = '✓ Bank account connected';
+  }
+
+  async function predictPayoutBanks() {
+    const account = payoutAccount.value.replace(/\D/g, '');
+    payoutAccount.value = account;
+    payoutName.value = '';
+    payoutStatus.textContent = '';
+    if (account.length !== 10) {
+      payoutHint.textContent = 'Enter your 10-digit account number to suggest matching banks.';
+      return;
+    }
+    try {
+      const data = await api.get('/auth/payout-bank-predictions?account_number=' + encodeURIComponent(account));
+      const predictions = data.predictions || [];
+      if (!predictions.length) {
+        payoutHint.textContent = 'No bank prediction found. Select your bank manually.';
+        return;
+      }
+      const current = payoutBank.value;
+      const predictedCodes = new Set(predictions.map(x => String(x.code)));
+      const combined = [...predictions, ...payoutBanks.filter(b => !predictedCodes.has(String(b.code)))];
+      payoutBank.innerHTML = '<option value="">Select bank</option>' + combined.map(b => `<option value="${b.code}">${b.name}</option>`).join('');
+      payoutBank.value = current && predictedCodes.has(current) ? current : String(predictions[0].code);
+      payoutHint.textContent = 'Suggested bank: ' + predictions[0].name + '. Confirm it before continuing.';
+      await resolvePayoutAccount();
+    } catch (e) {
+      payoutHint.textContent = 'Select your bank manually, then we will verify the account.';
+    }
+  }
+
+  async function resolvePayoutAccount() {
+    const account = payoutAccount.value.replace(/\D/g, '');
+    const bank = payoutBank.value;
+    payoutName.value = '';
+    if (account.length !== 10 || !bank) return;
+    payoutStatus.textContent = 'Verifying account…';
+    try {
+      const data = await api.get(`/auth/resolve-bank-account?account_number=${encodeURIComponent(account)}&bank_code=${encodeURIComponent(bank)}`);
+      payoutName.value = data.account_name || '';
+      payoutStatus.textContent = data.account_name ? '✓ Account verified by Paystack' : '';
+    } catch (e) {
+      payoutStatus.textContent = 'Could not verify this account with the selected bank.';
+    }
+  }
+
+  payoutAccount?.addEventListener('input', () => {
+    clearTimeout(payoutResolveTimer);
+    payoutResolveTimer = setTimeout(predictPayoutBanks, 250);
+  });
+  payoutBank?.addEventListener('change', resolvePayoutAccount);
+
+  document.getElementById('save-payout-btn')?.addEventListener('click', async () => {
+    const btn = document.getElementById('save-payout-btn');
+    const account_number = payoutAccount.value.replace(/\D/g, '');
+    const bank_code = payoutBank.value;
+    const bank_name = payoutBank.options[payoutBank.selectedIndex]?.textContent?.trim() || '';
+    const account_name = payoutName.value.trim();
+    if (account_number.length !== 10 || !bank_code || !account_name) {
+      toast('Enter a valid account number, confirm the bank, and wait for account verification.', 'error');
+      return;
+    }
+    btn.disabled = true; btn.innerHTML = icons.loader + ' Connecting…';
+    try {
+      const result = await api.post('/auth/payout-account', { bank_name, bank_code, account_number, account_name });
+      const fresh = await api.get('/auth/me');
+      auth.save(auth.getToken(), fresh);
+      document.getElementById('payout-connected').textContent = '✓ Bank account connected';
+      toast('Paystack seller account connected. Your share will be included automatically in checkout splits.', 'success');
+    } catch (e) {
+      toast(e.message || 'Could not connect payout account', 'error');
+    }
+    btn.disabled = false; btn.innerHTML = 'Connect Paystack account';
+  });
+
+  document.getElementById('save-password-btn').addEventListener('click', async () => {
+    const btn = document.getElementById('save-password-btn');
+    const current = document.getElementById('s-current-pw').value;
+    const next    = document.getElementById('s-new-pw').value;
+    const confirm = document.getElementById('s-confirm-pw').value;
+
+    if (!current || !next || !confirm) { toast('Please fill in all password fields', 'error'); return; }
+    if (next !== confirm) { toast('New passwords do not match', 'error'); return; }
+
+    btn.disabled = true; btn.innerHTML = icons.loader + ' Updating…';
+    try {
+      await api.put('/auth/change-password', {
+        current_password: current,
+        new_password: next,
+        confirm_password: confirm,
+      });
+      toast('Password updated!', 'success');
+      document.getElementById('s-current-pw').value = '';
+      document.getElementById('s-new-pw').value = '';
+      document.getElementById('s-confirm-pw').value = '';
+    } catch(e) { toast(e.message, 'error'); }
+    btn.disabled = false; btn.innerHTML = 'Update password';
+  });
+
+  async function setupDeletionUI() {
+    const status = document.getElementById('deletion-status');
+    const btn = document.getElementById('request-delete-btn');
+    if (!status || !btn) return;
+    try {
+      const u = await api.get('/auth/deletion-status');
+      if (u.account_status === 'deletion_pending') {
+        status.textContent = 'Your deletion request is awaiting admin approval.';
+        btn.disabled = true; btn.textContent = 'Deletion request pending';
+      } else if (u.account_status === 'deleted') {
+        status.textContent = u.deletion_retention_until ? `Deletion approved. Your data is retained until ${new Date(u.deletion_retention_until).toLocaleDateString('en-NG')}.` : 'Deletion approved.';
+        btn.disabled = true; btn.textContent = 'Account deletion approved';
+      }
+    } catch (_) {}
+    btn.addEventListener('click', async () => {
+      const reason = prompt('Why do you want to delete your Bixcart account?');
+      if (reason === null) return;
+      if (reason.trim().length < 10) { toast('Please provide at least 10 characters explaining your reason.', 'error'); return; }
+      btn.disabled = true;
+      try {
+        await api.post('/auth/request-deletion', { reason: reason.trim() });
+        status.textContent = 'Your deletion request has been submitted and is awaiting admin approval.';
+        btn.textContent = 'Deletion request pending';
+        toast('Deletion request submitted.', 'success');
+      } catch (e) { btn.disabled = false; toast(e.message, 'error'); }
+    });
+  }
+
+  document.getElementById('logout-btn').addEventListener('click', () => {
+    auth.clear();
+    window.location.href = '/';
+  });
+
+  loadSettings();
+  setupDeletionUI();
+</script>
+</body>
+</html>

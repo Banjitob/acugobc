@@ -1,0 +1,785 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<!-- ── SEO ── -->
+<meta name="description" content="Track your active listings, sales, and messages on Bixcart.">
+<meta name="robots" content="noindex, nofollow">
+<link rel="canonical" href="https://bixcart.onrender.com/pages/seller-dashboard.html">
+
+<!-- Open Graph -->
+<meta property="og:type" content="website">
+<meta property="og:title" content="Seller Dashboard — Bixcart">
+<meta property="og:description" content="Track your active listings, sales, and messages on Bixcart.">
+<meta property="og:url" content="https://bixcart.onrender.com/pages/seller-dashboard.html">
+<meta property="og:site_name" content="Bixcart">
+<meta property="og:image" content="https://bixcart.onrender.com/og-image.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="Bixcart — ACU Student Marketplace">
+
+<!-- Twitter / X -->
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:site" content="@bixcart">
+<meta name="twitter:title" content="Seller Dashboard — Bixcart">
+<meta name="twitter:description" content="Track your active listings, sales, and messages on Bixcart.">
+<meta name="twitter:image" content="https://bixcart.onrender.com/og-image.png">
+<title>Seller Dashboard — Bixcart</title>
+<link rel="stylesheet" href="../css/main.css">
+<style>
+  .dash-header { position: relative; }
+  .banner-wrap { width: 100%; height: 180px; background: var(--ink); overflow: hidden; position: relative; }
+  .banner-wrap img { width: 100%; height: 100%; object-fit: cover; }
+  .banner-edit-btn {
+    position: absolute; top: 12px; right: 16px;
+    background: rgba(0,0,0,.5); color: white; border: none; border-radius: var(--radius-md);
+    padding: 6px 12px; font-size: 12px; font-weight: 600; cursor: pointer;
+    display: flex; align-items: center; gap: 6px; transition: background .15s;
+  }
+  .banner-edit-btn:hover { background: rgba(0,0,0,.75); }
+  .seller-profile-row {
+    max-width: 1100px; margin: 0 auto; padding: 16px 24px 16px;
+    display: flex; align-items: flex-end; gap: 16px;
+    flex-wrap: wrap;
+  }
+  .seller-avatar-wrap { position: relative; flex-shrink: 0; transform: translateY(-44px); margin-bottom: -44px; }
+  .seller-avatar {
+    width: 80px; height: 80px; border-radius: 50%;
+    background: var(--surface-2); border: 3px solid white;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 28px; font-weight: 700; color: var(--ink-2);
+    overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,.15);
+  }
+  .seller-avatar img { width: 100%; height: 100%; object-fit: cover; }
+  .avatar-edit-btn {
+    position: absolute; bottom: 0; right: 0;
+    width: 24px; height: 24px; border-radius: 50%;
+    background: var(--ink); color: white; border: 2px solid white;
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer; font-size: 10px;
+  }
+  .avatar-edit-btn:hover { background: var(--accent); }
+  .seller-name-block { padding-bottom: 4px; flex: 1; min-width: 0; }
+  .seller-name-block .dash-greeting { color: var(--ink); }
+  .seller-name-block .dash-sub { color: var(--ink-3); }
+  .dash-header-actions { display: flex; gap: 10px; flex-wrap: wrap; padding-bottom: 4px; align-items: center; flex-shrink: 0; }
+  .dash-header-inner { max-width: 1100px; margin: 0 auto; padding: 0 24px; display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
+  .dash-greeting { font-family: var(--font-display); font-size: 24px; color: var(--ink); letter-spacing: -1px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .dash-sub { font-size: 13px; color: var(--ink-3); margin-top: 2px; }
+  .dash-body { max-width: 1100px; margin: 0 auto; padding: 32px 24px; }
+  .dash-grid { display: grid; grid-template-columns: 280px 1fr; gap: 28px; align-items: start; }
+  .stats-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-bottom: 28px; }
+  .stat-card { background: var(--surface); border: 1.5px solid var(--border); border-radius: var(--radius-lg); padding: 20px; }
+  .stat-label { font-size: 12px; font-family: var(--font-mono); text-transform: uppercase; letter-spacing: .06em; color: var(--ink-3); margin-bottom: 8px; }
+  .stat-value { font-family: var(--font-display); font-size: 32px; letter-spacing: -1px; }
+  .stat-sub { font-size: 12px; color: var(--ink-3); margin-top: 4px; }
+  .credits-box { background: var(--surface); border: 1.5px solid var(--border); border-radius: var(--radius-lg); padding: 20px; margin-bottom: 20px; }
+  .credits-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+  .credits-num { font-family: var(--font-display); font-size: 40px; letter-spacing: -2px; }
+  .credits-label { font-size: 13px; color: var(--ink-3); margin-top: 2px; }
+  .pricing-tiers { display: flex; flex-direction: column; gap: 8px; margin-top: 12px; }
+  .pricing-row { display: flex; justify-content: space-between; align-items: center; padding: 10px 12px; background: var(--bg); border-radius: var(--radius-md); font-size: 13px; cursor: pointer; transition: background .1s; border: 1.5px solid transparent; }
+  .pricing-row:hover { border-color: var(--accent); background: rgba(200,82,42,.04); }
+  .pricing-row .tier-label { font-weight: 600; }
+  .pricing-row .tier-price { color: var(--accent); font-weight: 700; }
+  .pricing-row .tier-save { font-size: 11px; color: var(--ink-3); background: var(--surface); padding: 2px 6px; border-radius: 4px; }
+  .listing-row { display: flex; align-items: center; gap: 14px; padding: 14px 0; border-bottom: 1px solid var(--border); }
+  .listing-row:last-child { border-bottom: none; }
+  .listing-thumb { width: 52px; height: 52px; border-radius: var(--radius-md); background: var(--surface); overflow: hidden; flex-shrink: 0; display: flex; align-items: center; justify-content: center; color: var(--ink-3); }
+  .listing-thumb img { width: 100%; height: 100%; object-fit: cover; }
+  .listing-meta { flex: 1; min-width: 0; }
+  .listing-title-row { font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .listing-detail { font-size: 13px; color: var(--ink-3); margin-top: 2px; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+  .listing-actions { display: flex; gap: 6px; flex-shrink: 0; }
+
+  /* ── Dashboard tabs ── */
+  .sd-tab { transition: color .12s, border-color .12s; }
+  .sd-tab.active { color: var(--ink) !important; border-bottom-color: var(--ink) !important; }
+  .sd-tab:hover  { color: var(--ink) !important; }
+
+  /* ── Order rows ── */
+  .order-row { display: flex; align-items: center; gap: 14px; padding: 14px 0; border-bottom: 1px solid var(--border); }
+  .order-row:last-child { border-bottom: none; }
+  .order-thumb { width: 44px; height: 44px; border-radius: var(--radius-md); background: var(--surface-2); overflow: hidden; flex-shrink: 0; display: flex; align-items: center; justify-content: center; color: var(--ink-3); }
+  .order-thumb img { width: 100%; height: 100%; object-fit: cover; }
+  .order-meta { flex: 1; min-width: 0; }
+  .order-title { font-size: 13px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .order-sub   { font-size: 12px; color: var(--ink-3); margin-top: 2px; }
+  .order-status-chip {
+    font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .05em;
+    padding: 3px 8px; border-radius: 20px; flex-shrink: 0;
+  }
+  .chip-pending   { background: #fef3c7; color: #92400e; }
+  .chip-confirmed { background: #dbeafe; color: #1e40af; }
+  .chip-completing{ background: #fffbeb; color: #92400e; }
+  .chip-completed { background: #d1fae5; color: #065f46; }
+  .chip-cancelled { background: #fee2e2; color: #991b1b; }
+  .order-filter-btn.active { background: var(--ink); color: white !important; border-color: var(--ink); }
+  @media(max-width: 900px) {
+    .dash-grid { grid-template-columns: 1fr; }
+    .stats-row { grid-template-columns: 1fr 1fr; }
+  }
+  @media(max-width: 600px) {
+    .seller-profile-row { padding: 10px 16px 12px; gap: 10px; }
+    .seller-avatar-wrap { transform: translateY(-32px); margin-bottom: -32px; }
+    .seller-avatar { width: 64px; height: 64px; font-size: 22px; }
+    .dash-greeting { font-size: 18px; }
+    .dash-header-actions { width: 100%; justify-content: flex-start; margin-top: -4px; }
+    .stats-row { grid-template-columns: 1fr; }
+    .listing-row { flex-wrap: wrap; }
+    .listing-actions { width: 100%; justify-content: flex-end; }
+    .banner-wrap { height: 120px; }
+  }
+
+  /* ── Account status modals ── */
+  .status-modal-overlay {
+    position: fixed; inset: 0; background: rgba(0,0,0,.6);
+    display: flex; align-items: center; justify-content: center;
+    z-index: 9999; padding: 20px;
+  }
+  .status-modal {
+    background: #fff; border-radius: 16px;
+    padding: 32px 28px; max-width: 420px; width: 100%;
+    box-shadow: 0 20px 60px rgba(0,0,0,.25); text-align: center;
+  }
+  .status-modal .sm-icon { font-size: 42px; margin-bottom: 12px; }
+  .status-modal h2 { margin: 0 0 8px; font-size: 20px; font-weight: 700; color: #1a1a1a; }
+  .status-modal p  { margin: 0 0 20px; font-size: 14px; color: #666; line-height: 1.6; }
+  .status-modal .sm-reason {
+    background: #fff8e1; border: 1.5px solid #f0c040; border-radius: 10px;
+    padding: 14px 16px; font-size: 13px; color: #5a3e00;
+    text-align: left; margin-bottom: 20px; line-height: 1.5;
+  }
+</style>
+</head>
+<body>
+<nav class="nav"></nav>
+
+<div class="dash-header">
+  <!-- Banner -->
+  <div class="banner-wrap" id="banner-wrap">
+    <div id="banner-bg" style="width:100%;height:100%;background:var(--ink);display:flex;align-items:center;justify-content:center;"></div>
+    <input type="file" id="banner-input" accept="image/*" style="display:none" onchange="uploadBanner(this)">
+    <button class="banner-edit-btn" onclick="document.getElementById('banner-input').click()">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+      Edit banner
+    </button>
+  </div>
+  <!-- Profile row -->
+  <div class="seller-profile-row">
+    <div class="seller-avatar-wrap">
+      <div class="seller-avatar" id="seller-avatar-el"></div>
+      <input type="file" id="avatar-input" accept="image/*" style="display:none" onchange="uploadAvatar(this)">
+      <button class="avatar-edit-btn" onclick="document.getElementById('avatar-input').click()" title="Change photo">
+        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+      </button>
+    </div>
+    <div class="seller-name-block">
+      <div class="dash-greeting" id="greeting">Seller Dashboard</div>
+      <div class="dash-sub" id="seller-sub">Ajayi Crowther University, Oyo, Nigeria</div>
+    </div>
+    <div class="dash-header-actions">
+      <a href="sell.html" class="btn btn-accent" id="new-listing-btn">+ New listing</a>
+      <a href="settings.html" class="btn btn-surface btn-sm btn-icon" title="Account settings">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg>
+      </a>
+      <button class="btn btn-surface btn-sm" id="notif-btn" onclick="handleNotifBtn()" title="Enable push notifications" style="display:none">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+        Notifications
+      </button>
+      <button class="btn btn-ghost btn-sm" onclick="logout()" style="color:var(--ink-3);gap:6px;display:flex;align-items:center;">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+        Log out
+      </button>
+    </div>
+  </div>
+</div>
+
+<div class="dash-body">
+  <div class="stats-row" id="stats-row">
+    <div class="stat-card"><div class="stat-label">Active listings</div><div class="stat-value" id="stat-active">—</div></div>
+    <div class="stat-card"><div class="stat-label">Total views</div><div class="stat-value" id="stat-views">—</div></div>
+    <div class="stat-card"><div class="stat-label">Items sold</div><div class="stat-value" id="stat-sold">—</div></div>
+  </div>
+
+  <div class="dash-grid">
+    <!-- SIDEBAR -->
+    <div>
+      <div class="credits-box">
+        <div class="credits-top">
+          <div>
+            <div class="credits-num" id="credits-num">FREE</div>
+            <div class="credits-label">Listings are free</div>
+          </div>
+          <div style="color:var(--ink-3)">${icons_placeholder_tag}</div>
+        </div>
+        <div id="credits-bonus-msg"></div>
+        <div style="font-size:13px;color:var(--ink-3);margin-bottom:16px;">Bixcart charges 7% on each completed sale. You can unlock a lower commission rate by having successfull sales.</div>
+        <div class="card" style="padding:14px;border-radius:14px;background:var(--bg);border:1px solid var(--border);">
+          <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:8px;">
+            <div style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--ink-3);">Seller tier</div>
+            <div id="seller-tier-badge" style="font-size:11px;font-weight:700;padding:4px 8px;border-radius:999px;background:#ede9fe;color:#5b21b6;">Starter</div>
+          </div>
+          <div id="seller-tier-title" style="font-size:18px;font-weight:700;margin-bottom:6px;">Current commission: 7%</div>
+          <div id="seller-tier-progress-wrap" style="margin-top:10px;">
+            <div style="display:flex;justify-content:space-between;font-size:12px;color:var(--ink-3);margin-bottom:6px;">
+              <span id="seller-tier-progress-label">0/10 sales</span>
+              <span id="seller-tier-progress-text">Starter tier</span>
+            </div>
+            <div style="width:100%;height:8px;border-radius:999px;background:var(--surface-2);overflow:hidden;">
+              <div id="seller-tier-progress-bar" style="height:100%;width:0%;background:linear-gradient(90deg,#8b5cf6,#d946ef);border-radius:999px;"></div>
+            </div>
+          </div>
+          <div id="seller-tier-next" style="font-size:12px;color:var(--ink-3);margin-top:10px;">Reach 10 sales to unlock 6.5%.</div>
+        </div>
+      </div>
+      <div class="card" style="padding:16px;">
+        <div style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--ink-3);margin-bottom:10px;">Seller tips</div>
+        <ul style="font-size:13px;color:var(--ink-2);line-height:1.9;padding-left:16px;margin:0;">
+          <li>Add clear photos for 3x more views</li>
+          <li>Price 10-20% below retail to sell faster</li>
+          <li>Respond to messages quickly</li>
+          <li>Meet buyers in a safe campus location</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- LISTINGS + TRANSACTIONS -->
+    <div>
+      <!-- Section tabs -->
+      <div style="display:flex;gap:0;border-bottom:2px solid var(--border);margin-bottom:16px;">
+        <button class="sd-tab active" data-tab="listings" onclick="switchTab('listings',this)" style="padding:8px 16px;font-size:14px;font-weight:700;background:none;border:none;cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-2px;color:var(--ink-3);transition:color .12s;">My Listings</button>
+        <button class="sd-tab" data-tab="orders" onclick="switchTab('orders',this)" style="padding:8px 16px;font-size:14px;font-weight:700;background:none;border:none;cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-2px;color:var(--ink-3);transition:color .12s;">Orders</button>
+        <button class="sd-tab" data-tab="transactions" onclick="switchTab('transactions',this)" style="padding:8px 16px;font-size:14px;font-weight:700;background:none;border:none;cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-2px;color:var(--ink-3);transition:color .12s;">Transactions</button>
+      </div>
+
+      <!-- Listings panel -->
+      <div id="tab-listings">
+        <div style="display:flex;gap:8px;margin-bottom:12px;">
+          <button class="btn btn-ghost btn-sm filter-btn active" data-filter="all" onclick="setFilter('all',this)">All</button>
+          <button class="btn btn-ghost btn-sm filter-btn" data-filter="active" onclick="setFilter('active',this)">Active</button>
+          <button class="btn btn-ghost btn-sm filter-btn" data-filter="sold" onclick="setFilter('sold',this)">Sold</button>
+        </div>
+        <div class="card" style="padding:0 20px;" id="listings-container">
+          <div style="padding:40px;text-align:center;color:var(--ink-3);">Loading…</div>
+        </div>
+      </div>
+
+      <!-- Orders panel (cart checkouts — delivery orders to fulfill) -->
+      <div id="tab-orders" style="display:none;">
+        <div style="display:flex;gap:8px;margin-bottom:12px;">
+          <button class="btn btn-ghost btn-sm ord-filter-btn active" data-of="pending" onclick="setOrderFilter('pending',this)">Pending</button>
+          <button class="btn btn-ghost btn-sm ord-filter-btn" data-of="completed" onclick="setOrderFilter('completed',this)">Completed</button>
+          <button class="btn btn-ghost btn-sm ord-filter-btn" data-of="cancelled" onclick="setOrderFilter('cancelled',this)">Cancelled</button>
+          <button class="btn btn-ghost btn-sm ord-filter-btn" data-of="all" onclick="setOrderFilter('all',this)">All</button>
+        </div>
+        <div class="card" style="padding:0 20px;" id="orders-container">
+          <div style="padding:40px;text-align:center;color:var(--ink-3);">Loading…</div>
+        </div>
+      </div>
+
+      <!-- Transactions panel (conversations as transactions) -->
+      <div id="tab-transactions" style="display:none;">
+        <div style="display:flex;gap:8px;margin-bottom:12px;">
+          <button class="btn btn-ghost btn-sm txn-filter-btn active" data-tf="pending" onclick="setTxnFilter('pending',this)">Pending</button>
+          <button class="btn btn-ghost btn-sm txn-filter-btn" data-tf="completed" onclick="setTxnFilter('completed',this)">Completed</button>
+          <button class="btn btn-ghost btn-sm txn-filter-btn" data-tf="cancelled" onclick="setTxnFilter('cancelled',this)">Cancelled</button>
+        </div>
+        <div class="card" style="padding:0 20px;" id="txns-container">
+          <div style="padding:40px;text-align:center;color:var(--ink-3);">Loading…</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<footer class="footer"></footer>
+<script src="../js/app.js"></script>
+<script>
+  // Nav
+  renderNav();
+
+  // Auth guard — seller only
+  if (!auth.isLoggedIn()) { window.location.href = 'auth.html'; }
+  const user = auth.getUser();
+  if (user?.role !== 'seller') { window.location.href = 'buyer-dashboard.html'; }
+
+  document.getElementById('credits-num').textContent = 'FREE';
+  const bonusEl = document.getElementById('credits-bonus-msg');
+  if (bonusEl) bonusEl.innerHTML = `<div style="font-size:12px;background:#d1fae5;color:#065f46;border-radius:8px;padding:7px 11px;margin-bottom:10px;font-weight:600;">✅ Listings are free. Bixcart commission starts at 7% and can decrease to 5.5% as you complete successful sales.</div>`;
+
+  document.getElementById('greeting').textContent = `Welcome back, ${user?.full_name?.split(' ')[0]}`;
+
+  // Avatar & banner upload helpers
+  function guessImageMime(name) {
+    const ext = (name || '').split('.').pop().toLowerCase();
+    const map = {
+      jpg: 'image/jpeg', jpeg: 'image/jpeg', png: 'image/png',
+      gif: 'image/gif', webp: 'image/webp', bmp: 'image/bmp',
+      heic: 'image/heic', heif: 'image/heif',
+    };
+    return map[ext] || 'image/jpeg';
+  }
+
+  async function uploadProfileImage(file, field) {
+    // iOS Safari sometimes reports an empty file.type for HEIC photos;
+    // make sure we always send a real image MIME type or the backend
+    // rejects the upload as application/octet-stream.
+    const uploadMime = (file.type && file.type.startsWith('image/')) ? file.type : guessImageMime(file.name);
+    const arrayBuffer = await file.arrayBuffer();
+    const fileBlob = new Blob([arrayBuffer], { type: uploadMime });
+    const formData = new FormData();
+    formData.append('image', fileBlob, file.name);
+    const token = auth.getToken();
+    const res = await fetch('/api/uploads/image', {
+      method: 'POST',
+      headers: { 'Authorization': `Bearer ${token}` },
+      body: formData,
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Upload failed');
+    await api.put('/auth/profile', { [field]: data.url });
+    return data.url;
+  }
+
+  async function uploadAvatar(input) {
+    const file = input.files[0]; if (!file) return;
+    toast('Uploading photo…', 'default');
+    try {
+      const url = await uploadProfileImage(file, 'avatar_url');
+      const el = document.getElementById('seller-avatar-el');
+      el.innerHTML = `<img src="${url}" alt="avatar">`;
+      const updated = await api.get('/auth/me');
+      auth.save(auth.getToken(), updated);
+      toast('Profile photo updated', 'success');
+    } catch(e) { toast(e.message, 'error'); }
+  }
+  window.uploadAvatar = uploadAvatar;
+
+  async function uploadBanner(input) {
+    const file = input.files[0]; if (!file) return;
+    toast('Uploading banner…', 'default');
+    try {
+      const url = await uploadProfileImage(file, 'banner_url');
+      const bg = document.getElementById('banner-bg');
+      bg.innerHTML = `<img src="${url}" style="width:100%;height:100%;object-fit:cover;">`;
+      const updated = await api.get('/auth/me');
+      auth.save(auth.getToken(), updated);
+      toast('Banner updated', 'success');
+    } catch(e) { toast(e.message, 'error'); }
+  }
+  window.uploadBanner = uploadBanner;
+
+  // Populate avatar and banner from saved data
+  async function loadProfileHeader() {
+    try {
+      const u = await api.get('/auth/me');
+      auth.save(auth.getToken(), u);
+      const avatarEl = document.getElementById('seller-avatar-el');
+      if (u.avatar_url) {
+        avatarEl.innerHTML = `<img src="${u.avatar_url}" alt="avatar">`;
+      } else {
+        avatarEl.textContent = getInitials(u.full_name);
+      }
+      if (u.banner_url) {
+        document.getElementById('banner-bg').innerHTML = `<img src="${u.banner_url}" style="width:100%;height:100%;object-fit:cover;">`;
+      }
+      document.getElementById('seller-sub').textContent = u.university || 'Ajayi Crowther University, Oyo, Nigeria';
+    } catch(e) {}
+  }
+
+  // Listings are free; no credit tier purchase is needed.
+  const creditsBox = document.querySelector('.credits-box');
+  if (creditsBox) creditsBox.innerHTML = creditsBox.innerHTML.replace('${icons_placeholder_tag}', icons.tag);
+
+  let allListings = [], currentFilter = 'all';
+
+  window.openUserProfile = (userId) => {
+    if (!userId) return;
+    window.location.href = `user-profile.html?id=${userId}`;
+  };
+
+  async function loadDashboard() {
+    try {
+      const freshUser = await api.get('/auth/me');
+      auth.save(auth.getToken(), freshUser);
+      document.getElementById('credits-num').textContent = 'FREE';
+
+      const [listings, stats] = await Promise.all([
+        api.get(`/listings/user/${user.id}`),
+        api.get('/orders/stats')
+      ]);
+      allListings = listings;
+      const active = listings.filter(l => l.status === 'active').length;
+      const sold   = listings.filter(l => l.status === 'sold').length;
+      const views  = listings.reduce((s, l) => s + (l.views || 0), 0);
+      document.getElementById('stat-active').textContent = active;
+      document.getElementById('stat-views').textContent = views;
+      document.getElementById('stat-sold').textContent = sold;
+
+      const currentTier = Number(stats.commission_percent || 7);
+      const salesCount = Number(stats.successful_sales_count || 0);
+      const nextThreshold = Number(stats.next_threshold ?? 10);
+      const progress = Number(stats.progress_to_next || 0);
+      const badge = document.getElementById('seller-tier-badge');
+      const title = document.getElementById('seller-tier-title');
+      const progressLabel = document.getElementById('seller-tier-progress-label');
+      const progressText = document.getElementById('seller-tier-progress-text');
+      const progressBar = document.getElementById('seller-tier-progress-bar');
+      const nextText = document.getElementById('seller-tier-next');
+
+      const tierName = currentTier >= 6.5 && currentTier < 7 ? 'Trusted'
+        : currentTier >= 6 && currentTier < 6.5 ? 'Reliable'
+        : currentTier < 6 ? 'Top seller' : 'Starter';
+
+      if (badge) badge.textContent = tierName;
+      if (title) title.textContent = `Current commission: ${currentTier.toFixed(1)}%`;
+      if (progressLabel) progressLabel.textContent = `${salesCount}/${nextThreshold} sales`;
+      if (progressText) progressText.textContent = `${tierName} tier`;
+      if (progressBar) progressBar.style.width = `${Math.min(progress, 100)}%`;
+      if (nextText) {
+        if (stats.remaining_sales_to_next > 0) {
+          nextText.textContent = `Reach ${salesCount + stats.remaining_sales_to_next} sales to unlock ${Number((currentTier - 0.5)).toFixed(1)}%.`;
+        } else {
+          nextText.textContent = 'You have reached the top seller tier.';
+        }
+      }
+      renderListings();
+    } catch (e) { toast(e.message, 'error'); }
+  }
+
+  function setFilter(f, btn) {
+    currentFilter = f;
+    document.querySelectorAll('.filter-btn').forEach(b => b.classList.toggle('active', b === btn));
+    renderListings();
+  }
+
+  /* ── Tab switching ── */
+  let txnsLoaded = false, ordersLoaded = false;
+  function switchTab(tab, btn) {
+    document.querySelectorAll('.sd-tab').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById('tab-listings').style.display     = tab === 'listings'     ? '' : 'none';
+    document.getElementById('tab-orders').style.display       = tab === 'orders'       ? '' : 'none';
+    document.getElementById('tab-transactions').style.display = tab === 'transactions' ? '' : 'none';
+    if (tab === 'transactions' && !txnsLoaded) { txnsLoaded = true; loadTxns(); }
+    if (tab === 'orders' && !ordersLoaded) { ordersLoaded = true; loadOrders(); }
+  }
+
+  // Orders created from a buyer's cart checkout — delivery, already paid, seller fulfills.
+  let allOrders = [], currentOrderFilter = 'pending';
+
+  async function loadOrders() {
+    const el = document.getElementById('orders-container');
+    el.innerHTML = '<div style="padding:40px;text-align:center;color:var(--ink-3);">Loading…</div>';
+    try {
+      allOrders = await api.get('/orders/selling');
+      renderSellerOrders();
+    } catch (e) {
+      el.innerHTML = `<div style="padding:32px;text-align:center;color:var(--ink-3);">Could not load orders.</div>`;
+    }
+  }
+
+  function setOrderFilter(f, btn) {
+    currentOrderFilter = f;
+    document.querySelectorAll('.ord-filter-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    renderSellerOrders();
+  }
+
+  function renderSellerOrders() {
+    const filtered = currentOrderFilter === 'all' ? allOrders
+      : allOrders.filter(o => orderDisplayStatus(o) === currentOrderFilter);
+
+    const el = document.getElementById('orders-container');
+    if (!filtered.length) {
+      el.innerHTML = `<div style="padding:40px;text-align:center;color:var(--ink-3);">
+        <div style="margin-bottom:10px;">${icons.truck}</div>
+        No orders here yet.
+      </div>`;
+      return;
+    }
+
+    const groupCounts = {};
+    allOrders.forEach(o => { if (o.checkout_group) groupCounts[o.checkout_group] = (groupCounts[o.checkout_group] || 0) + 1; });
+
+    el.innerHTML = filtered.map(o => {
+      return `
+      <div class="order-card">
+        <div class="order-card-top">
+          <div class="order-img">${o.listing_images?.[0] ? `<img src="${o.listing_images[0]}" alt="">` : icons.package}</div>
+          <div class="order-info">
+            <div class="order-title">${o.listing_title}</div>
+            <div class="order-meta">
+              ${statusBadge(orderDisplayStatus(o))}
+              <span style="display:flex;align-items:center;gap:4px;">${icons.user} ${o.buyer_name || 'Buyer'}</span>
+              <span>${formatDate(o.created_at)}</span>
+            </div>
+            ${groupCounts[o.checkout_group] > 1 ? `<div style="font-size:12px;color:var(--ink-3);margin-top:6px;">Part of a ${groupCounts[o.checkout_group]}-item order</div>` : ''}
+            ${o.delivery_address ? `
+              <div style="font-size:12px;color:var(--ink-3);margin-top:6px;display:flex;align-items:flex-start;gap:4px;">
+                ${icons.truck} <span>${o.delivery_address.full_name} · ${o.delivery_address.phone}<br>${o.delivery_address.campus || 'Ajayi Crowther University'}${o.delivery_address.note ? ` — "${o.delivery_address.note}"` : ''}</span>
+              </div>` : ''}
+            ${o.status === 'paid' ? `<div style="font-size:12px;color:#b45309;margin-top:6px;font-weight:600;">🔒 Payment received through Paystack Split — accept the order to get started.</div>` : ''}
+            ${o.delivery_code && ['confirmed','fulfilled'].includes(o.status) ? `<div style="font-size:12px;color:var(--ink-3);margin-top:6px;display:flex;align-items:center;gap:6px;flex-wrap:wrap;">${icons.shield} Give the buyer this delivery verification code at handoff: <strong style="color:var(--ink);letter-spacing:.12em;">${o.delivery_code}</strong></div>` : ''}
+            ${o.status === 'fulfilled' ? `<div style="font-size:12px;color:#d69e2e;margin-top:6px;font-weight:600;">⏳ Waiting for buyer to enter the code…</div>` : ''}
+          </div>
+        </div>
+        <div class="order-actions">
+          <div style="font-size:18px;font-weight:700;">${formatCurrency(o.amount)}</div>
+          <div style="display:flex;gap:6px;flex-wrap:wrap;">
+            ${o.status === 'paid' ? `
+              <button class="btn btn-primary btn-sm" onclick="acceptOrder('${o.id}')">${icons.check} Accept</button>
+              <button class="btn btn-danger btn-sm" onclick="declineOrder('${o.id}')">Decline</button>` : ''}
+            ${o.status === 'confirmed' ? `<button class="btn btn-primary btn-sm" onclick="getDeliveryInfo('${o.id}')">${icons.truck} Get Delivery Info</button>` : ''}
+            ${o.status === 'completed' ? `<span style="font-size:13px;color:#059669;font-weight:600;">${icons.check} Delivered</span>` : ''}
+            ${o.status === 'cancelled' ? `<span style="font-size:13px;color:var(--ink-3);font-weight:600;">Cancelled</span>` : ''}
+            ${o.buyer_rating ? `<span style="font-size:13px;color:#d69e2e;font-weight:600;">Rated ${'★'.repeat(o.buyer_rating)}</span>` : ''}
+          </div>
+        </div>
+      </div>`;
+    }).join('');
+  }
+
+  window.getDeliveryInfo = async (id) => {
+    try {
+      const info = await api.get(`/orders/${id}/delivery-info`);
+      if (info.mode === 'same_hostel') {
+        const extra = info.seller?.delivery_info ? `\n\nDelivery info: ${info.seller.delivery_info}` : '';
+        const ready = confirm(`${info.message}\n\nBuyer: ${info.buyer?.name || 'Buyer'}\nRoom: ${info.buyer?.room || 'Not provided'}${extra}\n\nWhen you have handed the item to the buyer, click OK to mark the order as delivered/fulfilled. The buyer will then confirm the verification code.`);
+        if (ready) {
+          await api.post(`/orders/${id}/mark-shipped`);
+          toast('Delivery recorded. The buyer can now verify the delivery code.', 'success');
+          loadOrders();
+        }
+      } else if (info.mode === 'delivery_chat') {
+        if (confirm('You and the buyer are not in the same hostel. Open the delivery chat to arrange the handoff?')) {
+          window.location.href = info.chat_url;
+        }
+      }
+    } catch (e) { toast(e.message, 'error'); }
+  };
+
+  // Kept as a compatibility alias for any older UI code that may still call it.
+  window.markDelivered = window.getDeliveryInfo;
+
+  window.acceptOrder = async (id) => {
+    try {
+      await api.post(`/orders/${id}/accept`);
+      toast('Order accepted — get it ready for delivery', 'success');
+      loadOrders();
+    } catch (e) { toast(e.message, 'error'); }
+  };
+
+  window.declineOrder = async (id) => {
+    if (!confirm('Decline this order? The buyer will be refunded and the listing will relist.')) return;
+    try {
+      await api.post(`/orders/${id}/resolve`, { outcome: 'cancelled' });
+      toast('Order declined — buyer refund initiated', 'success');
+      loadOrders();
+    } catch (e) { toast(e.message, 'error'); }
+  };
+
+  // Conversations are transactions. Status stored on conv.txn_status: 'pending'|'completed'|'cancelled'
+  let allTxns = [], currentTxnFilter = 'pending';
+
+  async function loadTxns() {
+    const el = document.getElementById('txns-container');
+    el.innerHTML = '<div style="padding:40px;text-align:center;color:var(--ink-3);">Loading…</div>';
+    try {
+      // Fetch all conversations where user is seller
+      const convs = await api.get('/messages/conversations');
+      // Conversations where current user is the seller (they own the listing)
+      allTxns = convs.filter(c => c.listing_id && String(c.seller_id) === String(me.id));
+      renderTxns();
+    } catch(e) {
+      el.innerHTML = `<div style="padding:32px;text-align:center;color:var(--ink-3);">Could not load transactions.</div>`;
+    }
+  }
+
+  function setTxnFilter(f, btn) {
+    currentTxnFilter = f;
+    document.querySelectorAll('.txn-filter-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    renderTxns();
+  }
+
+  function renderTxns() {
+    const el = document.getElementById('txns-container');
+    const filtered = allTxns.filter(c => {
+      const s = c.txn_status || 'pending';
+      return s === currentTxnFilter;
+    });
+
+    if (!filtered.length) {
+      const labels = { pending: 'No pending conversations yet.', completed: 'No completed deals yet.', cancelled: 'No cancelled deals.' };
+      el.innerHTML = `<div style="padding:40px;text-align:center;color:var(--ink-3);">${labels[currentTxnFilter]}</div>`;
+      return;
+    }
+
+    const chipMap = { pending: ['chip-pending','Pending'], completed: ['chip-completed','Completed'], cancelled: ['chip-cancelled','Cancelled'] };
+
+    el.innerHTML = filtered.map(c => {
+      const status = c.txn_status || 'pending';
+      const [chipCls, chipLabel] = chipMap[status] || ['chip-pending','Pending'];
+      const img = c.listing_images?.[0]
+        ? `<img src="${c.listing_images[0]}" style="width:44px;height:44px;object-fit:cover;display:block;" onerror="this.parentNode.innerHTML=icons.package">`
+        : icons.package;
+      return `<div class="order-row">
+        <div class="order-thumb" style="width:44px;height:44px;overflow:hidden;flex-shrink:0;">${img}</div>
+        <div class="order-meta">
+          <div class="order-title">${c.listing_title || 'Direct message'}</div>
+          <div class="order-sub">Buyer: ${c.other_user?.name || 'Unknown'} · ${formatDate(c.last_message_at)}</div>
+        </div>
+        <span class="order-status-chip ${chipCls}">${chipLabel}</span>
+        <a href="messages.html?conv=${c.id}" class="btn btn-ghost btn-sm btn-icon" title="Open chat">${icons.messageCircle}</a>
+      </div>`;
+    }).join('');
+  }
+
+  function renderListings() {
+    const filtered = currentFilter === 'all' ? allListings : allListings.filter(l => l.status === currentFilter);
+    const el = document.getElementById('listings-container');
+    if (!filtered.length) {
+      el.innerHTML = `<div style="padding:48px;text-align:center;">
+        <div style="margin-bottom:12px;color:var(--ink-3);display:flex;justify-content:center;"><svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="m7.5 4.27 9 5.15M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="m3.3 7 8.7 5 8.7-5M12 22V12"/></svg></div>
+        <h3 style="margin-bottom:6px;">No listings yet</h3>
+        <p style="color:var(--ink-3);margin-bottom:16px;">Create your first listing to start selling on Bixcart.</p>
+        <a href="sell.html" class="btn btn-accent btn-sm">Create listing</a>
+      </div>`;
+      return;
+    }
+    el.innerHTML = filtered.map(l => `
+      <div class="listing-row">
+        <div class="listing-thumb">${l.images?.length ? `<img src="${l.images[0]}" style="width:52px;height:52px;object-fit:cover;display:block;flex-shrink:0;" onerror="this.parentNode.innerHTML=icons.package">` : icons.package}</div>
+        <div class="listing-meta">
+          <div class="listing-title-row">${l.title}</div>
+          <div class="listing-detail">
+            ${statusBadge(l.status)}
+            ${l.ai_flagged ? `<span style="background:#fffbeb;color:#92400e;border:1px solid #fbbf24;font-size:10px;font-weight:700;padding:2px 7px;border-radius:20px;text-transform:uppercase;letter-spacing:.05em;">⚠ AI Flagged</span>` : ''}
+            <span>${formatPrice(l.price)}</span>
+            <span>${icons.eye} ${l.views || 0} views</span>
+            <span>${formatDate(l.created_at)}</span>
+          </div>
+        </div>
+        <div class="listing-actions">
+          <a href="listing.html?id=${l._id || l.id}" class="btn btn-ghost btn-sm btn-icon" title="View">${icons.eye}</a>
+          ${(() => { const locked = (Date.now() - new Date(l.created_at).getTime()) > 90*60*1000; return `<a href="sell.html?edit=${l._id || l.id}" class="btn btn-ghost btn-sm btn-icon" title="${locked ? 'Editing locked after 90 minutes' : 'Edit'}" style="${locked ? 'pointer-events:none;opacity:.3;' : ''}">${locked ? icons.lock : icons.edit}</a>`; })()}
+          ${l.status === 'active' && !l.ai_flagged
+            ? `<button class="btn btn-ghost btn-sm" title="Mark as sold — removes it from the marketplace" onclick="markListingSold('${l._id || l.id}',this)" style="display:flex;align-items:center;gap:5px;">${icons.check} Mark sold</button>`
+            : ''}
+          ${l.status === 'sold'
+            ? `<button class="btn btn-ghost btn-sm" title="Put this back on the marketplace" onclick="relistListing('${l._id || l.id}',this)">Relist</button>`
+            : ''}
+          ${l.ai_flagged
+            ? `<button class="btn btn-ghost btn-sm btn-icon" title="Flagged — cannot delete until admin reviews" disabled style="opacity:.4;cursor:not-allowed;">${icons.trash}</button>`
+            : `<button class="btn btn-ghost btn-sm btn-icon" title="Delete" onclick="deleteListing('${l._id || l.id}',this)">${icons.trash}</button>`}
+        </div>
+      </div>`).join('');
+  }
+
+  async function markListingSold(id, btn) {
+    if (!confirm('Mark this listing as sold? It will be removed from the marketplace immediately.')) return;
+    if (btn) btn.disabled = true;
+    try {
+      await api.post(`/listings/${id}/mark-sold`, {});
+      toast('Listing marked as sold', 'success');
+      loadDashboard();
+    } catch (e) { toast(e.message, 'error'); if (btn) btn.disabled = false; }
+  }
+  window.markListingSold = markListingSold;
+
+  async function relistListing(id, btn) {
+    if (btn) btn.disabled = true;
+    try {
+      await api.post(`/listings/${id}/relist`, {});
+      toast('Listing is active again', 'success');
+      loadDashboard();
+    } catch (e) { toast(e.message, 'error'); if (btn) btn.disabled = false; }
+  }
+  window.relistListing = relistListing;
+
+  async function deleteListing(id, btn) {
+    if (!confirm('Delete this listing?')) return;
+    try {
+      await api.delete(`/listings/${id}`);
+      toast('Listing deleted', 'success');
+      loadDashboard();
+    } catch (e) { toast(e.message, 'error'); }
+  }
+
+  function logout() {
+    auth.clear();
+    window.location.href = 'auth.html';
+  }
+
+  async function handleNotifBtn() {
+    const ok = await requestPushPermission();
+    if (ok) {
+      document.getElementById('notif-btn').style.display = 'none';
+      toast('Notifications enabled!', 'success');
+    }
+  }
+
+  // Always show notification button when push hasn't been granted yet
+  const _notifBtn = document.getElementById('notif-btn');
+  if (_notifBtn) {
+    if (pushManager.canPush() && !pushManager.alreadyGranted()) {
+      _notifBtn.style.display = 'flex';
+    } else {
+      _notifBtn.style.display = 'none';
+    }
+  }
+
+  renderFooter();
+  loadProfileHeader();
+
+  // ── Account status gate ────────────────────────────────────────────────────
+  (async function checkAccountStatus() {
+    try {
+      const freshUser = await api.get('/auth/me');
+      auth.save(auth.getToken(), freshUser);
+      const uid = freshUser._id || freshUser.id;
+
+      if (freshUser.account_status === 'suspended') {
+        document.body.innerHTML = `
+          <div class="status-modal-overlay">
+            <div class="status-modal">
+              <div class="sm-icon">🔒</div>
+              <h2>Account Suspended</h2>
+              <p>Your account has been suspended by an administrator and you cannot access the platform.</p>
+              ${freshUser.suspend_reason ? `<div class="sm-reason"><strong>Reason:</strong> ${freshUser.suspend_reason}</div>` : ''}
+              <p style="font-size:13px;color:#999">If you believe this is a mistake, please contact support.</p>
+            </div>
+          </div>`;
+        return;
+      }
+
+      if (freshUser.account_status === 'warned') {
+        const dismissKey = 'warn_dismissed_' + uid;
+        if (!sessionStorage.getItem(dismissKey)) {
+          const overlay = document.createElement('div');
+          overlay.className = 'status-modal-overlay';
+          overlay.innerHTML = `
+            <div class="status-modal">
+              <div class="sm-icon">⚠️</div>
+              <h2>Account Warning</h2>
+              <p>You have received a formal warning from the Bixcart admin team. Further violations may result in suspension.</p>
+              ${freshUser.warn_reason ? `<div class="sm-reason"><strong>Reason:</strong> ${freshUser.warn_reason}</div>` : ''}
+              <button class="btn btn-primary" style="width:100%" id="warn-dismiss-btn">I understand</button>
+            </div>`;
+          document.body.appendChild(overlay);
+          document.getElementById('warn-dismiss-btn').onclick = function() {
+            sessionStorage.setItem(dismissKey, '1');
+            overlay.remove();
+          };
+        }
+      }
+    } catch(e) { /* don't block if check fails */ }
+  })();
+
+  loadDashboard();
+</script>
+</body>
+</html>

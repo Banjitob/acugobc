@@ -1,0 +1,464 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<!-- ── SEO ── -->
+<meta name="description" content="Find great deals on textbooks, electronics, clothes, and more — listed by fellow ACU students. Bixcart: the campus marketplace for Ajayi Crowther University.">
+<meta name="robots" content="index, follow">
+<link rel="canonical" href="https://bixcart.onrender.com/pages/marketplace.html">
+
+<!-- Open Graph -->
+<meta property="og:type" content="website">
+<meta property="og:title" content="Browse Listings — Bixcart ACU Marketplace">
+<meta property="og:description" content="Find great deals on textbooks, electronics, clothes, and more — listed by fellow ACU students. Bixcart: the campus marketplace for Ajayi Crowther University.">
+<meta property="og:url" content="https://bixcart.onrender.com/pages/marketplace.html">
+<meta property="og:site_name" content="Bixcart">
+<meta property="og:image" content="https://bixcart.onrender.com/og-image.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="Bixcart — ACU Student Marketplace">
+
+<!-- Twitter / X -->
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:site" content="@bixcart">
+<meta name="twitter:title" content="Browse Listings — Bixcart ACU Marketplace">
+<meta name="twitter:description" content="Find great deals on textbooks, electronics, clothes, and more — listed by fellow ACU students. Bixcart: the campus marketplace for Ajayi Crowther University.">
+<meta name="twitter:image" content="https://bixcart.onrender.com/og-image.png">
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "ItemList",
+  "name": "Bixcart Marketplace Listings",
+  "description": "Second-hand goods listed by ACU students for fellow students.",
+  "url": "https://bixcart.onrender.com/pages/marketplace.html"
+}
+</script>
+<title>Browse Listings — Bixcart ACU Marketplace</title>
+<link rel="stylesheet" href="../css/main.css">
+<style>
+  .market-layout { display: grid; grid-template-columns: 256px 1fr; gap: 28px; align-items: start; }
+  .filter-panel {
+    background: var(--surface); border: 1.5px solid var(--border);
+    border-radius: var(--radius-lg); padding: 20px;
+    position: sticky; top: calc(var(--nav-h) + 16px);
+    box-shadow: var(--shadow-sm);
+  }
+  .filter-section { margin-bottom: 24px; }
+  .filter-section:last-child { margin-bottom: 0; }
+  .filter-section-title {
+    font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: .07em;
+    color: var(--ink-3); margin-bottom: 12px; display: flex; align-items: center; justify-content: space-between;
+  }
+  .filter-section-title button { font-size: 11px; font-weight: 500; color: var(--accent); background: none; border: none; cursor: pointer; }
+  .cat-filter-item {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 7px 10px; border-radius: var(--radius-md);
+    font-size: 13px; font-weight: 500; color: var(--ink-2);
+    cursor: pointer; transition: all .15s; border: none; background: none;
+    width: 100%; text-align: left;
+  }
+  .cat-filter-item:hover { background: var(--bg); color: var(--ink); }
+  .cat-filter-item.active { background: var(--ink); color: white; font-weight: 600; }
+  .cat-filter-item .count { font-size: 11px; opacity: .7; }
+  .cat-filter-item-icon { display: flex; align-items: center; gap: 8px; }
+  .price-range { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .cond-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+  .market-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 18px; flex-wrap: wrap; gap: 12px; }
+  .market-results-count { font-size: 14px; color: var(--ink-3); }
+  .market-sort { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+  .sort-select {
+    padding: 7px 12px; border: 1.5px solid var(--border); border-radius: var(--radius-md);
+    font-family: var(--font-body); font-size: 13px; color: var(--ink); background: var(--surface);
+    outline: none; cursor: pointer;
+  }
+  .active-filters { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 16px; }
+  .active-filter-tag {
+    display: inline-flex; align-items: center; gap: 5px;
+    background: var(--ink); color: white;
+    font-size: 12px; font-weight: 500;
+    padding: 4px 10px; border-radius: var(--radius-full);
+  }
+  .active-filter-tag button { background: none; border: none; color: white; cursor: pointer; display: flex; align-items: center; padding: 0; opacity: .7; }
+  .active-filter-tag button:hover { opacity: 1; }
+  .view-toggle { display: flex; gap: 2px; }
+  .view-btn { padding: 6px; border: 1.5px solid var(--border); background: var(--surface); border-radius: var(--radius-md); cursor: pointer; color: var(--ink-3); display: flex; align-items: center; transition: all .15s; }
+  .view-btn.active { background: var(--ink); color: white; border-color: var(--ink); }
+  .listings-list-view { display: flex; flex-direction: column; gap: 14px; }
+  .list-card {
+    background: var(--surface); border: 1.5px solid var(--border);
+    border-radius: var(--radius-lg); overflow: hidden;
+    display: grid; grid-template-columns: 160px 1fr auto;
+    transition: all .2s; cursor: pointer;
+  }
+  .list-card:hover { transform: translateY(-2px); box-shadow: var(--shadow-md); border-color: var(--border-strong); }
+  .list-card-img {
+    height: 120px; background: var(--surface-2);
+    display: flex; align-items: center; justify-content: center; color: var(--ink-3);
+  }
+  .list-card-body { padding: 16px; min-width: 0; }
+  .list-card-body > div { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .list-card-actions { padding: 16px; display: flex; flex-direction: column; align-items: flex-end; justify-content: space-between; }
+
+  /* ── TABLET (≤900px) ── */
+  @media (max-width: 900px) {
+    .market-layout { grid-template-columns: 1fr; }
+    .filter-panel { position: static; display: none; }
+    .filter-panel.mobile-open { display: block; }
+    .list-card { grid-template-columns: 140px 1fr auto; }
+  }
+
+  /* ── MOBILE (≤640px) ── */
+  @media (max-width: 640px) {
+    .market-page-title { font-size: 26px !important; letter-spacing: -.5px !important; }
+    /* Force single-column listing grid on small phones */
+    .listings-grid { grid-template-columns: 1fr !important; gap: 12px !important; }
+    /* List card: stack image above body, hide actions column */
+    .list-card { grid-template-columns: 100px 1fr; }
+    .list-card-img { height: 100px; }
+    .list-card-actions { display: none; }
+    /* Market header: stack count + controls vertically */
+    .market-header { flex-direction: column; align-items: flex-start; gap: 8px; }
+    .market-sort { width: 100%; justify-content: space-between; }
+    .sort-select { flex: 1; }
+    /* Search button stays compact */
+    #search-btn { padding: 8px 14px; font-size: 13px; }
+  }
+
+  /* ── VERY SMALL (≤400px) ── */
+  @media (max-width: 400px) {
+    .list-card { grid-template-columns: 1fr; }
+    .list-card-img { height: 160px; width: 100%; }
+    .list-card-body > div { white-space: normal; }
+  }
+</style>
+</head>
+<body>
+
+<nav class="nav"></nav>
+
+<div class="page">
+  <div class="container">
+
+    <!-- Page header -->
+    <div style="margin-bottom:24px;">
+      <h1 class="market-page-title" style="font-family:var(--font-display);font-size:36px;letter-spacing:-1px;margin-bottom:6px;">Marketplace</h1>
+      <p class="text-muted text-sm">Find what you need from verified students on ACU</p>
+    </div>
+
+    <!-- Search bar -->
+    <div class="search-bar-wrap">
+      <span style="color:var(--ink-3);display:flex;"id="search-icon"></span>
+      <input class="search-bar-input" id="search-input" type="text" placeholder="Search listings…" autocomplete="off">
+      <button class="btn btn-primary" id="search-btn" style="border-radius:var(--radius-md);margin:2px;">Search</button>
+    </div>
+
+    <!-- Quick category scroller -->
+    <div class="cat-chip-scroll" id="cat-chip-scroll"></div>
+
+    <button class="btn btn-surface mobile-filter-toggle" id="filter-toggle" onclick="toggleFilterPanel()">
+  Filters
+</button>
+<div class="market-layout">
+      <!-- FILTER PANEL -->
+      <aside class="filter-panel" id="filter-panel">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
+          <span style="font-size:14px;font-weight:700;">Filters</span>
+          <button class="btn btn-ghost btn-sm" id="clear-filters-btn">Clear all</button>
+        </div>
+
+        <div class="filter-section">
+          <div class="filter-section-title">Category</div>
+          <div id="cat-filter-list"></div>
+        </div>
+
+        <div class="divider" style="margin:16px 0;"></div>
+
+        <div class="filter-section">
+          <div class="filter-section-title">Condition</div>
+          <div class="cond-chips" id="cond-filter"></div>
+        </div>
+
+        <div class="divider" style="margin:16px 0;"></div>
+
+        <div class="filter-section">
+          <div class="filter-section-title">Price range</div>
+          <div class="price-range">
+            <div class="form-group">
+              <label class="form-label">Min (₦)</label>
+              <input class="form-input" id="min-price" type="number" placeholder="0" min="0">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Max (₦)</label>
+              <input class="form-input" id="max-price" type="number" placeholder="Any" min="0">
+            </div>
+          </div>
+          <button class="btn btn-ghost btn-sm w-full mt-2" id="apply-price-btn" style="margin-top:10px;">Apply</button>
+        </div>
+      </aside>
+
+      <!-- MAIN CONTENT -->
+      <div>
+        <!-- Active filters + controls -->
+        <div class="active-filters" id="active-filters"></div>
+
+        <div class="market-header">
+          <div class="market-results-count" id="results-count">Loading…</div>
+          <div class="market-sort">
+            <div class="view-toggle">
+              <button class="view-btn active" id="grid-view-btn" title="Grid view"></button>
+              <button class="view-btn" id="list-view-btn" title="List view"></button>
+            </div>
+            <select class="sort-select" id="sort-select">
+              <option value="recommended">Recommended for you</option>
+              <option value="price_asc">Price: Low to high</option>
+              <option value="price_desc">Price: High to low</option>
+              <option value="popular">Most viewed</option>
+            </select>
+          </div>
+        </div>
+
+        <div id="listings-container" class="listings-grid"></div>
+        <div id="pagination" class="pagination"></div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<footer class="footer"></footer>
+<script src="../js/app.js"></script>
+<script>
+  renderNav('Browse');
+  renderFooter();
+
+  function toggleFilterPanel() {
+    const panel = document.getElementById('filter-panel');
+    const btn   = document.getElementById('filter-toggle');
+    const open  = panel.classList.toggle('mobile-open');
+    btn.innerHTML = open
+      ? `${icons.x} Hide filters`
+      : `${icons.sliders || icons.grid} Filters`;
+  }
+
+  document.getElementById('search-icon').innerHTML = icons.search;
+  document.getElementById('grid-view-btn').innerHTML = icons.grid;
+  document.getElementById('list-view-btn').innerHTML = icons.list;
+
+  const CATEGORIES = [
+    { name: 'All', icon: 'grid' },
+    { name: 'Textbooks', icon: 'bookOpen' },
+    { name: 'Electronics', icon: 'cpu' },
+    { name: 'Furniture', icon: 'home' },
+    { name: 'Clothing', icon: 'shirt' },
+    { name: 'Sports', icon: 'dumbbell' },
+    { name: 'Music', icon: 'music' },
+    { name: 'Transportation', icon: 'bike' },
+    { name: 'Dorm Essentials', icon: 'package' },
+  ];
+  const CONDITIONS = ['New', 'Like New', 'Good', 'Fair'];
+
+  let state = {
+    q: getParam('q') || '',
+    category: getParam('category') || '',
+    
+    condition: getParam('condition') || '',
+    min_price: getParam('min_price') || '',
+    max_price: getParam('max_price') || '',
+    sort: getParam('sort') || 'recommended',
+    page: parseInt(getParam('page')) || 1,
+    view: 'grid',
+    total: 0, pages: 0,
+  };
+
+  // Build category filter
+  document.getElementById('cat-filter-list').innerHTML = CATEGORIES.map(c => `
+    <button class="cat-filter-item ${(state.category === c.name || (c.name === 'All' && !state.category)) ? 'active' : ''}"
+      data-cat="${c.name === 'All' ? '' : c.name}">
+      <div class="cat-filter-item-icon">${icons[c.icon]} ${c.name}</div>
+      <span class="count"></span>
+    </button>`).join('');
+
+  document.querySelectorAll('.cat-filter-item').forEach(btn => {
+    btn.addEventListener('click', () => { state.category = btn.dataset.cat; state.page = 1; fetchListings(); });
+  });
+
+  // Quick category scroller (mirrors the sidebar list — same state, same data-cat convention)
+  document.getElementById('cat-chip-scroll').innerHTML = CATEGORIES.map(c => `
+    <button class="cat-chip ${(state.category === c.name || (c.name === 'All' && !state.category)) ? 'active' : ''}" data-cat="${c.name === 'All' ? '' : c.name}">
+      ${icons[c.icon]} ${c.name}
+    </button>`).join('');
+  document.querySelectorAll('.cat-chip').forEach(btn => {
+    btn.addEventListener('click', () => { state.category = btn.dataset.cat; state.page = 1; fetchListings(); });
+  });
+
+  // Condition chips
+  document.getElementById('cond-filter').innerHTML = CONDITIONS.map(c =>
+    `<button class="chip ${state.condition === c ? 'active' : ''}" data-cond="${c}">${conditionDot(c)} ${c}</button>`).join('');
+  document.querySelectorAll('#cond-filter .chip').forEach(btn => {
+    btn.addEventListener('click', () => {
+      state.condition = state.condition === btn.dataset.cond ? '' : btn.dataset.cond;
+      state.page = 1;
+      document.querySelectorAll('#cond-filter .chip').forEach(b => b.classList.toggle('active', b.dataset.cond === state.condition));
+      fetchListings();
+    });
+  });
+
+  // Restore inputs
+  document.getElementById('search-input').value = state.q;
+  
+  document.getElementById('sort-select').value = state.sort;
+  if (state.min_price) document.getElementById('min-price').value = state.min_price;
+  if (state.max_price) document.getElementById('max-price').value = state.max_price;
+
+  // Search
+  document.getElementById('search-btn').addEventListener('click', () => {
+    state.q = document.getElementById('search-input').value.trim();
+    
+    state.page = 1; fetchListings();
+  });
+  document.getElementById('search-input').addEventListener('keydown', e => { if (e.key === 'Enter') document.getElementById('search-btn').click(); });
+  
+  document.getElementById('sort-select').addEventListener('change', () => { state.sort = document.getElementById('sort-select').value; state.page=1; fetchListings(); });
+  document.getElementById('apply-price-btn').addEventListener('click', () => {
+    state.min_price = document.getElementById('min-price').value;
+    state.max_price = document.getElementById('max-price').value;
+    state.page = 1; fetchListings();
+  });
+  document.getElementById('clear-filters-btn').addEventListener('click', () => {
+    state = { ...state, category: '', condition: '', min_price: '', max_price: '', page: 1 };
+    document.getElementById('min-price').value = '';
+    document.getElementById('max-price').value = '';
+    document.querySelectorAll('.cat-filter-item, .cat-chip').forEach(b => b.classList.toggle('active', b.dataset.cat === ''));
+    document.querySelectorAll('#cond-filter .chip').forEach(b => b.classList.remove('active'));
+    fetchListings();
+  });
+
+  // View toggle
+  document.getElementById('grid-view-btn').addEventListener('click', () => setView('grid'));
+  document.getElementById('list-view-btn').addEventListener('click', () => setView('list'));
+  function setView(v) {
+    state.view = v;
+    document.getElementById('grid-view-btn').classList.toggle('active', v === 'grid');
+    document.getElementById('list-view-btn').classList.toggle('active', v === 'list');
+    renderCurrentListings();
+  }
+
+  let currentListings = [];
+
+  function renderActiveFilters() {
+    const tags = [];
+    if (state.category) tags.push({ label: state.category, key: 'category' });
+    if (state.condition) tags.push({ label: state.condition, key: 'condition' });
+    if (state.min_price) tags.push({ label: `Min ₦${parseInt(state.min_price).toLocaleString('en-NG')}`, key: 'min_price' });
+    if (state.max_price) tags.push({ label: `Max ₦${parseInt(state.max_price).toLocaleString('en-NG')}`, key: 'max_price' });
+    
+    document.getElementById('active-filters').innerHTML = tags.map(t =>
+      `<div class="active-filter-tag">${t.label}<button onclick="removeFilter('${t.key}')">${icons.x}</button></div>`).join('');
+  }
+
+  function removeFilter(key) {
+    state[key] = ''; state.page = 1;
+    
+    if (key === 'min_price') document.getElementById('min-price').value = '';
+    if (key === 'max_price') document.getElementById('max-price').value = '';
+    if (key === 'category') document.querySelectorAll('.cat-filter-item, .cat-chip').forEach(b => b.classList.toggle('active', b.dataset.cat === ''));
+    if (key === 'condition') document.querySelectorAll('#cond-filter .chip').forEach(b => b.classList.remove('active'));
+    fetchListings();
+  }
+  window.removeFilter = removeFilter;
+
+  function renderCurrentListings() {
+    const c = document.getElementById('listings-container');
+    if (!currentListings.length) {
+      c.className = '';
+      c.innerHTML = `<div class="empty-state" style="grid-column:1/-1;">
+        <div class="empty-state-icon">${icons.package}</div>
+        <h3>No listings found</h3>
+        <p>Try adjusting your filters or search term</p>
+        <button class="btn btn-ghost" onclick="document.getElementById('clear-filters-btn').click()">Clear filters</button>
+      </div>`;
+      return;
+    }
+    if (state.view === 'grid') {
+      c.className = 'listings-grid';
+      c.innerHTML = currentListings.map(l => productCardHTML(l)).join('');
+    } else {
+      c.className = 'listings-list-view';
+      c.innerHTML = currentListings.map(l => `
+        <div class="list-card" onclick="viewListing('${l.id}')">
+          <div class="list-card-img">${l.images?.length ? `<img src="${l.images[0]}" style="width:100%;height:100%;object-fit:cover;">` : icons.package}</div>
+          <div class="list-card-body">
+            <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--accent);margin-bottom:4px;">${l.category}</div>
+            <div style="font-size:16px;font-weight:700;margin-bottom:6px;">${l.title}</div>
+            <div style="font-size:13px;color:var(--ink-3);line-height:1.5;margin-bottom:8px;">${l.description?.slice(0,120)}…</div>
+            <div style="display:flex;align-items:center;gap:12px;">
+              ${conditionDot(l.condition)}<span class="text-sm text-muted">${l.condition}</span>
+            </div>
+          </div>
+          <div class="list-card-actions">
+            <div>
+              <div style="font-size:22px;font-weight:700;text-align:right;">${formatPrice(l.price)}</div>
+              ${l.original_price ? `<div style="font-size:13px;color:var(--ink-3);text-decoration:line-through;text-align:right;">${formatPrice(l.original_price)}</div>` : ''}
+            </div>
+            <button class="btn btn-accent btn-sm" onclick="event.stopPropagation();viewListing('${l.id}')">View</button>
+          </div>
+        </div>`).join('');
+    }
+  }
+
+  function renderPagination() {
+    const pg = document.getElementById('pagination');
+    if (state.pages <= 1) { pg.innerHTML = ''; return; }
+    let html = `<button class="page-btn" onclick="goPage(${state.page-1})" ${state.page===1?'disabled':''}>${icons.chevronLeft}</button>`;
+    for (let i = 1; i <= state.pages; i++) {
+      if (state.pages > 7 && Math.abs(i - state.page) > 2 && i !== 1 && i !== state.pages) {
+        if (i === 2 || i === state.pages - 1) { html += `<span style="padding:0 4px;color:var(--ink-3);">…</span>`; }
+        continue;
+      }
+      html += `<button class="page-btn ${i === state.page ? 'active' : ''}" onclick="goPage(${i})">${i}</button>`;
+    }
+    html += `<button class="page-btn" onclick="goPage(${state.page+1})" ${state.page===state.pages?'disabled':''}>${icons.chevronRight}</button>`;
+    pg.innerHTML = html;
+  }
+  window.goPage = (p) => { state.page = p; fetchListings(); window.scrollTo({ top: 0, behavior: 'smooth' }); };
+
+  async function fetchListings() {
+    const c = document.getElementById('listings-container');
+    c.className = 'listings-grid';
+    c.innerHTML = Array(8).fill(0).map(() => `<div class="card" style="overflow:hidden;"><div class="skeleton" style="height:196px;border-radius:0;"></div><div style="padding:16px;display:flex;flex-direction:column;gap:8px;"><div class="skeleton" style="height:11px;width:55px;"></div><div class="skeleton" style="height:16px;"></div><div class="skeleton" style="height:14px;width:75%;"></div><div style="display:flex;justify-content:space-between;margin-top:8px;"><div class="skeleton" style="height:20px;width:60px;"></div><div class="skeleton" style="height:14px;width:80px;"></div></div></div></div>`).join('');
+
+    // update URL
+    const p = new URLSearchParams();
+    if (state.q) p.set('q', state.q);
+    if (state.category) p.set('category', state.category);
+    
+    if (state.condition) p.set('condition', state.condition);
+    if (state.min_price) p.set('min_price', state.min_price);
+    if (state.max_price) p.set('max_price', state.max_price);
+    if (state.sort !== 'recommended') p.set('sort', state.sort);
+    if (state.page > 1) p.set('page', state.page);
+    window.history.replaceState({}, '', '?' + p.toString());
+
+    renderActiveFilters();
+    // Update category active state
+    document.querySelectorAll('.cat-filter-item, .cat-chip').forEach(b => b.classList.toggle('active', b.dataset.cat === state.category));
+
+    try {
+      const qs = new URLSearchParams({ ...Object.fromEntries(Object.entries(state).filter(([k,v])=>v&&!['view','total','pages'].includes(k))), limit: 12 });
+      const data = await api.get(`/listings?${qs}`, false);
+      currentListings = data.listings || [];
+      state.total = data.total;
+      state.pages = data.pages;
+      document.getElementById('results-count').textContent = `${data.total} listing${data.total !== 1 ? 's' : ''} found`;
+      renderCurrentListings();
+      renderPagination();
+    } catch(e) {
+      document.getElementById('listings-container').innerHTML = `<div class="empty-state"><div class="empty-state-icon">${icons.alertCircle}</div><h3>Failed to load listings</h3><p>${e.message}</p></div>`;
+    }
+  }
+
+  fetchListings();
+</script>
+</body>
+</html>

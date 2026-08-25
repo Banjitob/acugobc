@@ -1,0 +1,32 @@
+# render.yaml — Render Blueprint (deploys backend + frontend as one service)
+# Docs: https://render.com/docs/blueprint-spec
+
+services:
+  - type: web
+    name: campusmarket
+    runtime: node
+    rootDir: backend
+    buildCommand: npm install
+    nodeVersion: 18
+    startCommand: node server.js
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 10000
+      - key: JWT_SECRET
+        generateValue: true          # Render auto-generates a secure value
+      - key: MONGODB_URI
+        sync: false                  # You paste this in manually in the Render dashboard
+      - key: FRONTEND_URL
+        fromService:
+          type: web
+          name: campusmarket
+          property: host
+      - key: PUBLIC_APP_URL
+        sync: false
+      - key: PAYSTACK_PUBLIC_KEY
+        sync: false
+      - key: PAYSTACK_SECRET_KEY
+        sync: false
+    healthCheckPath: /api/health

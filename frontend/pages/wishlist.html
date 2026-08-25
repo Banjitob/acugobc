@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<!-- ── SEO ── -->
+<meta name="description" content="Items you&#x27;ve saved on Bixcart.">
+<meta name="robots" content="noindex, nofollow">
+<link rel="canonical" href="https://bixcart.onrender.com/pages/wishlist.html">
+
+<!-- Open Graph -->
+<meta property="og:type" content="website">
+<meta property="og:title" content="My Wishlist — Bixcart">
+<meta property="og:description" content="Items you&#x27;ve saved on Bixcart.">
+<meta property="og:url" content="https://bixcart.onrender.com/pages/wishlist.html">
+<meta property="og:site_name" content="Bixcart">
+<meta property="og:image" content="https://bixcart.onrender.com/og-image.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="Bixcart — ACU Student Marketplace">
+
+<!-- Twitter / X -->
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:site" content="@bixcart">
+<meta name="twitter:title" content="My Wishlist — Bixcart">
+<meta name="twitter:description" content="Items you&#x27;ve saved on Bixcart.">
+<meta name="twitter:image" content="https://bixcart.onrender.com/og-image.png">
+<title>My Wishlist — Bixcart</title>
+<link rel="stylesheet" href="../css/main.css">
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@700&display=swap" rel="stylesheet">
+<style>
+  .wishlist-hero {
+    background: linear-gradient(135deg, var(--ink) 0%, #2d2d2d 100%);
+    padding: 48px 0 40px;
+    text-align: center;
+    color: white;
+  }
+  .wishlist-hero h1 {
+    font-family: var(--font-display);
+    font-size: clamp(28px, 5vw, 40px);
+    font-weight: 800;
+    letter-spacing: -.8px;
+    margin-bottom: 8px;
+    color: white;
+  }
+  .wishlist-hero p {
+    font-size: 14px;
+    color: rgba(255,255,255,.55);
+    margin: 0;
+  }
+  .wishlist-count {
+    display: inline-flex; align-items: center; gap: 6px;
+    background: rgba(255,255,255,.1); border: 1px solid rgba(255,255,255,.15);
+    color: white; font-size: 13px; font-weight: 600;
+    padding: 4px 14px; border-radius: 99px; margin-top: 14px;
+  }
+
+  .wishlist-body {
+    max-width: 1160px; margin: 0 auto; padding: 32px 20px 60px;
+  }
+
+  /* Sort / filter bar */
+  .wishlist-bar {
+    display: flex; align-items: center; gap: 10px;
+    margin-bottom: 24px; flex-wrap: wrap;
+  }
+  .wishlist-bar select {
+    padding: 8px 12px; border: 1.5px solid var(--border);
+    border-radius: var(--radius-md); font-family: var(--font-body);
+    font-size: 13px; background: var(--surface); color: var(--ink);
+    outline: none; cursor: pointer;
+  }
+  .wishlist-bar-label {
+    font-size: 12px; color: var(--ink-3); font-weight: 600;
+    text-transform: uppercase; letter-spacing: .06em;
+  }
+  .wishlist-bar-spacer { flex: 1; }
+  .wishlist-clear-btn {
+    font-size: 12px; color: var(--red, #e53e3e); background: none;
+    border: 1.5px solid #fca5a5; border-radius: var(--radius-md);
+    padding: 6px 12px; cursor: pointer; font-family: var(--font-body);
+    font-weight: 600; transition: background .12s;
+  }
+  .wishlist-clear-btn:hover { background: #fff5f5; }
+
+  /* Product grid reuses main.css .products-grid */
+  .wishlist-empty {
+    text-align: center; padding: 80px 20px;
+    color: var(--ink-3);
+  }
+  .wishlist-empty-icon { font-size: 56px; margin-bottom: 16px; line-height: 1; }
+  .wishlist-empty h2 { font-size: 20px; font-weight: 700; color: var(--ink); margin-bottom: 8px; }
+  .wishlist-empty p  { font-size: 14px; line-height: 1.7; max-width: 300px; margin: 0 auto 24px; }
+
+  /* Saved-at label on card */
+  .wishlist-saved-label {
+    font-size: 10px; color: var(--ink-3); text-align: center;
+    padding: 4px 0 8px; font-weight: 500;
+  }
+
+  @media (max-width: 520px) {
+    .wishlist-hero { padding: 32px 16px 28px; }
+    .wishlist-body { padding: 20px 12px 48px; }
+  }
+</style>
+</head>
+<body>
+
+<nav class="nav"></nav>
+
+<div class="wishlist-hero">
+  <h1>My Wishlist</h1>
+  <p>Items you've saved from the marketplace</p>
+  <div class="wishlist-count" id="wishlist-count">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+    Loading…
+  </div>
+</div>
+
+<div class="wishlist-body">
+  <div class="wishlist-bar" id="wishlist-bar" style="display:none;">
+    <span class="wishlist-bar-label">Sort</span>
+    <select id="wishlist-sort">
+      <option value="saved_at_desc">Recently saved</option>
+      <option value="saved_at_asc">Oldest saved</option>
+      <option value="price_asc">Price: low to high</option>
+      <option value="price_desc">Price: high to low</option>
+    </select>
+    <div class="wishlist-bar-spacer"></div>
+    <button class="wishlist-clear-btn" id="wishlist-clear-btn">
+      🗑 Clear all
+    </button>
+  </div>
+
+  <div class="products-grid" id="wishlist-grid"></div>
+</div>
+
+<footer class="footer"></footer>
+<script src="../js/app.js"></script>
+<script>
+  renderNav();
+  renderFooter();
+
+  // Must be logged in
+  if (!auth.isLoggedIn()) {
+    window.location.replace('auth.html?redirect=wishlist.html');
+  }
+
+  let allSaved = [];
+
+  async function loadWishlist() {
+    try {
+      const data = await api.get('/listings/saved');
+      allSaved = data.listings || [];
+      renderWishlist();
+      updateCount();
+    } catch(e) {
+      document.getElementById('wishlist-grid').innerHTML = `
+        <div class="wishlist-empty" style="grid-column:1/-1">
+          <div class="wishlist-empty-icon">😕</div>
+          <h2>Couldn't load wishlist</h2>
+          <p>${escHtml(e.message)}</p>
+        </div>`;
+      document.getElementById('wishlist-count').innerHTML = '0 items';
+    }
+  }
+
+  function updateCount() {
+    const el = document.getElementById('wishlist-count');
+    const n  = allSaved.length;
+    el.innerHTML = `
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+      ${n} ${n === 1 ? 'item' : 'items'} saved`;
+  }
+
+  function sortedListings() {
+    const sort = document.getElementById('wishlist-sort')?.value || 'saved_at_desc';
+    const list = [...allSaved];
+    if (sort === 'saved_at_desc') list.sort((a,b) => new Date(b.saved_at) - new Date(a.saved_at));
+    if (sort === 'saved_at_asc')  list.sort((a,b) => new Date(a.saved_at) - new Date(b.saved_at));
+    if (sort === 'price_asc')     list.sort((a,b) => a.price - b.price);
+    if (sort === 'price_desc')    list.sort((a,b) => b.price - a.price);
+    return list;
+  }
+
+  function renderWishlist() {
+    const grid = document.getElementById('wishlist-grid');
+    const bar  = document.getElementById('wishlist-bar');
+
+    if (!allSaved.length) {
+      bar.style.display = 'none';
+      grid.innerHTML = `
+        <div class="wishlist-empty" style="grid-column:1/-1">
+          <div class="wishlist-empty-icon">🤍</div>
+          <h2>Your wishlist is empty</h2>
+          <p>Tap the heart on any listing to save it here for later.</p>
+          <a href="marketplace.html" class="btn btn-primary">Browse Marketplace</a>
+        </div>`;
+      return;
+    }
+
+    bar.style.display = 'flex';
+    const list = sortedListings();
+
+    grid.innerHTML = list.map(l => `
+      <div>
+        ${productCardHTML(l, true)}
+        <div class="wishlist-saved-label">Saved ${timeAgo(l.saved_at)}</div>
+      </div>`).join('');
+  }
+
+  function timeAgo(dateStr) {
+    const diff = Date.now() - new Date(dateStr).getTime();
+    const mins  = Math.floor(diff / 60000);
+    const hours = Math.floor(diff / 3600000);
+    const days  = Math.floor(diff / 86400000);
+    if (days  > 1) return `${days} days ago`;
+    if (days  === 1) return 'yesterday';
+    if (hours > 1) return `${hours} hours ago`;
+    if (hours === 1) return '1 hour ago';
+    if (mins  > 1) return `${mins} min ago`;
+    return 'just now';
+  }
+
+  // Re-render when sort changes
+  document.getElementById('wishlist-sort').addEventListener('change', renderWishlist);
+
+  // Clear all wishlist items
+  document.getElementById('wishlist-clear-btn').addEventListener('click', async () => {
+    if (!confirm(`Remove all ${allSaved.length} saved items from your wishlist?`)) return;
+    try {
+      // Unsave each one (toggle off)
+      await Promise.all(allSaved.map(l => api.post(`/listings/${l.id}/save`).catch(() => {})));
+      allSaved = [];
+      renderWishlist();
+      updateCount();
+      toast('Wishlist cleared.', 'success');
+    } catch(e) { toast(e.message, 'error'); }
+  });
+
+  // When a card's heart is toggled, remove that item from the wishlist view
+  window.addEventListener('saveToggled', e => {
+    const { id, saved } = e.detail;
+    if (!saved) {
+      allSaved = allSaved.filter(l => String(l.id) !== String(id));
+      renderWishlist();
+      updateCount();
+    }
+  });
+
+  function escHtml(s) {
+    return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  }
+
+  loadWishlist();
+</script>
+</body>
+</html>

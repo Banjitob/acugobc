@@ -1,0 +1,494 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<!-- ── SEO ── -->
+<meta name="description" content="Bixcart is coming to your campus. Get early access by joining the waitlist for ACU&#x27;s student marketplace.">
+<meta name="robots" content="index, follow">
+<link rel="canonical" href="https://bixcart.onrender.com/pages/waitlist.html">
+
+<!-- Open Graph -->
+<meta property="og:type" content="website">
+<meta property="og:title" content="Join the Waitlist — Bixcart">
+<meta property="og:description" content="Bixcart is coming to your campus. Get early access by joining the waitlist for ACU&#x27;s student marketplace.">
+<meta property="og:url" content="https://bixcart.onrender.com/pages/waitlist.html">
+<meta property="og:site_name" content="Bixcart">
+<meta property="og:image" content="https://bixcart.onrender.com/og-image.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="Bixcart — ACU Student Marketplace">
+
+<!-- Twitter / X -->
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:site" content="@bixcart">
+<meta name="twitter:title" content="Join the Waitlist — Bixcart">
+<meta name="twitter:description" content="Bixcart is coming to your campus. Get early access by joining the waitlist for ACU&#x27;s student marketplace.">
+<meta name="twitter:image" content="https://bixcart.onrender.com/og-image.png">
+<title>Join the Waitlist — Bixcart</title>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@600;700&family=Raleway:wght@400;700;900&family=Nunito:wght@400;600;700&family=Coming+Soon&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --cream: #fdf8f3;
+  --ink:   #1a1208;
+  --orange: #c8522a;
+  --orange-light: #fdeee8;
+  --green:  #2d5016;
+  --green-light: #eef5e6;
+  --border: #e8ddd4;
+  --muted:  #7a6a5a;
+}
+
+body {
+  background: var(--cream);
+  color: var(--ink);
+  font-family: 'Nunito', sans-serif;
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+/* ── NAV ── */
+.nav {
+  padding: 18px 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  max-width: 1100px;
+  margin: 0 auto;
+}
+.nav-logo {
+  font-family: 'Fredoka', sans-serif;
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--ink);
+  text-decoration: none;
+}
+.nav-logo span { color: var(--orange); }
+.nav-cta {
+  padding: 9px 20px;
+  background: var(--ink);
+  color: var(--cream);
+  border-radius: 99px;
+  font-size: 13px;
+  font-weight: 700;
+  text-decoration: none;
+  transition: opacity .15s;
+}
+.nav-cta:hover { opacity: .85; }
+
+/* ── HERO ── */
+.hero {
+  max-width: 860px;
+  margin: 0 auto;
+  padding: 60px 24px 48px;
+  text-align: center;
+}
+
+.hero-eyebrow {
+  display: inline-block;
+  font-family: 'Coming Soon', cursive;
+  font-size: 16px;
+  color: var(--orange);
+  margin-bottom: 24px;
+  position: relative;
+}
+.hero-eyebrow::before {
+  content: '→ ';
+}
+
+.hero h1 {
+  font-family: 'Raleway', sans-serif;
+  font-size: clamp(38px, 7vw, 72px);
+  font-weight: 900;
+  line-height: 1.05;
+  letter-spacing: -2px;
+  color: var(--ink);
+  margin-bottom: 20px;
+}
+.hero h1 .wavy {
+  color: var(--orange);
+  position: relative;
+  display: inline-block;
+}
+.hero h1 .wavy::after {
+  content: '';
+  position: absolute;
+  bottom: -4px;
+  left: 0;
+  right: 0;
+  height: 6px;
+  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='6' viewBox='0 0 100 6'%3E%3Cpath d='M0 3 Q12.5 0 25 3 Q37.5 6 50 3 Q62.5 0 75 3 Q87.5 6 100 3' stroke='%23c8522a' stroke-width='2' fill='none'/%3E%3C/svg%3E") repeat-x center;
+  background-size: 60px 6px;
+}
+
+.hero-sub {
+  font-size: 18px;
+  color: var(--muted);
+  line-height: 1.7;
+  max-width: 560px;
+  margin: 0 auto 12px;
+}
+
+.hero-clarify {
+  font-family: 'Coming Soon', cursive;
+  font-size: 14px;
+  color: var(--muted);
+  margin-bottom: 36px;
+}
+
+/* ── FORM ── */
+.form-wrap {
+  max-width: 480px;
+  margin: 0 auto;
+}
+.form-row {
+  display: flex;
+  gap: 8px;
+  background: white;
+  border: 2px solid var(--ink);
+  border-radius: 14px;
+  padding: 6px 6px 6px 18px;
+  box-shadow: 4px 4px 0 var(--ink);
+  transition: box-shadow .15s;
+}
+.form-row:focus-within {
+  box-shadow: 6px 6px 0 var(--ink);
+}
+.form-input {
+  flex: 1;
+  border: none;
+  outline: none;
+  font-family: 'Nunito', sans-serif;
+  font-size: 14px;
+  color: var(--ink);
+  background: transparent;
+  min-width: 0;
+}
+.form-input::placeholder { color: #bbb; }
+.form-btn {
+  padding: 11px 22px;
+  background: var(--orange);
+  color: white;
+  border: none;
+  border-radius: 10px;
+  font-family: 'Nunito', sans-serif;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background .15s;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+.form-btn:hover { background: #b04422; }
+.form-btn:disabled { opacity: .6; cursor: not-allowed; }
+.form-error { font-size: 12px; color: #c0392b; margin-top: 8px; min-height: 18px; }
+.form-note  { font-size: 12px; color: var(--muted); margin-top: 10px; }
+
+/* ── SUCCESS ── */
+.success-box {
+  display: none;
+  background: var(--green-light);
+  border: 2px solid var(--green);
+  border-radius: 16px;
+  padding: 28px 24px;
+  text-align: center;
+  box-shadow: 4px 4px 0 var(--green);
+}
+.success-box .emoji { font-size: 40px; margin-bottom: 12px; }
+.success-box h3 { font-family: 'Raleway', sans-serif; font-size: 22px; font-weight: 900; margin-bottom: 8px; }
+.success-box p { font-size: 14px; color: #3a5a20; line-height: 1.7; margin-bottom: 18px; }
+.success-btn {
+  display: inline-block;
+  padding: 12px 28px;
+  background: var(--green);
+  color: white;
+  border-radius: 99px;
+  font-weight: 700;
+  font-size: 14px;
+  text-decoration: none;
+  transition: opacity .15s;
+}
+.success-btn:hover { opacity: .88; }
+
+/* ── DIVIDER ── */
+.divider {
+  max-width: 860px;
+  margin: 56px auto 0;
+  padding: 0 24px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  color: var(--border);
+}
+.divider::before, .divider::after { content: ''; flex: 1; height: 1.5px; background: var(--border); }
+.divider-text { font-family: 'Coming Soon', cursive; font-size: 14px; color: var(--muted); white-space: nowrap; }
+
+/* ── SCENARIO SECTION ── */
+.scenarios {
+  max-width: 860px;
+  margin: 40px auto;
+  padding: 0 24px;
+}
+.scenarios-label {
+  font-family: 'Coming Soon', cursive;
+  font-size: 15px;
+  color: var(--muted);
+  margin-bottom: 20px;
+  text-align: center;
+}
+
+.scenario-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 14px;
+}
+.scenario-card {
+  background: white;
+  border: 1.5px solid var(--border);
+  border-radius: 16px;
+  padding: 20px;
+  position: relative;
+  overflow: hidden;
+}
+.scenario-card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 4px;
+}
+.scenario-card:nth-child(1)::before { background: #c8522a; }
+.scenario-card:nth-child(2)::before { background: #2d5016; }
+.scenario-card:nth-child(3)::before { background: #1e40af; }
+.scenario-card:nth-child(4)::before { background: #7c3aed; }
+.scenario-emoji  { font-size: 28px; margin-bottom: 10px; }
+.scenario-quote  { font-family: 'Coming Soon', cursive; font-size: 14px; line-height: 1.7; color: var(--ink); margin-bottom: 8px; }
+.scenario-detail { font-size: 12px; color: var(--muted); line-height: 1.6; }
+
+/* ── HOW IT WORKS ── */
+.how {
+  max-width: 860px;
+  margin: 56px auto;
+  padding: 0 24px;
+}
+.how h2 {
+  font-family: 'Raleway', sans-serif;
+  font-size: clamp(26px, 4vw, 40px);
+  font-weight: 900;
+  letter-spacing: -1px;
+  margin-bottom: 32px;
+  text-align: center;
+}
+.how h2 em { font-style: normal; color: var(--orange); }
+.how-steps {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 14px;
+}
+.how-step {
+  background: white;
+  border: 1.5px solid var(--border);
+  border-radius: 16px;
+  padding: 22px 18px;
+  position: relative;
+}
+.how-step-num {
+  font-family: 'Fredoka', sans-serif;
+  font-size: 40px;
+  font-weight: 700;
+  color: var(--orange-light);
+  line-height: 1;
+  margin-bottom: 8px;
+}
+.how-step h3 { font-size: 15px; font-weight: 700; margin-bottom: 6px; }
+.how-step p  { font-size: 13px; color: var(--muted); line-height: 1.65; }
+
+/* ── FOOTER ── */
+.footer-strip {
+  border-top: 1.5px solid var(--border);
+  padding: 24px;
+  text-align: center;
+  font-size: 13px;
+  color: var(--muted);
+}
+.footer-strip a { color: var(--orange); text-decoration: none; }
+
+/* ── RESPONSIVE ── */
+@media (max-width: 640px) {
+  .hero { padding: 40px 20px 36px; }
+  .form-row { flex-direction: column; padding: 10px; gap: 6px; }
+  .form-btn { width: 100%; }
+  .credits-card { grid-template-columns: 1fr; }
+  .credits-join-btn { width: 100%; text-align: center; }
+  .scenario-grid { grid-template-columns: 1fr; }
+  .how-steps { grid-template-columns: 1fr; }
+}
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav class="nav">
+  <a href="/" class="nav-logo">Bix<span>cart</span></a>
+  <a href="auth.html" class="nav-cta">Already have account →</a>
+</nav>
+
+<!-- HERO -->
+<section class="hero">
+  <p class="hero-eyebrow">ACU students, this one's for you</p>
+
+  <h1>
+    Stop WhatsApp-ing<br>
+    <span class="wavy">sell on campus</span><br>
+    properly.
+  </h1>
+
+  <p class="hero-sub">
+    Bixcart is a marketplace built for Ajayi Crowther University students.
+    Sell your old textbooks, hostel stuff, clothes — all in one place.
+  </p>
+
+  <p class="hero-clarify">No middlemen. No "I go send you" drama. No strangers.</p>
+
+  <!-- FORM -->
+  <div class="form-wrap">
+    <div id="wl-form-area">
+      <form class="form-row" id="wl-form" onsubmit="joinWaitlist(event)">
+        <input
+          class="form-input"
+          type="email"
+          id="wl-email"
+          placeholder="your ACU email address…"
+          required
+          autocomplete="email"
+        >
+        <button class="form-btn" type="submit" id="wl-btn">Join the waitlist →</button>
+      </form>
+      <p class="form-error" id="wl-error"></p>
+      <p class="form-note">Drop your email and we'll keep you updated as Bixcart opens up.</p>
+    </div>
+
+    <div class="success-box" id="wl-success">
+      <div class="emoji">✅</div>
+      <h3>You're in!</h3>
+      <p>
+        When you create your <strong>seller account</strong> using this email,
+        you'll be among the first to hear about Bixcart updates.
+        No code. Nothing extra.
+      </p>
+      <a href="auth.html?mode=register" class="success-btn">Create my account now</a>
+    </div>
+  </div>
+</section>
+
+<!-- DIVIDER -->
+<div class="divider">
+  <span class="divider-text">who is this for exactly?</span>
+</div>
+
+<!-- SCENARIOS -->
+<section class="scenarios">
+  <p class="scenarios-label">real things real students want to do:</p>
+  <div class="scenario-grid">
+    <div class="scenario-card">
+      <div class="scenario-emoji">📚</div>
+      <p class="scenario-quote">"I bought CHM 101 textbook for ₦4,500, I need to sell it fast. SIWES is starting."</p>
+      <p class="scenario-detail">List it, set your price. Buyers in your faculty will find it.</p>
+    </div>
+    <div class="scenario-card">
+      <div class="scenario-emoji">🪑</div>
+      <p class="scenario-quote">"I'm leaving hostel. Electric fan, reading table, extension box — all available."</p>
+      <p class="scenario-detail">Post everything at once. First-year students will rush you.</p>
+    </div>
+    <div class="scenario-card">
+      <div class="scenario-emoji">👕</div>
+      <p class="scenario-quote">"I bought this jacket, it doesn't fit. Too proud to return it. Someone should buy."</p>
+      <p class="scenario-detail">Upload photos, set price. Done in 2 minutes.</p>
+    </div>
+    <div class="scenario-card">
+      <div class="scenario-emoji">💻</div>
+      <p class="scenario-quote">"Looking for a laptop under ₦80k. The ones in town are too stressful to verify."</p>
+      <p class="scenario-detail">Buy from verified ACU students. At least you know where to find them.</p>
+    </div>
+  </div>
+</section>
+
+<!-- DIVIDER -->
+<div class="divider">
+  <span class="divider-text">how it works</span>
+</div>
+
+<!-- HOW IT WORKS -->
+<section class="how">
+  <h2>Honestly, it's <em>pretty simple.</em></h2>
+  <div class="how-steps">
+    <div class="how-step">
+      <div class="how-step-num">01</div>
+      <h3>Create your account</h3>
+      <p>Sign up with your email. Verification keeps out non-ACU people — that's the point.</p>
+    </div>
+    <div class="how-step">
+      <div class="how-step-num">02</div>
+      <h3>Post your item</h3>
+      <p>Take a photo. Write what it is. Set your price. It takes less time than writing a WhatsApp status.</p>
+    </div>
+    <div class="how-step">
+      <div class="how-step-num">03</div>
+      <h3>Chat, agree, meet</h3>
+      <p>Buyers message you in the app. Agree on price, pick a spot on campus, hand it over.</p>
+    </div>
+    <div class="how-step">
+      <div class="how-step-num">04</div>
+      <h3>Money enters</h3>
+      <p>Pay however you agree — transfer, cash, whatever. Bixcart doesn't take commission.</p>
+    </div>
+  </div>
+</section>
+
+<!-- CREDITS PROMO -->
+
+
+<!-- FOOTER -->
+<div class="footer-strip">
+  Made for ACU students, by people who went through the WhatsApp-group-selling pain too. ·
+  <a href="auth.html">Already registered?</a>
+</div>
+
+<script>
+async function joinWaitlist(e) {
+  e.preventDefault();
+  const email  = document.getElementById('wl-email').value.trim();
+  const btn    = document.getElementById('wl-btn');
+  const errEl  = document.getElementById('wl-error');
+  errEl.textContent = '';
+  btn.disabled = true;
+  btn.textContent = 'Saving your spot…';
+
+  try {
+    const res  = await fetch('/api/auth/waitlist', {
+      method:  'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body:    JSON.stringify({ email }),
+    });
+    const data = await res.json();
+
+    if (!res.ok) {
+      if (data.error === 'already_registered') {
+        window.location.href = 'auth.html';
+        return;
+      }
+      throw new Error(data.error || 'Something went wrong, try again.');
+    }
+
+    document.getElementById('wl-form-area').style.display = 'none';
+    document.getElementById('wl-success').style.display   = 'block';
+  } catch(err) {
+    errEl.textContent   = err.message;
+    btn.disabled        = false;
+    btn.textContent     = 'Join the waitlist →';
+  }
+}
+</script>
+</body>
+</html>

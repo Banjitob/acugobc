@@ -1,0 +1,20 @@
+User-agent: *
+Disallow: /pages/admin.html
+Disallow: /pages/admin-login.html
+Disallow: /pages/buyer-dashboard.html
+Disallow: /pages/seller-dashboard.html
+Disallow: /pages/messages.html
+Disallow: /pages/wishlist.html
+Disallow: /pages/sell.html
+Disallow: /pages/auth.html
+Disallow: /pages/register.html
+
+Allow: /
+Allow: /pages/marketplace.html
+Allow: /pages/listing.html
+Allow: /pages/user-profile.html
+Allow: /pages/terms.html
+Allow: /pages/privacy.html
+Allow: /pages/waitlist.html
+
+Sitemap: https://bixcart.onrender.com/sitemap.xml

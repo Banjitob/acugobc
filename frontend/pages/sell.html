@@ -1,0 +1,575 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<!-- ── SEO ── -->
+<meta name="description" content="Got something you no longer need? List it on Bixcart in under 2 minutes and sell to fellow ACU students. Free to list, no fees, no hassle.">
+<meta name="robots" content="noindex, nofollow">
+<link rel="canonical" href="https://bixcart.onrender.com/pages/sell.html">
+
+<!-- Open Graph -->
+<meta property="og:type" content="website">
+<meta property="og:title" content="Sell Your Stuff — List an Item on Bixcart">
+<meta property="og:description" content="Got something you no longer need? List it on Bixcart in under 2 minutes and sell to fellow ACU students. Free to list, no fees, no hassle.">
+<meta property="og:url" content="https://bixcart.onrender.com/pages/sell.html">
+<meta property="og:site_name" content="Bixcart">
+<meta property="og:image" content="https://bixcart.onrender.com/og-image.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="Bixcart — ACU Student Marketplace">
+
+<!-- Twitter / X -->
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:site" content="@bixcart">
+<meta name="twitter:title" content="Sell Your Stuff — List an Item on Bixcart">
+<meta name="twitter:description" content="Got something you no longer need? List it on Bixcart in under 2 minutes and sell to fellow ACU students. Free to list, no fees, no hassle.">
+<meta name="twitter:image" content="https://bixcart.onrender.com/og-image.png">
+<title>Sell Your Stuff — List an Item on Bixcart</title>
+<link rel="stylesheet" href="../css/main.css">
+<style>
+  .sell-layout { display: grid; grid-template-columns: 1fr 360px; gap: 32px; align-items: start; }
+  .form-card { background: var(--surface); border: 1.5px solid var(--border); border-radius: var(--radius-xl); padding: 32px; box-shadow: var(--shadow-sm); }
+  .form-section-title {
+    font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: .07em;
+    color: var(--ink-3); margin-bottom: 16px; padding-bottom: 10px;
+    border-bottom: 1.5px solid var(--border); display: flex; align-items: center; gap: 8px;
+  }
+  .form-grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .img-upload-zone {
+    border: 2px dashed var(--border); border-radius: var(--radius-lg);
+    padding: 36px 24px; text-align: center; cursor: pointer;
+    transition: all .2s; background: var(--bg); position: relative;
+  }
+  .img-upload-zone:hover, .img-upload-zone.drag-over {
+    border-color: var(--ink); background: var(--surface);
+  }
+  .img-upload-zone input { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
+  .img-upload-icon { color: var(--ink-3); margin-bottom: 12px; display: flex; justify-content: center; }
+  .img-upload-label { font-size: 14px; font-weight: 600; color: var(--ink-2); margin-bottom: 4px; }
+  .img-upload-sub { font-size: 12px; color: var(--ink-3); }
+  .img-previews { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-top: 14px; }
+  .img-preview-item {
+    aspect-ratio: 1; border-radius: var(--radius-md); overflow: hidden;
+    position: relative; background: var(--surface-2);
+    border: 1.5px solid var(--border);
+  }
+  .img-preview-item img { width: 100%; height: 100%; object-fit: cover; }
+  .img-preview-remove {
+    position: absolute; top: 4px; right: 4px;
+    width: 22px; height: 22px; border-radius: 50%;
+    background: rgba(24,21,15,.7); color: white;
+    border: none; cursor: pointer; display: flex; align-items: center; justify-content: center;
+    font-size: 11px; transition: background .15s;
+  }
+  .img-preview-remove:hover { background: var(--red); }
+  .preview-card {
+    background: var(--surface); border: 1.5px solid var(--border);
+    border-radius: var(--radius-xl); overflow: hidden; position: sticky;
+    top: calc(var(--nav-h) + 16px);
+  }
+  .preview-img {
+    height: 200px; background: var(--surface-2);
+    display: flex; align-items: center; justify-content: center; color: var(--ink-3);
+  }
+  .preview-body { padding: 20px; }
+  .price-input-wrap { position: relative; }
+  .price-input-wrap::before {
+    content: '₦'; position: absolute; left: 14px; top: 50%;
+    transform: translateY(-50%); font-size: 16px; font-weight: 600; color: var(--ink-2);
+    pointer-events: none;
+  }
+  .price-input-wrap .form-input { padding-left: 28px; font-size: 16px; font-weight: 600; }
+  .cond-options { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; }
+  .cond-option {
+    padding: 10px 14px; border: 1.5px solid var(--border);
+    border-radius: var(--radius-md); cursor: pointer;
+    font-size: 13px; font-weight: 500; color: var(--ink-2);
+    transition: all .15s; background: var(--surface); text-align: left;
+    font-family: var(--font-body);
+  }
+  .cond-option:hover { border-color: var(--ink-2); }
+  .cond-option.selected { border-color: var(--ink); background: var(--ink); color: white; }
+  .cond-option-name { font-weight: 700; display: block; margin-bottom: 2px; }
+  .cond-option-desc { font-size: 11px; opacity: .7; display: block; }
+  .window-options { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; }
+  .window-option {
+    padding: 10px 12px; border: 1.5px solid var(--border);
+    border-radius: var(--radius-md); cursor: pointer;
+    font-size: 13px; font-weight: 500; color: var(--ink-2);
+    transition: all .15s; background: var(--surface); text-align: center;
+    font-family: var(--font-body);
+  }
+  .window-option:hover { border-color: var(--ink-2); }
+  .window-option.selected { border-color: var(--ink); background: var(--ink); color: white; }
+  .window-option-name { font-weight: 700; display: block; }
+  .tips-card { background: var(--surface); border: 1.5px solid var(--border); border-radius: var(--radius-lg); padding: 20px; margin-top: 16px; }
+  .tip-item { display: flex; align-items: flex-start; gap: 10px; margin-bottom: 12px; font-size: 13px; color: var(--ink-2); line-height: 1.5; }
+  .tip-item:last-child { margin-bottom: 0; }
+  .tip-icon { color: var(--green); flex-shrink: 0; margin-top: 1px; }
+
+  @media(max-width: 900px) {
+    .sell-layout { grid-template-columns: 1fr; }
+    .preview-card { position: static; }
+    .window-options { grid-template-columns: repeat(3, 1fr); }
+  }
+  @media(max-width: 600px) {
+    .form-card { padding: 20px; }
+    .form-grid-2 { grid-template-columns: 1fr; }
+    .img-previews { grid-template-columns: repeat(3, 1fr); }
+    .cond-options { grid-template-columns: 1fr; }
+    .window-options { grid-template-columns: repeat(2, 1fr); }
+  }
+    .sell-layout { grid-template-columns: 1fr; }
+    .preview-card { position: static; }
+    .form-grid-2 { grid-template-columns: 1fr; }
+  
+</style>
+</head>
+<body>
+<nav class="nav"></nav>
+
+<div class="page">
+  <div class="container">
+
+    <div style="margin-bottom:24px;">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px;">
+        <a href="seller-dashboard.html" class="btn btn-ghost btn-sm btn-icon" id="back-btn" title="Back"></a>
+        <h1 id="page-title" style="font-size:28px;font-weight:700;letter-spacing:-0.5px;font-family:var(--font-display);">List an item</h1>
+      </div>
+      <p class="text-sm text-muted">Fill in the details below to create your listing</p>
+    </div>
+
+    <div class="sell-layout">
+      <!-- FORM -->
+      <div style="display:flex;flex-direction:column;gap:24px;">
+
+        <!-- Photos -->
+        <div class="form-card">
+          <div class="form-section-title"><span id="photo-icon"></span> Photos</div>
+          <div class="img-upload-zone" id="upload-zone">
+            <input type="file" id="file-input" multiple accept="image/*">
+            <div class="img-upload-icon" id="upload-icon-el"></div>
+            <div class="img-upload-label">Drop photos here or click to upload</div>
+            <div class="img-upload-sub">Up to 5 photos · JPG, PNG, WEBP · Max 5MB each</div>
+          </div>
+          <div class="img-previews" id="img-previews"></div>
+        </div>
+
+        <!-- Basic info -->
+        <div class="form-card">
+          <div class="form-section-title"><span id="info-icon"></span> Item details</div>
+
+          <div class="form-group" style="margin-bottom:16px;">
+            <label class="form-label">Title <span style="color:var(--red);">*</span></label>
+            <input class="form-input" id="f-title" type="text" placeholder="e.g. MacBook Air M1 2020 — Space Grey" maxlength="100">
+            <span class="form-hint" id="title-count">0/100 characters</span>
+          </div>
+
+          <div class="form-group" style="margin-bottom:16px;">
+            <label class="form-label">Description <span style="color:var(--red);">*</span></label>
+            <textarea class="form-textarea" id="f-desc" placeholder="Describe the item's condition, what's included, reason for selling…" style="min-height:120px;" maxlength="1000"></textarea>
+            <span class="form-hint" id="desc-count">0/1000 characters</span>
+          </div>
+
+          <div class="form-grid-2" style="margin-bottom:16px;">
+            <div class="form-group">
+              <label class="form-label">Category <span style="color:var(--red);">*</span></label>
+              <select class="form-select" id="f-category">
+                <option value="">Select category…</option>
+                <option value="Textbooks">Textbooks</option>
+                <option value="Electronics">Electronics</option>
+                <option value="Furniture">Furniture</option>
+                <option value="Clothing">Clothing</option>
+                <option value="Sports">Sports</option>
+                <option value="Music">Music</option>
+                <option value="Transportation">Tickets</option>
+                <option value="Dorm Essentials">Hostel Essentials</option>
+                <option value="Other">Other</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <!-- Condition -->
+        <div class="form-card">
+          <div class="form-section-title"><span id="cond-icon"></span> Condition <span style="color:var(--red);">*</span></div>
+          <div class="cond-options">
+            <button type="button" class="cond-option" data-cond="New">
+              <span class="cond-option-name">New</span>
+              <span class="cond-option-desc">Unopened, original packaging</span>
+            </button>
+            <button type="button" class="cond-option" data-cond="Like New">
+              <span class="cond-option-name">Like New</span>
+              <span class="cond-option-desc">Used once or twice, no defects</span>
+            </button>
+            <button type="button" class="cond-option" data-cond="Good">
+              <span class="cond-option-name">Good</span>
+              <span class="cond-option-desc">Normal use, minor wear only</span>
+            </button>
+            <button type="button" class="cond-option" data-cond="Fair">
+              <span class="cond-option-name">Fair</span>
+              <span class="cond-option-desc">Visible wear but fully functional</span>
+            </button>
+          </div>
+          <input type="hidden" id="f-condition">
+        </div>
+
+        <!-- Pricing -->
+        <div class="form-card">
+          <div class="form-section-title"><span id="price-icon"></span> Pricing</div>
+          <div class="form-grid-2">
+            <div class="form-group">
+              <label class="form-label">Your price <span style="color:var(--red);">*</span></label>
+              <div class="price-input-wrap">
+                <input class="form-input" id="f-price" type="number" min="0" step="0.01" placeholder="0.00">
+              </div>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Original retail price <span style="color:var(--ink-3);font-weight:400;">(optional)</span></label>
+              <div class="price-input-wrap">
+                <input class="form-input" id="f-orig-price" type="number" min="0" step="0.01" placeholder="0.00">
+              </div>
+              <span class="form-hint">Helps buyers see the savings</span>
+            </div>
+          </div>
+          <div id="discount-preview" style="margin-top:10px;display:none;">
+            <span class="badge badge-accent" id="discount-badge"></span>
+          </div>
+        </div>
+
+        <!-- Delivery Window -->
+        <div class="form-card">
+          <div class="form-section-title"><span id="delivery-icon"></span> Delivery timeframe <span style="color:var(--red);">*</span></div>
+          <div class="form-hint" style="margin-bottom:14px;">How long after the buyer pays do they have to wait for delivery?</div>
+          <div class="window-options">
+            <button type="button" class="window-option" data-window="5m">
+              <span class="window-option-name">5 minutes</span>
+            </button>
+            <button type="button" class="window-option" data-window="6h">
+              <span class="window-option-name">6 hours</span>
+            </button>
+            <button type="button" class="window-option" data-window="12h">
+              <span class="window-option-name">12 hours</span>
+            </button>
+            <button type="button" class="window-option" data-window="1d">
+              <span class="window-option-name">1 day</span>
+            </button>
+            <button type="button" class="window-option" data-window="3d">
+              <span class="window-option-name">3 days</span>
+            </button>
+            <button type="button" class="window-option" data-window="7d">
+              <span class="window-option-name">7 days</span>
+            </button>
+          </div>
+          <input type="hidden" id="f-delivery-window" value="1d">
+        </div>
+
+        <!-- Submit -->
+        <div style="display:flex;gap:12px;justify-content:flex-end;padding-bottom:40px;">
+          <a href="seller-dashboard.html" class="btn btn-ghost btn-lg">Cancel</a>
+          <button class="btn btn-accent btn-lg" id="submit-btn">
+            <span id="submit-icon"></span>
+            <span id="submit-label">Publish listing</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- PREVIEW SIDEBAR -->
+      <div>
+        <div class="preview-card">
+          <div class="preview-img" id="preview-img">
+            <div style="display:flex;flex-direction:column;align-items:center;gap:10px;color:var(--ink-3);">
+              <span id="preview-img-placeholder"></span>
+              <span style="font-size:12px;">Photo preview</span>
+            </div>
+          </div>
+          <div class="preview-body">
+            <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--accent);margin-bottom:6px;" id="preview-cat">Category</div>
+            <div style="font-size:16px;font-weight:700;line-height:1.3;margin-bottom:8px;color:var(--ink);" id="preview-title">Your listing title will appear here</div>
+            <div style="font-size:13px;color:var(--ink-3);line-height:1.5;margin-bottom:14px;" id="preview-desc">Your description will appear here…</div>
+            <div style="display:flex;align-items:center;gap:8px;padding-top:12px;border-top:1.5px solid var(--border);">
+              <div style="font-size:22px;font-weight:700;" id="preview-price">₦—</div>
+              <div style="font-size:13px;color:var(--ink-3);text-decoration:line-through;" id="preview-orig"></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="tips-card">
+          <div style="font-size:13px;font-weight:700;margin-bottom:12px;display:flex;align-items:center;gap:6px;">
+            <span id="tips-icon"></span> Tips for selling faster
+          </div>
+          <div class="tip-item"><span class="tip-icon" id="tip1-icon"></span> Add multiple clear photos from different angles</div>
+          <div class="tip-item"><span class="tip-icon" id="tip2-icon"></span> Be honest about condition — it builds trust</div>
+          <div class="tip-item"><span class="tip-icon" id="tip3-icon"></span> Price 20-30% below retail for quick sales</div>
+          <div class="tip-item"><span class="tip-icon" id="tip4-icon"></span> Include model numbers and specs in the title</div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<footer class="footer"></footer>
+<script src="../js/app.js"></script>
+<script>
+  if (!auth.requireAuth()) throw new Error('redirect');
+  renderNav('Sell');
+  renderFooter();
+
+  // inject icons
+  document.getElementById('back-btn').innerHTML = icons.arrowLeft;
+  document.getElementById('photo-icon').innerHTML = icons.package;
+  document.getElementById('info-icon').innerHTML = icons.tag;
+  document.getElementById('cond-icon').innerHTML = icons.star;
+  document.getElementById('price-icon').innerHTML = icons.dollarSign;
+  document.getElementById('delivery-icon').innerHTML = icons.clock;
+  document.getElementById('submit-icon').innerHTML = icons.plus;
+  document.getElementById('preview-img-placeholder').innerHTML = icons.package;
+  document.getElementById('tips-icon').innerHTML = icons.star;
+  document.getElementById('upload-icon-el').innerHTML = `<svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>`;
+  ['tip1-icon','tip2-icon','tip3-icon','tip4-icon'].forEach(id => document.getElementById(id).innerHTML = icons.check);
+
+  const editId = getParam('edit');
+
+  // Listings are free now — no credit check required.
+  (function showFreeListingNotice() {
+    if (editId) return;
+    const notice = document.createElement('div');
+    notice.style.cssText = 'background:linear-gradient(135deg,#edf7ed,#f3faf5);border:1.5px solid #a7f3d0;border-radius:var(--radius-lg);padding:16px 18px;margin-bottom:18px;';
+    notice.innerHTML = `
+      <div style="font-size:14px;font-weight:700;color:#065f46;">Listings are free on Bixcart.</div>
+      <div style="font-size:12px;color:#166534;line-height:1.5;margin-top:4px;">Bixcart keeps a 7% fee only when an item sells.</div>`;
+    const formArea = document.querySelector('.sell-layout') || document.querySelector('form') || document.querySelector('.form-card');
+    if (formArea) formArea.closest('.page, main, .container') ? formArea.closest('.page, main, .container').prepend(notice) : formArea.before(notice);
+  })();
+  if (editId) {
+    document.getElementById('page-title').textContent = 'Edit listing';
+    document.getElementById('submit-label').textContent = 'Save changes';
+    loadExisting(editId);
+  }
+
+  async function loadExisting(id) {
+    try {
+      const l = await api.get(`/listings/${id}`);
+
+      // ── Edit lock: 90 minutes after creation ─────────────────────────────
+      const EDIT_LOCK_MS = 90 * 60 * 1000;
+      const ageMs = Date.now() - new Date(l.created_at).getTime();
+      if (ageMs > EDIT_LOCK_MS) {
+        document.getElementById('submit-btn').disabled = true;
+        document.getElementById('submit-label').textContent = 'Editing locked';
+        const minsAgo = Math.round(ageMs / 60000);
+        const notice = document.createElement('div');
+        notice.style.cssText = 'background:var(--surface);border:1.5px solid var(--border);border-radius:var(--radius-lg);padding:20px;margin-bottom:24px;text-align:center;';
+        notice.innerHTML = `
+          <div style="font-size:28px;margin-bottom:8px">🔒</div>
+          <div style="font-weight:700;font-size:16px;margin-bottom:6px">Listing locked</div>
+          <div style="font-size:14px;color:var(--ink-3)">Listings can only be edited within 90 minutes of being created. This listing was created ${minsAgo} minutes ago.</div>`;
+        document.querySelector('.sell-layout')?.before(notice) || document.querySelector('main')?.prepend(notice);
+        // Still populate fields as read-only view
+        document.querySelectorAll('.form-input, textarea, select, .cond-option').forEach(el => el.disabled = true);
+      }
+      // ── Populate fields ───────────────────────────────────────────────────
+      document.getElementById('f-title').value = l.title;
+      document.getElementById('f-desc').value = l.description;
+      document.getElementById('f-category').value = l.category;
+      
+      document.getElementById('f-price').value = l.price;
+      document.getElementById('f-orig-price').value = l.original_price || '';
+      document.getElementById('f-condition').value = l.condition;
+      document.getElementById('f-delivery-window').value = l.delivery_window || '1d';
+      document.querySelectorAll('.cond-option').forEach(b => b.classList.toggle('selected', b.dataset.cond === l.condition));
+      document.querySelectorAll('.window-option').forEach(b => b.classList.toggle('selected', b.dataset.window === (l.delivery_window || '1d')));
+      updatePreview();
+    } catch(e) { toast('Failed to load listing', 'error'); }
+  }
+
+  // Character counts
+  document.getElementById('f-title').addEventListener('input', () => {
+    const v = document.getElementById('f-title').value;
+    document.getElementById('title-count').textContent = `${v.length}/100 characters`;
+    document.getElementById('preview-title').textContent = v || 'Your listing title will appear here';
+  });
+  document.getElementById('f-desc').addEventListener('input', () => {
+    const v = document.getElementById('f-desc').value;
+    document.getElementById('desc-count').textContent = `${v.length}/1000 characters`;
+    document.getElementById('preview-desc').textContent = v.slice(0, 140) + (v.length > 140 ? '…' : '') || 'Your description will appear here…';
+  });
+  document.getElementById('f-category').addEventListener('change', () => {
+    document.getElementById('preview-cat').textContent = document.getElementById('f-category').value || 'Category';
+  });
+
+  // Price preview & discount
+  function updatePricePreview() {
+    const price = parseFloat(document.getElementById('f-price').value);
+    const orig = parseFloat(document.getElementById('f-orig-price').value);
+    document.getElementById('preview-price').textContent = price > 0 ? formatPrice(price) : '$—';
+    if (orig > 0 && price > 0) {
+      document.getElementById('preview-orig').textContent = formatPrice(orig);
+      const discount = Math.round((1 - price/orig) * 100);
+      if (discount > 0) {
+        document.getElementById('discount-preview').style.display = 'block';
+        document.getElementById('discount-badge').textContent = `-${discount}% off retail`;
+      }
+    } else {
+      document.getElementById('preview-orig').textContent = '';
+      document.getElementById('discount-preview').style.display = 'none';
+    }
+  }
+  document.getElementById('f-price').addEventListener('input', updatePricePreview);
+  document.getElementById('f-orig-price').addEventListener('input', updatePricePreview);
+
+  // Condition selection
+  document.querySelectorAll('.cond-option').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.cond-option').forEach(b => b.classList.remove('selected'));
+      btn.classList.add('selected');
+      document.getElementById('f-condition').value = btn.dataset.cond;
+    });
+  });
+
+  // Delivery window selection
+  document.querySelectorAll('.window-option').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.window-option').forEach(b => b.classList.remove('selected'));
+      btn.classList.add('selected');
+      document.getElementById('f-delivery-window').value = btn.dataset.window;
+    });
+  });
+
+  // Image upload — uploads to Cloudinary via API
+  let uploadedImages = []; // stores CDN URLs after upload
+
+  document.getElementById('file-input').addEventListener('change', e => handleFiles(e.target.files));
+
+  const zone = document.getElementById('upload-zone');
+  zone.addEventListener('dragover', e => { e.preventDefault(); zone.classList.add('drag-over'); });
+  zone.addEventListener('dragleave', () => zone.classList.remove('drag-over'));
+  zone.addEventListener('drop', e => {
+    e.preventDefault(); zone.classList.remove('drag-over');
+    handleFiles(e.dataTransfer.files);
+  });
+
+  function guessImageMime(name) {
+    const ext = (name || '').split('.').pop().toLowerCase();
+    const map = {
+      jpg: 'image/jpeg', jpeg: 'image/jpeg', png: 'image/png',
+      gif: 'image/gif', webp: 'image/webp', bmp: 'image/bmp',
+      heic: 'image/heic', heif: 'image/heif',
+    };
+    return map[ext] || 'image/jpeg';
+  }
+
+  function handleFiles(files) {
+    if (uploadedImages.length >= 5) { toast('Maximum 5 photos allowed', 'warning'); return; }
+    Array.from(files).slice(0, 5 - uploadedImages.length).forEach(async file => {
+      // Note: iOS Safari sometimes reports an empty/non-standard MIME type
+      // for HEIC/HEIF photos, so fall back to checking the file extension
+      // before rejecting — and always tell the user why, instead of
+      // silently doing nothing.
+      const looksLikeImageByType = file.type && file.type.startsWith('image/');
+      const looksLikeImageByExt = /\.(jpe?g|png|gif|webp|heic|heif|bmp)$/i.test(file.name || '');
+      if (!looksLikeImageByType && !looksLikeImageByExt) {
+        toast(`${file.name || 'File'} isn't a supported image type`, 'error');
+        return;
+      }
+      if (file.size > 5 * 1024 * 1024) { toast(`${file.name} is too large (max 5MB)`, 'error'); return; }
+
+      const uploadMime = looksLikeImageByType ? file.type : guessImageMime(file.name);
+
+      // Upload immediately to Cloudinary
+      let fileBlob = file;
+      try {
+        const arrayBuffer = await file.arrayBuffer();
+        fileBlob = new Blob([arrayBuffer], { type: uploadMime });
+      } catch (err) {
+        toast('Cannot read file. Try again.', 'error');
+        return;
+      }
+
+      const formData = new FormData();
+      formData.append('image', fileBlob, file.name);
+      try {
+        const token = localStorage.getItem('cm_token');
+        const res = await fetch('/api/uploads/image', {
+          method: 'POST',
+          headers: { 'Authorization': `Bearer ${token}` },
+          body: formData,
+        });
+        const data = await res.json();
+        if (!res.ok) { toast(data.error || 'Upload failed', 'error'); return; }
+        uploadedImages.push(data.url);
+        renderPreviews();
+      } catch(err) { toast('Upload failed: ' + err.message, 'error'); }
+    });
+  }
+
+  function renderPreviews() {
+    const el = document.getElementById('img-previews');
+    el.innerHTML = uploadedImages.map((src, i) => `
+      <div class="img-preview-item">
+        <img src="${src}" alt="">
+        <button class="img-preview-remove" onclick="removeImg(${i})" title="Remove">&#x2715;</button>
+        ${i === 0 ? `<div style="position:absolute;bottom:4px;left:4px;background:rgba(24,21,15,.7);color:white;font-size:9px;font-weight:700;padding:2px 6px;border-radius:4px;">MAIN</div>` : ''}
+      </div>`).join('');
+    // update preview img
+    if (uploadedImages.length) {
+      document.getElementById('preview-img').innerHTML = `<img src="${uploadedImages[0]}" style="width:100%;height:100%;object-fit:cover;">`;
+    }
+  }
+  window.removeImg = (i) => { uploadedImages.splice(i, 1); renderPreviews(); };
+
+  function updatePreview() {
+    const title = document.getElementById('f-title').value;
+    const desc = document.getElementById('f-desc').value;
+    const cat = document.getElementById('f-category').value;
+    document.getElementById('preview-title').textContent = title || 'Your listing title will appear here';
+    document.getElementById('preview-desc').textContent = (desc.slice(0,140) + (desc.length>140?'…':'')) || 'Your description will appear here…';
+    document.getElementById('preview-cat').textContent = cat || 'Category';
+    updatePricePreview();
+  }
+
+  // Form submission
+  document.getElementById('submit-btn').addEventListener('click', async () => {
+    const title = document.getElementById('f-title').value.trim();
+    const desc = document.getElementById('f-desc').value.trim();
+    const category = document.getElementById('f-category').value;
+    
+    const condition = document.getElementById('f-condition').value;
+    const deliveryWindow = document.getElementById('f-delivery-window').value;
+    const price = parseFloat(document.getElementById('f-price').value);
+    const origPrice = parseFloat(document.getElementById('f-orig-price').value) || null;
+
+    if (!title) { toast('Please enter a title', 'error'); document.getElementById('f-title').focus(); return; }
+    if (!desc) { toast('Please enter a description', 'error'); return; }
+    if (!category) { toast('Please select a category', 'error'); return; }
+    if (!condition) { toast('Please select the item condition', 'error'); return; }
+    if (!deliveryWindow) { toast('Please select a delivery timeframe', 'error'); return; }
+    if (!price || price <= 0) { toast('Please enter a valid price', 'error'); return; }
+
+    const btn = document.getElementById('submit-btn');
+    btn.disabled = true;
+    document.getElementById('submit-icon').innerHTML = icons.loader;
+    document.getElementById('submit-label').textContent = editId ? 'Saving…' : 'Publishing…';
+
+    try {
+      const payload = { title, description: desc, price, original_price: origPrice, category, condition, delivery_window: deliveryWindow, images: uploadedImages };
+      let result;
+      if (editId) {
+        result = await api.put(`/listings/${editId}`, payload);
+      } else {
+        result = await api.post('/listings', payload);
+      }
+      toast(editId ? 'Listing updated!' : 'Listing published!', 'success');
+      setTimeout(() => window.location.href = `/pages/listing.html?id=${result.id}`, 700);
+    } catch(e) {
+      toast(e.message, 'error');
+      btn.disabled = false;
+      document.getElementById('submit-icon').innerHTML = icons.plus;
+      document.getElementById('submit-label').textContent = editId ? 'Save changes' : 'Publish listing';
+    }
+  });
+</script>
+</body>
+</html>

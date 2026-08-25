@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="Checkout on Bixcart.">
+<meta name="robots" content="noindex, nofollow">
+<link rel="canonical" href="https://bixcart.onrender.com/pages/checkout.html">
+<title>Checkout — Bixcart</title>
+<link rel="stylesheet" href="../css/main.css">
+<style>
+  .checkout-layout { display: grid; grid-template-columns: 1fr 360px; gap: 28px; align-items: start; }
+  .checkout-section-title { display: flex; align-items: center; gap: 8px; font-weight: 700; font-size: 15px; margin-bottom: 16px; }
+  .checkout-summary { position: sticky; top: 84px; }
+  .co-line { display: flex; gap: 10px; align-items: center; padding: 8px 0; }
+  .co-line-img { width: 44px; height: 44px; border-radius: var(--radius-sm); overflow: hidden; background: var(--surface-2); flex-shrink: 0; display:flex; align-items:center; justify-content:center; color: var(--ink-3); }
+  .co-line-img img { width: 100%; height: 100%; object-fit: cover; }
+  .co-line-title { font-size: 13px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .co-line-price { font-size: 13px; font-weight: 700; margin-left: auto; white-space: nowrap; }
+  .cart-summary-row { display: flex; justify-content: space-between; font-size: 14px; color: var(--ink-2); padding: 8px 0; }
+  .cart-summary-row.total { font-size: 17px; font-weight: 700; color: var(--ink); border-top: 1.5px solid var(--border); margin-top: 8px; padding-top: 14px; }
+  .pay-badge { display: flex; align-items: center; gap: 8px; font-size: 12px; color: var(--ink-3); margin-top: 12px; }
+  @media (max-width: 860px) {
+    .checkout-layout { grid-template-columns: 1fr; }
+    .checkout-summary { position: static; }
+  }
+</style>
+</head>
+<body>
+
+<nav class="nav"></nav>
+
+<div class="page">
+  <div class="container" style="max-width:1000px;">
+    <div id="checkout-content">
+      <div style="padding:60px 0;text-align:center;color:var(--ink-3);">Loading checkout…</div>
+    </div>
+  </div>
+</div>
+
+<footer class="footer"></footer>
+<script src="../js/app.js"></script>
+<script>
+  renderNav();
+  renderFooter();
+  if (!auth.requireAuth()) throw new Error('redirect');
+
+  let items = [], subtotal = 0, paying = false;
+
+  async function init() {
+    try {
+      const params = new URLSearchParams(window.location.search);
+      const returnedReference = params.get('reference') || params.get('trxref');
+      if (params.get('payment') === 'success' && returnedReference) {
+        document.getElementById('checkout-content').innerHTML = `
+          <div class="empty-state">
+            <div class="empty-state-icon">${icons.loader}</div>
+            <h3>Confirming your payment…</h3>
+            <p>Please wait while Bixcart verifies your Paystack payment.</p>
+          </div>`;
+        await finalizeOrder(returnedReference);
+        return;
+      }
+      items = (await cart.list()).filter(i => i.status === 'active');
+      if (!items.length) {
+        document.getElementById('checkout-content').innerHTML = `
+          <div class="empty-state">
+            <div class="empty-state-icon">${icons.shoppingBag}</div>
+            <h3>Nothing to check out</h3>
+            <p>Your cart is empty, or the items in it are no longer available.</p>
+            <a href="marketplace.html" class="btn btn-accent">Browse marketplace</a>
+          </div>`;
+        return;
+      }
+      subtotal = items.reduce((s, i) => s + i.price, 0);
+      renderCheckout();
+    } catch (e) {
+      document.getElementById('checkout-content').innerHTML = `<div class="empty-state"><h3>Couldn't load checkout</h3><p>${e.message}</p></div>`;
+    }
+  }
+
+  function renderCheckout() {
+    const user = auth.getUser();
+    document.getElementById('checkout-content').innerHTML = `
+      <div class="page-header">
+        <h1 class="display" style="font-size:28px;">Checkout</h1>
+        <p style="color:var(--ink-3);font-size:14px;margin-top:4px;">${items.length} ${items.length === 1 ? 'item' : 'items'} · pay now to place your order</p>
+      </div>
+      <div class="checkout-layout">
+        <div class="card" style="padding:24px;">
+          <div class="checkout-section-title">${icons.mapPin} Delivery details</div>
+          <div class="form-group" style="margin-bottom:14px;">
+            <label class="form-label">Full name <span style="color:var(--red);">*</span></label>
+            <input class="form-input" id="f-name" value="${user?.full_name || ''}" placeholder="Who should we deliver to?">
+          </div>
+          <div class="form-group" style="margin-bottom:14px;">
+            <label class="form-label">Phone number <span style="color:var(--red);">*</span></label>
+            <input class="form-input" id="f-phone" type="tel" placeholder="e.g. 0803 123 4567">
+          </div>
+          <div class="form-group" style="margin-bottom:14px;">
+            <label class="form-label">Campus</label>
+            <input class="form-input" id="f-campus" value="Ajayi Crowther University" readonly aria-readonly="true">
+            <span class="form-hint">Bixcart currently operates on Ajayi Crowther University campus.</span>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Note for the seller (optional)</label>
+            <textarea class="form-textarea" id="f-note" style="min-height:70px;" placeholder="e.g. call me when you're close"></textarea>
+          </div>
+        </div>
+
+        <div class="card checkout-summary" style="padding:20px;">
+          <div style="font-weight:700;font-size:15px;margin-bottom:8px;">Order summary</div>
+          ${items.map(i => `
+            <div class="co-line">
+              <div class="co-line-img">${i.images?.length ? `<img src="${i.images[0]}">` : icons.package}</div>
+              <div class="co-line-title">${i.title}</div>
+              <div class="co-line-price">${formatPrice(i.price)}</div>
+            </div>`).join('')}
+          <div class="cart-summary-row" style="margin-top:8px;"><span>Subtotal</span><span>${formatPrice(subtotal)}</span></div>
+          <div class="cart-summary-row"><span>Delivery</span><span>Free</span></div>
+          <div class="cart-summary-row total"><span>Total</span><span id="co-total">${formatPrice(subtotal)}</span></div>
+          <button class="btn btn-accent w-full" style="margin-top:16px;" id="pay-btn" onclick="payNow()">
+            ${icons.creditCard} Pay ${formatPrice(subtotal)}
+          </button>
+          <div class="pay-badge">${icons.shield} Secured by Paystack · card, transfer or USSD</div>
+        </div>
+      </div>`;
+  }
+
+  function validateForm() {
+    const name  = document.getElementById('f-name').value.trim();
+    const phone = document.getElementById('f-phone').value.trim();
+    if (!name || !phone) {
+      toast('Please fill in your name and phone number', 'error');
+      return null;
+    }
+    return {
+      full_name: name,
+      phone,
+      campus: 'Ajayi Crowther University',
+      note: document.getElementById('f-note').value.trim(),
+    };
+  }
+
+  async function finalizeOrder(reference) {
+    try {
+      const result = await api.post('/orders/checkout', { payment_reference: reference });
+      await cart.clear().catch(() => {});
+      const cleanUrl = window.location.pathname;
+      window.history.replaceState({}, document.title, cleanUrl);
+      showConfirmation(result);
+    } catch (e) {
+      document.getElementById('checkout-content').innerHTML = `
+        <div class="empty-state">
+          <div class="empty-state-icon" style="background:var(--red-bg);color:var(--red);">${icons.alertCircle || icons.x}</div>
+          <h3>We couldn't confirm your payment</h3>
+          <p>${e.message || 'Please contact Bixcart support with your Paystack reference: ' + reference}</p>
+          <button class="btn btn-accent" onclick="location.reload()">Try again</button>
+        </div>`;
+    } finally {
+      paying = false;
+    }
+  }
+
+  async function payNow() {
+    if (paying) return;
+    const delivery_address = validateForm();
+    if (!delivery_address) return;
+
+    const user = auth.getUser();
+    if (!user?.email) { toast('Please log in again', 'error'); return; }
+
+    paying = true;
+    const btn = document.getElementById('pay-btn');
+    if (btn) { btn.disabled = true; btn.innerHTML = icons.loader + ' Preparing secure payment…'; }
+    try {
+      const result = await api.post('/orders/initialize-payment', { delivery_address });
+      if (!result.authorization_url) throw new Error('Paystack did not return a payment link');
+      window.location.href = result.authorization_url;
+    } catch (e) {
+      toast(e.message || 'Could not start payment', 'error');
+      paying = false;
+      if (btn) { btn.disabled = false; btn.innerHTML = icons.creditCard + ' Pay ' + formatPrice(subtotal); }
+    }
+  }
+
+  function showConfirmation(result) {
+    document.getElementById('checkout-content').innerHTML = `
+      <div class="empty-state">
+        <div class="empty-state-icon" style="background:var(--green-bg);color:var(--green);">${icons.check}</div>
+        <h3>Order placed!</h3>
+        <p>${result.order_count} ${result.order_count === 1 ? 'item is' : 'items are'} on the way — ${formatPrice(result.total)} paid. Sellers have been notified to prepare your delivery.</p>
+        <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap;">
+          <a href="buyer-dashboard.html" class="btn btn-accent">View my orders</a>
+          <a href="marketplace.html" class="btn btn-surface">Continue shopping</a>
+        </div>
+      </div>`;
+  }
+
+  init();
+</script>
+</body>
+</html>

@@ -1,0 +1,564 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<!-- ── SEO ── -->
+<meta name="description" content="Sign in to your Bixcart account to buy, sell, and message other ACU students.">
+<meta name="robots" content="noindex, nofollow">
+<link rel="canonical" href="https://bixcart.onrender.com/pages/auth.html">
+
+<!-- Open Graph -->
+<meta property="og:type" content="website">
+<meta property="og:title" content="Sign In — Bixcart">
+<meta property="og:description" content="Sign in to your Bixcart account to buy, sell, and message other ACU students.">
+<meta property="og:url" content="https://bixcart.onrender.com/pages/auth.html">
+<meta property="og:site_name" content="Bixcart">
+<meta property="og:image" content="https://bixcart.onrender.com/og-image.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="Bixcart — ACU Student Marketplace">
+
+<!-- Twitter / X -->
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:site" content="@bixcart">
+<meta name="twitter:title" content="Sign In — Bixcart">
+<meta name="twitter:description" content="Sign in to your Bixcart account to buy, sell, and message other ACU students.">
+<meta name="twitter:image" content="https://bixcart.onrender.com/og-image.png">
+<title>Sign In — Bixcart</title>
+<link rel="stylesheet" href="../css/main.css">
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@700&display=swap" rel="stylesheet">
+<style>
+  .auth-page {
+    min-height: 100vh; display: grid; grid-template-columns: 1fr 1fr;
+  }
+  .auth-left {
+    background: var(--ink); display: flex; flex-direction: column;
+    justify-content: center; padding: 80px 64px; position: relative; overflow: hidden;
+  }
+  .auth-left::before {
+    content: ''; position: absolute; inset: 0;
+    background: radial-gradient(ellipse at 20% 70%, rgba(200,82,42,.25) 0%, transparent 55%),
+                radial-gradient(ellipse at 80% 20%, rgba(45,122,79,.15) 0%, transparent 50%);
+  }
+  .auth-left-content { position: relative; z-index: 1; }
+  .auth-logo { font-family: 'Fredoka', var(--font-logo); font-size: 30px; font-weight: 700; color: white; margin-bottom: 56px; letter-spacing: .5px; }
+  .auth-logo span { color: var(--accent); }
+  .auth-headline {
+    font-family: var(--font-display); font-size: 52px; color: white;
+    line-height: 1.05; letter-spacing: -2px; margin-bottom: 20px;
+  }
+  .auth-headline em { font-style: italic; color: rgba(255,255,255,.5); }
+  .auth-sub { font-size: 16px; color: rgba(255,255,255,.5); line-height: 1.7; margin-bottom: 48px; }
+  .auth-feature { display: flex; align-items: center; gap: 12px; margin-bottom: 16px; }
+  .auth-feature-icon {
+    width: 36px; height: 36px; border-radius: var(--radius-md);
+    background: rgba(255,255,255,.08); display: flex; align-items: center; justify-content: center;
+    color: white; flex-shrink: 0;
+  }
+  .auth-feature-text { font-size: 14px; color: rgba(255,255,255,.65); }
+  .auth-right {
+    display: flex; align-items: center; justify-content: center;
+    padding: 60px 64px; background: var(--bg); overflow-y: auto;
+  }
+  .auth-form-card { width: 100%; max-width: 440px; }
+  .auth-form-title { font-family: var(--font-display); font-size: 34px; margin-bottom: 6px; letter-spacing: -1px; }
+  .auth-form-sub { font-size: 15px; color: var(--ink-3); margin-bottom: 32px; }
+  .auth-form { display: flex; flex-direction: column; gap: 16px; }
+  .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .auth-toggle { text-align: center; margin-top: 20px; font-size: 14px; color: var(--ink-3); }
+  .auth-toggle a { color: var(--ink); font-weight: 600; cursor: pointer; }
+  .auth-toggle a:hover { color: var(--accent); }
+  /* Password input with toggle */
+  .pw-wrap { position: relative; }
+  .pw-wrap .form-input { padding-right: 44px; }
+  .pw-toggle {
+    position: absolute; right: 12px; top: 50%; transform: translateY(-50%);
+    background: none; border: none; cursor: pointer; color: var(--ink-3);
+    padding: 4px; display: flex; align-items: center;
+    transition: color .15s;
+  }
+  .pw-toggle:hover { color: var(--ink); }
+  /* Input icon wrap */
+  .input-icon-wrap { position: relative; }
+  .input-icon-wrap .form-input { padding-left: 40px; }
+  .input-icon {
+    position: absolute; left: 12px; top: 50%; transform: translateY(-50%);
+    color: var(--ink-3); display: flex; pointer-events: none;
+  }
+  /* Role picker */
+  .role-picker { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .role-card {
+    border: 2px solid var(--border); border-radius: var(--radius-lg);
+    padding: 16px 14px; cursor: pointer; transition: all .15s; text-align: center;
+    background: var(--surface);
+  }
+  .role-card:hover { border-color: var(--ink-3); }
+  .role-card.selected { border-color: var(--accent); background: rgba(200,82,42,.06); }
+  .role-card-icon { margin-bottom: 8px; display:flex; justify-content:center; }
+  .role-card-title { font-weight: 700; font-size: 15px; margin-bottom: 2px; }
+  .role-card-desc { font-size: 12px; color: var(--ink-3); line-height: 1.4; }
+  /* Password strength meter */
+  .pw-strength { margin-top: 6px; }
+  .pw-strength-bar { height: 4px; border-radius: 2px; background: var(--border); overflow: hidden; margin-bottom: 4px; }
+  .pw-strength-fill { height: 100%; border-radius: 2px; transition: width .3s, background .3s; width: 0; }
+  .pw-strength-text { font-size: 12px; color: var(--ink-3); }
+  /* Inline link style */
+  .link-btn { background: none; border: none; color: var(--ink-3); font-size: 13px; cursor: pointer; text-decoration: underline; padding: 0; }
+  .link-btn:hover { color: var(--accent); }
+  /* Verification banner */
+  .verify-banner {
+    background: rgba(200,82,42,.08); border: 1px solid rgba(200,82,42,.2);
+    border-radius: var(--radius-md); padding: 14px 16px; font-size: 14px;
+    color: var(--ink-2); line-height: 1.5; display: flex; gap: 10px; align-items: flex-start;
+  }
+  .verify-banner svg { flex-shrink: 0; margin-top: 1px; color: var(--accent); }
+  /* Success state */
+  .success-card { text-align: center; padding: 20px 0; }
+  .success-icon {
+    width: 64px; height: 64px; border-radius: 50%; background: rgba(45,122,79,.1);
+    display: flex; align-items: center; justify-content: center; margin: 0 auto 20px;
+    color: #2d7a4f;
+  }
+  .success-title { font-family: var(--font-display); font-size: 26px; margin-bottom: 8px; }
+  .success-sub { font-size: 15px; color: var(--ink-3); line-height: 1.6; margin-bottom: 24px; }
+  @media(max-width: 768px) {
+    .auth-page { grid-template-columns: 1fr; }
+    .auth-left { display: none; }
+    .auth-right { padding: 32px 20px; align-items: flex-start; }
+    .auth-form-card { max-width: 100%; }
+    .form-row { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body style="background:var(--ink);">
+<div class="auth-page">
+  <!-- LEFT PANEL -->
+  <div class="auth-left">
+    <div class="auth-left-content">
+      <div class="auth-logo">Bix<span>cart</span></div>
+      <h1 class="auth-headline">ACU's own<br>campus<br><em>marketplace.</em></h1>
+      <p class="auth-sub">Buy and sell with fellow Ajayi Crowther students. Safe, trusted, campus-first.</p>
+      <div class="auth-feature">
+        <div class="auth-feature-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/></svg></div>
+        <div class="auth-feature-text">Exclusively for ACU students</div>
+      </div>
+      <div class="auth-feature">
+        <div class="auth-feature-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m11 17 2 2a1 1 0 1 0 3-3"/><path d="m14 14 2.5 2.5a1 1 0 1 0 3-3l-3.88-3.88a3 3 0 0 0-4.24 0l-.88.88a1 1 0 1 1-3-3l2.81-2.81a5.79 5.79 0 0 1 7.06-.87l.47.28a2 2 0 0 0 1.42.25L21 4"/><path d="m21 3 1 11h-1"/><path d="M3 3 2 14l6.5 6.5a1 1 0 1 0 3-3"/></svg></div>
+        <div class="auth-feature-text">Direct peer-to-peer — no middleman</div>
+      </div>
+      <div class="auth-feature">
+        <div class="auth-feature-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg></div>
+        <div class="auth-feature-text">Sellers keep 97% of every sale</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- RIGHT PANEL -->
+  <div class="auth-right">
+    <div class="auth-form-card">
+
+      <!-- ── LOGIN VIEW ── -->
+      <div id="login-view">
+        <div class="auth-form-title">Welcome back</div>
+        <div class="auth-form-sub">Sign in to your Bixcart account</div>
+        <form class="auth-form" id="login-form">
+          <div class="form-group">
+            <label class="form-label">Email address</label>
+            <div class="input-icon-wrap">
+              <span class="input-icon" id="login-email-icon"></span>
+              <input class="form-input" type="email" id="login-email" placeholder="you@example.com" required autocomplete="email">
+            </div>
+          </div>
+          <div class="form-group">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+              <label class="form-label" style="margin:0;">Password</label>
+              <button type="button" class="link-btn" onclick="showForgot()">Forgot password?</button>
+            </div>
+            <div class="pw-wrap">
+              <input class="form-input" type="password" id="login-password" placeholder="••••••••" required autocomplete="current-password">
+              <button type="button" class="pw-toggle" onclick="togglePw('login-password', this)" aria-label="Show/hide password">
+                <svg id="login-eye" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+              </button>
+            </div>
+          </div>
+          <button type="submit" class="btn btn-primary btn-lg w-full" id="login-btn">Sign in</button>
+        </form>
+        <div class="auth-toggle">Don't have an account? <a onclick="showRegister()">Create one free</a> • Read our Terms of use <a href="/pages/terms.html">here</a></div>
+      </div>
+
+      <!-- ── REGISTER VIEW ── -->
+      <div id="register-view" style="display:none">
+        <div class="auth-form-title">Join Bixcart</div>
+        <div class="auth-form-sub">Ajayi Crowther University · Oyo, Nigeria</div>
+        <form class="auth-form" id="register-form">
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">First name</label>
+              <input class="form-input" type="text" id="reg-firstname" placeholder="Chidi" required autocomplete="given-name">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Last name</label>
+              <input class="form-input" type="text" id="reg-lastname" placeholder="Okafor" required autocomplete="family-name">
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Email address</label>
+            <input class="form-input" type="email" id="reg-email" placeholder="you@example.com" required autocomplete="email">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Password</label>
+            <div class="pw-wrap">
+              <input class="form-input" type="password" id="reg-password" placeholder="At least 8 characters" required autocomplete="new-password" oninput="updatePwStrength(this.value)">
+              <button type="button" class="pw-toggle" onclick="togglePw('reg-password', this)" aria-label="Show/hide password">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+              </button>
+            </div>
+            <div class="pw-strength">
+              <div class="pw-strength-bar"><div class="pw-strength-fill" id="pw-strength-fill"></div></div>
+              <div class="pw-strength-text" id="pw-strength-text"></div>
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Confirm password</label>
+            <div class="pw-wrap">
+              <input class="form-input" type="password" id="reg-confirm-password" placeholder="Re-enter your password" required autocomplete="new-password">
+              <button type="button" class="pw-toggle" onclick="togglePw('reg-confirm-password', this)" aria-label="Show/hide password">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+              </button>
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label" style="margin-bottom:10px;">I want to…</label>
+            <div class="role-picker" id="role-picker">
+              <div class="role-card" data-role="buyer" onclick="selectRole('buyer')">
+                <div class="role-card-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg></div>
+                <div class="role-card-title">Buy</div>
+                <div class="role-card-desc">Browse & buy from other students</div>
+              </div>
+              <div class="role-card" data-role="seller" onclick="selectRole('seller')">
+                <div class="role-card-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg></div>
+                <div class="role-card-title">Sell</div>
+                <div class="role-card-desc">List items &amp; earn from campus</div>
+                <div id="seller-bonus-badge" style="display:none;margin-top:6px;background:#d1fae5;color:#065f46;font-size:10px;font-weight:700;padding:2px 8px;border-radius:99px;text-align:center;">🎉 Welcome to Bixcart — listings are free!</div>
+              </div>
+            </div>
+            <input type="hidden" id="reg-role" required>
+          </div>
+          <button type="submit" class="btn btn-primary btn-lg w-full" id="register-btn">Create account</button>
+          <p style="font-size:12px;color:var(--ink-3);text-align:center;line-height:1.5;">
+            By signing up you agree to our <a href="/pages/terms.html" style="color:var(--ink);">Terms</a> and <a href="/pages/privacy.html" style="color:var(--ink);">Privacy Policy</a>.
+          </p>
+        </form>
+        <div class="auth-toggle">Already have an account? <a onclick="showLogin()">Sign in</a></div>
+      </div>
+
+      <!-- ── FORGOT PASSWORD VIEW ── -->
+      <div id="forgot-view" style="display:none">
+        <div class="auth-form-title">Forgot password?</div>
+        <div class="auth-form-sub">Enter your email and we'll send you a reset link.</div>
+        <form class="auth-form" id="forgot-form">
+          <div class="form-group">
+            <label class="form-label">Email address</label>
+            <input class="form-input" type="email" id="forgot-email" placeholder="you@example.com" required autocomplete="email">
+          </div>
+          <button type="submit" class="btn btn-primary btn-lg w-full" id="forgot-btn">Send reset link</button>
+        </form>
+        <div class="auth-toggle"><a onclick="showLogin()">← Back to sign in</a></div>
+      </div>
+
+      <!-- ── RESET PASSWORD VIEW ── -->
+      <div id="reset-view" style="display:none">
+        <div class="auth-form-title">Set new password</div>
+        <div class="auth-form-sub">Choose a strong password for your account.</div>
+        <form class="auth-form" id="reset-form">
+          <div class="form-group">
+            <label class="form-label">New password</label>
+            <div class="pw-wrap">
+              <input class="form-input" type="password" id="reset-password" placeholder="At least 8 characters" required autocomplete="new-password" oninput="updatePwStrengthReset(this.value)">
+              <button type="button" class="pw-toggle" onclick="togglePw('reset-password', this)" aria-label="Show/hide password">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+              </button>
+            </div>
+            <div class="pw-strength">
+              <div class="pw-strength-bar"><div class="pw-strength-fill" id="pw-strength-fill-reset"></div></div>
+              <div class="pw-strength-text" id="pw-strength-text-reset"></div>
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Confirm new password</label>
+            <div class="pw-wrap">
+              <input class="form-input" type="password" id="reset-confirm-password" placeholder="Re-enter new password" required autocomplete="new-password">
+              <button type="button" class="pw-toggle" onclick="togglePw('reset-confirm-password', this)" aria-label="Show/hide password">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+              </button>
+            </div>
+          </div>
+          <button type="submit" class="btn btn-primary btn-lg w-full" id="reset-btn">Reset password</button>
+        </form>
+      </div>
+
+      <!-- ── SUCCESS VIEWS ── -->
+      <div id="forgot-success-view" style="display:none">
+        <div class="success-card">
+          <div class="success-icon">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+          </div>
+          <div class="success-title">Check your email</div>
+          <div class="success-sub">If that email is registered, we've sent a password reset link. Check your inbox (and spam folder).</div>
+          <button class="btn btn-primary btn-lg w-full" onclick="showLogin()">Back to sign in</button>
+        </div>
+      </div>
+
+      <div id="reset-success-view" style="display:none">
+        <div class="success-card">
+          <div class="success-icon">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+          </div>
+          <div class="success-title">Password reset!</div>
+          <div class="success-sub">Your password has been updated. You can now sign in with your new password.</div>
+          <button class="btn btn-primary btn-lg w-full" onclick="showLogin()">Sign in</button>
+        </div>
+      </div>
+
+      <div id="verify-success-view" style="display:none">
+        <div class="success-card">
+          <div class="success-icon">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+          </div>
+          <div class="success-title">Email verified!</div>
+          <div class="success-sub">Your email address has been confirmed. Welcome to Bixcart!</div>
+          <button class="btn btn-primary btn-lg w-full" onclick="showLogin()">Sign in</button>
+        </div>
+      </div>
+
+      <div id="verify-error-view" style="display:none">
+        <div class="success-card">
+          <div class="success-icon" style="background:rgba(200,82,42,.1);color:var(--accent);">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+          </div>
+          <div class="success-title">Link expired</div>
+          <div class="success-sub">This verification link is invalid or has expired. Request a new one below.</div>
+          <form class="auth-form" id="resend-form" style="margin-bottom:16px;">
+            <input class="form-input" type="email" id="resend-email" placeholder="Your email address" required>
+            <button type="submit" class="btn btn-primary btn-lg w-full" id="resend-btn">Resend verification email</button>
+          </form>
+          <div class="auth-toggle"><a onclick="showLogin()">← Back to sign in</a></div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<script src="../js/app.js"></script>
+<script>
+  // ── Icons ──────────────────────────────────────────────────────────────────
+  document.getElementById('login-email-icon').innerHTML = icons.user;
+
+  // ── View switchers ─────────────────────────────────────────────────────────
+  const VIEWS = ['login-view','register-view','forgot-view','reset-view',
+                 'forgot-success-view','reset-success-view',
+                 'verify-success-view','verify-error-view'];
+
+  function showOnly(id) {
+    VIEWS.forEach(v => document.getElementById(v).style.display = v === id ? 'block' : 'none');
+  }
+  function showLogin()    { showOnly('login-view');    history.replaceState({ bixAuth: true }, '', window.location.pathname); }
+  function showRegister() { showOnly('register-view'); history.replaceState({ bixAuth: true }, '', '?mode=register'); }
+  function showForgot()   { showOnly('forgot-view'); }
+
+  // ── Role picker ────────────────────────────────────────────────────────────
+  let selectedRole = '';
+  // Check if first-50-seller bonus is still available
+  api.get('/auth/seller-count', false).then(data => {
+    if (data && data.count < 50) {
+      const badge = document.getElementById('seller-bonus-badge');
+      if (badge) badge.style.display = 'block';
+    }
+  }).catch(() => {});
+
+  function selectRole(role) {
+    selectedRole = role;
+    document.getElementById('reg-role').value = role;
+    document.querySelectorAll('.role-card').forEach(c =>
+      c.classList.toggle('selected', c.dataset.role === role));
+  }
+
+  // ── Password toggle ────────────────────────────────────────────────────────
+  const EYE_OPEN  = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>`;
+  const EYE_CLOSED = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>`;
+
+  function togglePw(inputId, btn) {
+    const inp = document.getElementById(inputId);
+    const show = inp.type === 'password';
+    inp.type = show ? 'text' : 'password';
+    btn.innerHTML = show ? EYE_CLOSED : EYE_OPEN;
+  }
+
+  // ── Password strength ──────────────────────────────────────────────────────
+  function calcStrength(pw) {
+    let score = 0;
+    if (pw.length >= 8)  score++;
+    if (pw.length >= 12) score++;
+    if (/[A-Z]/.test(pw)) score++;
+    if (/[0-9]/.test(pw)) score++;
+    if (/[^A-Za-z0-9]/.test(pw)) score++;
+    return score;
+  }
+
+  function renderStrength(pw, fillId, textId) {
+    const fill = document.getElementById(fillId);
+    const text = document.getElementById(textId);
+    if (!pw) { fill.style.width = '0'; text.textContent = ''; return; }
+    const s = calcStrength(pw);
+    const levels = [
+      { w: '20%', color: '#e53e3e', label: 'Very weak' },
+      { w: '40%', color: '#dd6b20', label: 'Weak' },
+      { w: '60%', color: '#d69e2e', label: 'Fair' },
+      { w: '80%', color: '#38a169', label: 'Good' },
+      { w: '100%', color: '#2d7a4f', label: 'Strong' },
+    ];
+    const l = levels[Math.min(s - 1, 4)] || levels[0];
+    fill.style.width = l.w;
+    fill.style.background = l.color;
+    text.textContent = l.label;
+    text.style.color = l.color;
+  }
+
+  function updatePwStrength(pw)      { renderStrength(pw, 'pw-strength-fill', 'pw-strength-text'); }
+  function updatePwStrengthReset(pw) { renderStrength(pw, 'pw-strength-fill-reset', 'pw-strength-text-reset'); }
+
+  // ── URL param handling ─────────────────────────────────────────────────────
+  const action = getParam('action');
+  const token  = getParam('token');
+
+  if (action === 'verify' && token) {
+    // Auto-verify on page load
+    api.get(`/auth/verify-email?token=${encodeURIComponent(token)}`, false)
+      .then(() => showOnly('verify-success-view'))
+      .catch(() => showOnly('verify-error-view'));
+  } else if (action === 'reset' && token) {
+    showOnly('reset-view');
+  } else if (getParam('mode') === 'register') {
+    showRegister();
+  }
+
+  // Redirect if already logged in
+  if (!action && !getParam('mode')) {
+    if (auth.isLoggedIn()) {
+      const u = auth.getUser();
+      if (!u?.registration_complete) window.location.replace('register.html');
+      else window.location.href = u?.role === 'seller' ? 'seller-dashboard.html' : 'buyer-dashboard.html';
+    }
+  }
+
+  // ── Login ──────────────────────────────────────────────────────────────────
+  document.getElementById('login-form').addEventListener('submit', async e => {
+    e.preventDefault();
+    const btn = document.getElementById('login-btn');
+    btn.disabled = true; btn.textContent = 'Signing in…';
+    try {
+      const data = await api.post('/auth/login', {
+        email:    document.getElementById('login-email').value.trim(),
+        password: document.getElementById('login-password').value,
+      }, false);
+      auth.save(data.token, data.user);
+      toast('Welcome back!', 'success');
+      const redirect = getParam('redirect');
+      if (redirect) { setTimeout(() => window.location.replace(redirect), 400); return; }
+      const dest = !data.user.registration_complete
+        ? 'register.html'
+        : (data.user.role === 'seller' ? 'seller-dashboard.html'
+          : data.user.role === 'admin' ? 'admin.html' : 'buyer-dashboard.html');
+      setTimeout(() => window.location.replace(dest), 600);
+    } catch (err) {
+      toast(err.message, 'error');
+      btn.disabled = false; btn.textContent = 'Sign in';
+    }
+  });
+
+  // ── Register ───────────────────────────────────────────────────────────────
+  document.getElementById('register-form').addEventListener('submit', async e => {
+    e.preventDefault();
+    if (!selectedRole) { toast('Please choose buyer or seller', 'error'); return; }
+
+    const password  = document.getElementById('reg-password').value;
+    const confirm   = document.getElementById('reg-confirm-password').value;
+    if (password !== confirm) { toast('Passwords do not match', 'error'); return; }
+
+    const email = document.getElementById('reg-email').value.trim().toLowerCase();
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/i.test(email)) { toast('Please enter a valid email address.', 'error'); return; }
+
+    const btn = document.getElementById('register-btn');
+    btn.disabled = true; btn.textContent = 'Creating account…';
+    try {
+      const data = await api.post('/auth/register', {
+        email,
+        password,
+        confirm_password: confirm,
+        full_name: `${document.getElementById('reg-firstname').value.trim()} ${document.getElementById('reg-lastname').value.trim()}`,
+        role: selectedRole,
+      }, false);
+      auth.save(data.token, data.user);
+      toast('Welcome to Bixcart! Check your email to verify your account.', 'success');
+      setTimeout(() => window.location.replace('register.html'), 500);
+    } catch (err) {
+      toast(err.message, 'error');
+      btn.disabled = false; btn.textContent = 'Create account';
+    }
+  });
+
+  // ── Forgot password ────────────────────────────────────────────────────────
+  document.getElementById('forgot-form').addEventListener('submit', async e => {
+    e.preventDefault();
+    const btn = document.getElementById('forgot-btn');
+    btn.disabled = true; btn.textContent = 'Sending…';
+    try {
+      await api.post('/auth/forgot-password', {
+        email: document.getElementById('forgot-email').value.trim(),
+      }, false);
+      showOnly('forgot-success-view');
+    } catch (err) {
+      toast(err.message, 'error');
+      btn.disabled = false; btn.textContent = 'Send reset link';
+    }
+  });
+
+  // ── Reset password ─────────────────────────────────────────────────────────
+  document.getElementById('reset-form').addEventListener('submit', async e => {
+    e.preventDefault();
+    const password = document.getElementById('reset-password').value;
+    const confirm  = document.getElementById('reset-confirm-password').value;
+    if (password !== confirm) { toast('Passwords do not match', 'error'); return; }
+
+    const btn = document.getElementById('reset-btn');
+    btn.disabled = true; btn.textContent = 'Resetting…';
+    try {
+      await api.post('/auth/reset-password', { token, password, confirm_password: confirm }, false);
+      showOnly('reset-success-view');
+    } catch (err) {
+      toast(err.message, 'error');
+      btn.disabled = false; btn.textContent = 'Reset password';
+    }
+  });
+
+  // ── Resend verification ────────────────────────────────────────────────────
+  document.getElementById('resend-form').addEventListener('submit', async e => {
+    e.preventDefault();
+    const btn = document.getElementById('resend-btn');
+    btn.disabled = true; btn.textContent = 'Sending…';
+    try {
+      await api.post('/auth/resend-verification', {
+        email: document.getElementById('resend-email').value.trim(),
+      }, false);
+      toast('Verification email sent! Check your inbox.', 'success');
+      setTimeout(() => showLogin(), 1500);
+    } catch (err) {
+      toast(err.message, 'error');
+      btn.disabled = false; btn.textContent = 'Resend verification email';
+    }
+  });
+</script>
+</body>
+</html>

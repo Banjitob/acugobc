@@ -1,0 +1,409 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<!-- ── SEO ── -->
+<meta name="description" content="Bixcart is the trusted peer-to-peer marketplace exclusively for Ajayi Crowther University students. Buy, sell, and swap textbooks, electronics, and more — all on campus.">
+<meta name="robots" content="index, follow">
+<link rel="canonical" href="https://bixcart.onrender.com/">
+
+<!-- Open Graph -->
+<meta property="og:type" content="website">
+<meta property="og:title" content="Bixcart — Buy &amp; Sell on Campus | ACU Student Marketplace">
+<meta property="og:description" content="Bixcart is the trusted peer-to-peer marketplace exclusively for Ajayi Crowther University students. Buy, sell, and swap textbooks, electronics, and more — all on campus.">
+<meta property="og:url" content="https://bixcart.onrender.com/">
+<meta property="og:site_name" content="Bixcart">
+<meta property="og:image" content="https://bixcart.onrender.com/og-image.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="Bixcart — ACU Student Marketplace">
+
+<!-- Twitter / X -->
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:site" content="@bixcart">
+<meta name="twitter:title" content="Bixcart — Buy &amp; Sell on Campus | ACU Student Marketplace">
+<meta name="twitter:description" content="Bixcart is the trusted peer-to-peer marketplace exclusively for Ajayi Crowther University students. Buy, sell, and swap textbooks, electronics, and more — all on campus.">
+<meta name="twitter:image" content="https://bixcart.onrender.com/og-image.png">
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "WebSite",
+  "name": "Bixcart",
+  "url": "https://bixcart.onrender.com",
+  "description": "Peer-to-peer student marketplace for Ajayi Crowther University (ACU).",
+  "potentialAction": {
+    "@type": "SearchAction",
+    "target": "https://bixcart.onrender.com/pages/marketplace.html?q={search_term_string}",
+    "query-input": "required name=search_term_string"
+  }
+}
+</script>
+<title>Bixcart — Buy & Sell on Campus | ACU Student Marketplace</title>
+<link rel="stylesheet" href="css/main.css">
+<style>
+  /* ── HERO ── */
+  .hero {
+    background: var(--ink); position: relative; overflow: hidden;
+    padding: 56px 0 44px;
+  }
+  .hero::before {
+    content: '';
+    position: absolute; inset: 0;
+    background: radial-gradient(ellipse at 15% 30%, rgba(200,82,42,.25) 0%, transparent 55%),
+                radial-gradient(ellipse at 90% 80%, rgba(45,122,79,.16) 0%, transparent 50%);
+  }
+  .hero-inner { position: relative; }
+  .hero-h1 {
+    font-family: var(--font-display); color: white;
+    font-size: clamp(28px, 4vw, 42px);
+    line-height: 1.08; letter-spacing: -1px;
+    margin-bottom: 10px;
+    animation: fadeUp .5s ease .08s both;
+  }
+  .hero-h1 em { font-style: italic; color: var(--accent); }
+  .hero-sub {
+    font-size: 15px; color: rgba(255,255,255,.65); line-height: 1.6;
+    max-width: 480px; margin-bottom: 22px;
+    animation: fadeUp .5s ease .15s both;
+  }
+  .hero-search-wrap { max-width: 600px; animation: fadeUp .5s ease .2s both; }
+  .hero-search-wrap .search-bar-wrap { padding: 6px 6px 6px 16px; }
+  .hero-search-wrap .search-bar-input { font-size: 16px; padding: 9px 0; }
+  @media (max-width: 600px) {
+    .hero-search-wrap .search-bar-wrap {
+      padding: 8px 8px 8px 12px;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+    .hero-search-wrap .search-bar-input {
+      min-width: 0;
+      width: 100%;
+    }
+    .hero-search-wrap .btn {
+      width: 100%;
+    }
+  }
+  .hero-chips { display: flex; gap: 8px; overflow-x: auto; margin-top: 16px; scrollbar-width: none; animation: fadeUp .5s ease .26s both; }
+  .hero-chips::-webkit-scrollbar { display: none; }
+  .hero-chips .cat-chip { background: rgba(255,255,255,.08); border-color: rgba(255,255,255,.14); color: rgba(255,255,255,.85); }
+  .hero-chips .cat-chip:hover { border-color: rgba(255,255,255,.3); }
+  .hero-chips .cat-chip.active { background: var(--accent); border-color: var(--accent); color: white; }
+
+  @keyframes fadeUp { from { opacity:0; transform:translateY(18px); } to { opacity:1; transform:translateY(0); } }
+
+  /* ── TRUST BAR ── */
+  .trust-bar {
+    background: var(--surface); border-top: 1.5px solid var(--border); border-bottom: 1.5px solid var(--border);
+    padding: 18px 0;
+  }
+  .trust-items { display: flex; justify-content: space-around; align-items: center; flex-wrap: wrap; gap: 16px; }
+  .trust-item {
+    display: flex; align-items: center; gap: 9px;
+    font-size: 13px; font-weight: 500; color: var(--ink-2);
+  }
+  .trust-item-icon {
+    width: 34px; height: 34px; border-radius: var(--radius-md);
+    background: var(--bg); display: flex; align-items: center; justify-content: center;
+    color: var(--accent); flex-shrink: 0;
+  }
+
+  /* ── CATEGORIES ── */
+  .cats-grid {
+    display: grid; grid-template-columns: repeat(8, 1fr); gap: 14px;
+  }
+  .cat-card {
+    background: var(--surface); border: 1.5px solid var(--border);
+    border-radius: var(--radius-lg); padding: 20px 14px; text-align: center;
+    cursor: pointer; transition: all .2s; text-decoration: none; color: inherit;
+    display: flex; flex-direction: column; align-items: center; gap: 10px;
+  }
+  .cat-card:hover { border-color: var(--ink); transform: translateY(-3px); box-shadow: var(--shadow-md); }
+  .cat-card-icon {
+    width: 44px; height: 44px; border-radius: var(--radius-md);
+    display: flex; align-items: center; justify-content: center;
+    background: var(--bg); color: var(--ink-2);
+  }
+  .cat-card:hover .cat-card-icon { background: var(--accent-bg); color: var(--accent); }
+  .cat-name { font-size: 12px; font-weight: 600; }
+  .cat-count { font-size: 11px; color: var(--ink-3); }
+
+  /* ── FEATURED ── */
+  .section-kicker {
+    font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: .1em;
+    color: var(--accent); margin-bottom: 8px;
+  }
+  .section-title-lg {
+    font-family: var(--font-display); font-size: 38px; letter-spacing: -1px; margin-bottom: 8px;
+  }
+  .section-sub { font-size: 15px; color: var(--ink-3); max-width: 520px; }
+
+  /* ── HOW IT WORKS ── */
+  .how-section { background: var(--ink); padding: 100px 0; margin-top: 80px; }
+  .how-step {
+    padding: 32px;
+    border: 1.5px solid rgba(255,255,255,.1);
+    border-radius: var(--radius-xl);
+    transition: border-color .2s;
+  }
+  .how-step:hover { border-color: rgba(255,255,255,.25); }
+  .how-step-num {
+    font-family: var(--font-display); font-size: 64px; line-height: 1;
+    color: rgba(255,255,255,.08); letter-spacing: -3px; margin-bottom: 20px;
+  }
+  .how-step-icon {
+    width: 48px; height: 48px; border-radius: var(--radius-md);
+    background: rgba(255,255,255,.08);
+    display: flex; align-items: center; justify-content: center;
+    color: white; margin-bottom: 20px;
+  }
+  .how-step-title { font-size: 20px; font-weight: 700; color: white; margin-bottom: 10px; }
+  .how-step-desc { font-size: 14px; color: rgba(255,255,255,.5); line-height: 1.7; }
+
+  /* ── CTA BAND ── */
+  .cta-band {
+    background: var(--accent); padding: 80px 0;
+    display: flex; align-items: center; justify-content: center; text-align: center;
+  }
+  .cta-band h2 {
+    font-family: var(--font-display); font-size: 54px; color: white;
+    letter-spacing: -2px; line-height: 1.05; margin-bottom: 16px;
+  }
+  .cta-band h2 em { font-style: italic; }
+  .cta-band p { font-size: 17px; color: rgba(255,255,255,.75); margin-bottom: 32px; }
+
+  @media(max-width: 900px) {
+    .cats-grid { grid-template-columns: repeat(4,1fr); }
+  }
+  @media(max-width:600px) { .cats-grid { grid-template-columns: repeat(2,1fr); } }
+</style>
+</head>
+<body>
+
+<nav class="nav"></nav>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="container hero-inner">
+    <h1 class="hero-h1">Everything ACU is<br>buying &amp; selling <em>right now.</em></h1>
+    <p class="hero-sub">The marketplace built exclusively for ACU students — textbooks, electronics, furniture, and more from verified classmates.</p>
+    <div class="hero-search-wrap" id="buyer-home-search">
+      <div class="search-bar-wrap">
+        <span style="color:var(--ink-3);display:flex;" id="hero-search-icon"></span>
+        <input class="search-bar-input" id="hero-search-input" type="text" placeholder="Search for textbooks, phones, furniture…" autocomplete="off">
+        <button class="btn btn-accent" id="hero-search-btn" style="border-radius:var(--radius-md);">Search</button>
+      </div>
+    </div>
+    <div class="hero-chips" id="hero-chips"></div>
+    <div id="seller-home-panel" style="display:none;margin-top:24px;max-width:620px;">
+      <div style="display:flex;gap:12px;flex-wrap:wrap;align-items:center;">
+        <a href="pages/seller-dashboard.html" class="btn btn-xl" style="background:white;color:var(--accent);font-weight:700;">Manage my listings</a>
+        <a href="pages/sell.html" class="btn btn-xl" style="background:rgba(255,255,255,.15);color:white;border:1.5px solid rgba(255,255,255,.3);">List a new item</a>
+      </div>
+      <p style="margin:12px 0 0;color:rgba(255,255,255,.68);font-size:13px;">Manage your listings, orders, messages and seller account from your dashboard.</p>
+    </div>
+    <a href="pages/sell.html" id="hero-sell-btn" style="display:inline-flex;align-items:center;gap:6px;margin-top:16px;font-size:13px;font-weight:600;color:rgba(255,255,255,.75);text-decoration:none;">Got something to sell? List it in under 2 minutes →</a>
+  </div>
+</section>
+
+<!-- TRUST BAR -->
+<div class="trust-bar">
+  <div class="container">
+    <div class="trust-items">
+      <div class="trust-item"><div class="trust-item-icon" id="t1"></div> .edu verified students only</div>
+      <div class="trust-item"><div class="trust-item-icon" id="t2"></div> Secure in-app payments</div>
+      <div class="trust-item"><div class="trust-item-icon" id="t3"></div> Direct messaging</div>
+      <div class="trust-item"><div class="trust-item-icon" id="t4"></div> Campus-only meetups</div>
+      <div class="trust-item"><div class="trust-item-icon" id="t5"></div> Buyer &amp; seller protection</div>
+    </div>
+  </div>
+</div>
+
+<!-- CATEGORIES -->
+<section id="buyer-categories-section" style="padding: 56px 0 40px;">
+  <div class="container">
+    <div style="display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:32px;">
+      <div>
+        <div class="section-kicker">Explore</div>
+        <h2 class="section-title-lg">Browse by category</h2>
+      </div>
+      <a href="pages/marketplace.html" class="btn btn-ghost">View all listings</a>
+    </div>
+    <div class="cats-grid" id="cats-grid"></div>
+  </div>
+</section>
+
+<!-- TODAY'S DEALS -->
+<section id="deals-section" style="padding: 20px 0 40px; display:none;">
+  <div class="container">
+    <div style="display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:20px;">
+      <div>
+        <div class="section-kicker" style="color:var(--red);">Save more</div>
+        <h2 class="section-title-lg" style="font-size:30px;">Today's deals</h2>
+      </div>
+      <a href="pages/marketplace.html?sort=price_asc" class="btn btn-ghost">See all deals</a>
+    </div>
+    <div class="product-scroll" id="deals-scroll"></div>
+  </div>
+</section>
+
+<!-- RECOMMENDED FOR YOU -->
+<section id="buyer-recommended-section" style="padding: 20px 0 80px;">
+  <div class="container">
+    <div style="display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:32px;">
+      <div>
+        <div class="section-kicker">For you</div>
+        <h2 class="section-title-lg">Recommended for you</h2>
+        <p class="section-sub">A fresh mix every week, tuned to what you're into.</p>
+      </div>
+      <a href="pages/marketplace.html" class="btn btn-ghost">Browse all</a>
+    </div>
+    <div class="listings-grid" id="recommended-listings">
+      <div style="grid-column:1/-1;padding:40px;text-align:center;color:var(--ink-3);">Loading…</div>
+    </div>
+    <div style="text-align:center;margin-top:32px;">
+      <a href="pages/marketplace.html" class="btn btn-surface btn-lg">Browse the full marketplace</a>
+    </div>
+  </div>
+</section>
+
+<!-- HOW IT WORKS -->
+<section class="how-section">
+  <div class="container">
+    <div style="margin-bottom:56px;">
+      <div class="section-kicker" style="color:rgba(255,255,255,.4);">Simple process</div>
+      <h2 class="section-title-lg" style="color:white;">How Bixcart works</h2>
+    </div>
+    <div class="grid-3" id="how-steps"></div>
+  </div>
+</section>
+
+<!-- CTA BAND -->
+<section class="cta-band" id="buyer-cta-band">
+  <div style="max-width:600px;">
+    <h2>Ready to <em>save money</em> this semester?</h2>
+    <p>Join thousands of students already buying and selling on Bixcart. Free forever.</p>
+    <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap;">
+      <a href="pages/auth.html?mode=register" class="btn btn-xl" style="background:white;color:var(--accent);font-weight:700;">Create free account</a>
+      <a href="pages/marketplace.html" class="btn btn-xl" style="background:rgba(255,255,255,.15);color:white;border:1.5px solid rgba(255,255,255,.3);">Browse listings</a>
+    </div>
+  </div>
+</section>
+
+<footer class="footer"></footer>
+
+<script src="js/app.js"></script>
+<script>
+  renderNav();
+  renderFooter();
+
+  // Keep buyer-only and seller-only content separated on the home page.
+  (function() {
+    const u = auth.getUser();
+    const isBuyer = u?.role === 'buyer';
+    const isSeller = u?.role === 'seller';
+
+    const sellBtn = document.getElementById('hero-sell-btn');
+    const sellerPanel = document.getElementById('seller-home-panel');
+    const buyerSearch = document.getElementById('buyer-home-search');
+    const buyerChips = document.getElementById('hero-chips');
+    const buyerCategories = document.getElementById('buyer-categories-section');
+    const buyerDeals = document.getElementById('deals-section');
+    const buyerRecommended = document.getElementById('buyer-recommended-section');
+    const buyerCta = document.getElementById('buyer-cta-band');
+
+    if (isSeller) {
+      if (sellBtn) sellBtn.style.display = 'none';
+      if (sellerPanel) sellerPanel.style.display = '';
+      if (buyerSearch) buyerSearch.style.display = 'none';
+      if (buyerChips) buyerChips.style.display = 'none';
+      if (buyerCategories) buyerCategories.style.display = 'none';
+      if (buyerDeals) buyerDeals.style.display = 'none';
+      if (buyerRecommended) buyerRecommended.style.display = 'none';
+      if (buyerCta) buyerCta.style.display = 'none';
+    } else if (isBuyer) {
+      if (sellBtn) sellBtn.style.display = 'none';
+      if (sellerPanel) sellerPanel.style.display = 'none';
+    } else {
+      // Logged-out visitors can see the public marketplace experience.
+      if (sellerPanel) sellerPanel.style.display = 'none';
+    }
+  })();
+
+  // trust icons
+  const tIcons = [icons.shield, icons.dollarSign, icons.messageCircle, icons.mapPinMd, icons.check];
+  tIcons.forEach((ic, i) => { const el = document.getElementById(`t${i+1}`); if(el) el.innerHTML = ic; });
+
+  // categories — shared between the hero quick-chips and the full grid below
+  const cats = [
+    { name: 'Textbooks', icon: 'bookOpen', q: 'Textbooks' },
+    { name: 'Electronics', icon: 'cpu', q: 'Electronics' },
+    { name: 'Furniture', icon: 'home', q: 'Furniture' },
+    { name: 'Clothing', icon: 'shirt', q: 'Clothing' },
+    { name: 'Sports', icon: 'dumbbell', q: 'Sports' },
+    { name: 'Music', icon: 'music', q: 'Music' },
+    { name: 'Transport', icon: 'bike', q: 'Transportation' },
+    { name: 'Dorm', icon: 'package', q: 'Dorm Essentials' },
+  ];
+  document.getElementById('cats-grid').innerHTML = cats.map(c => `
+    <a href="pages/marketplace.html?category=${c.q}" class="cat-card">
+      <div class="cat-card-icon">${icons[c.icon]}</div>
+      <div class="cat-name">${c.name}</div>
+    </a>`).join('');
+  document.getElementById('hero-chips').innerHTML = cats.map(c => `
+    <a href="pages/marketplace.html?category=${c.q}" class="cat-chip">${icons[c.icon]} ${c.name}</a>`).join('');
+
+  // how it works
+  const steps = [
+    { num: '01', icon: 'shield', title: 'Verify your .edu', desc: 'Sign up with ACU email. This keeps the marketplace safe and exclusive to verified students at your school.' },
+    { num: '02', icon: 'package', title: 'List in under 2 mins', desc: 'Take a photo, set your price, add a description. Your listing goes live immediately to students across ACU.' },
+    { num: '03', icon: 'dollarSign', title: 'Meet up & get paid', desc: 'Chat securely in-app, agree on a campus meetup, and complete the transaction with our safe payment system.' },
+  ];
+  document.getElementById('how-steps').innerHTML = steps.map(s => `
+    <div class="how-step">
+      <div class="how-step-num">${s.num}</div>
+      <div class="how-step-icon">${icons[s.icon]}</div>
+      <div class="how-step-title">${s.title}</div>
+      <p class="how-step-desc">${s.desc}</p>
+    </div>`).join('');
+
+  // Hero search
+  document.getElementById('hero-search-icon').innerHTML = icons.search;
+  function runHeroSearch() {
+    const q = document.getElementById('hero-search-input').value.trim();
+    window.location.href = 'pages/marketplace.html' + (q ? `?q=${encodeURIComponent(q)}` : '');
+  }
+  document.getElementById('hero-search-btn').addEventListener('click', runHeroSearch);
+  document.getElementById('hero-search-input').addEventListener('keydown', e => { if (e.key === 'Enter') runHeroSearch(); });
+
+  // Today's deals — active listings with a real discount, biggest cut first
+  async function loadDeals() {
+    try {
+      const data = await api.get('/listings?limit=50&sort=price_asc', false);
+      const deals = (data.listings || [])
+        .filter(l => l.original_price && l.original_price > l.price)
+        .sort((a, b) => (b.original_price - b.price) / b.original_price - (a.original_price - a.price) / a.original_price)
+        .slice(0, 10);
+      if (!deals.length) return; // section stays hidden — no fake deals
+      document.getElementById('deals-scroll').innerHTML = deals.map(l => productCardHTML(l)).join('');
+      document.getElementById('deals-section').style.display = '';
+    } catch (e) { console.error(e); }
+  }
+
+  // Recommended for you — the weekly-shuffled, lightly-personalized default feed
+  async function loadRecommended() {
+    const grid = document.getElementById('recommended-listings');
+    try {
+      const data = await api.get('/listings?limit=8', false); // sort defaults to 'recommended' server-side
+      if (!data.listings?.length) { grid.innerHTML = '<p class="text-muted" style="grid-column:1/-1;">No listings yet — be the first to sell something.</p>'; return; }
+      grid.innerHTML = data.listings.map(l => productCardHTML(l)).join('');
+    } catch (e) {
+      grid.innerHTML = '<p class="text-muted" style="grid-column:1/-1;">Couldn\'t load listings right now.</p>';
+    }
+  }
+
+  loadDeals();
+  loadRecommended();
+</script>
+</body>
+</html>

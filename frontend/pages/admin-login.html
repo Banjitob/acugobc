@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Admin Login — Bixcart</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --ink:     #0f0f0f;
+    --ink-2:   #3a3a3a;
+    --ink-3:   #888;
+    --border:  rgba(255,255,255,.1);
+    --red:     #ff4d4d;
+    --accent:  #f5a623;
+    --radius:  10px;
+    --font:    'Georgia', 'Times New Roman', serif;
+    --font-ui: system-ui, -apple-system, sans-serif;
+  }
+
+  html, body {
+    height: 100%; background: #0a0a0a;
+    font-family: var(--font-ui); color: white;
+    display: flex; align-items: center; justify-content: center;
+  }
+
+  /* Subtle grid background */
+  body::before {
+    content: '';
+    position: fixed; inset: 0; pointer-events: none; z-index: 0;
+    background-image:
+      linear-gradient(rgba(255,255,255,.025) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255,255,255,.025) 1px, transparent 1px);
+    background-size: 48px 48px;
+  }
+
+  .login-wrap {
+    position: relative; z-index: 1;
+    width: 100%; max-width: 380px; padding: 24px;
+  }
+
+  .login-logo {
+    text-align: center; margin-bottom: 36px;
+  }
+  .login-logo-mark {
+    font-family: 'Fredoka', var(--font-logo); font-size: 34px; font-weight: 700;
+    color: white; letter-spacing: .5px;
+  }
+  .login-logo-mark span { color: var(--accent); }
+  .login-logo-sub {
+    font-size: 11px; font-weight: 600; letter-spacing: .2em;
+    text-transform: uppercase; color: rgba(255,255,255,.3);
+    margin-top: 6px;
+  }
+
+  .login-card {
+    background: #161616;
+    border: 1px solid rgba(255,255,255,.08);
+    border-radius: 16px;
+    padding: 32px;
+    box-shadow: 0 32px 80px rgba(0,0,0,.6), 0 0 0 1px rgba(255,255,255,.04) inset;
+  }
+
+  .login-heading {
+    font-size: 20px; font-weight: 700; margin-bottom: 4px; color: white;
+  }
+  .login-sub {
+    font-size: 13px; color: rgba(255,255,255,.35); margin-bottom: 28px;
+  }
+
+  .field { margin-bottom: 16px; }
+  .field-label {
+    display: block; font-size: 12px; font-weight: 600;
+    color: rgba(255,255,255,.45); margin-bottom: 7px; letter-spacing: .03em;
+  }
+  .field-input {
+    width: 100%; padding: 11px 14px;
+    background: rgba(255,255,255,.05);
+    border: 1px solid rgba(255,255,255,.1);
+    border-radius: var(--radius);
+    font-size: 14px; color: white; font-family: var(--font-ui);
+    outline: none; transition: border-color .15s, background .15s;
+    -webkit-autofill: none;
+  }
+  .field-input::placeholder { color: rgba(255,255,255,.2); }
+  .field-input:focus {
+    border-color: rgba(255,255,255,.3);
+    background: rgba(255,255,255,.07);
+  }
+  /* Fix Chrome autofill blue */
+  .field-input:-webkit-autofill,
+  .field-input:-webkit-autofill:hover,
+  .field-input:-webkit-autofill:focus {
+    -webkit-box-shadow: 0 0 0 100px #1e1e1e inset;
+    -webkit-text-fill-color: white;
+    border-color: rgba(255,255,255,.15);
+  }
+
+  .login-btn {
+    width: 100%; padding: 12px;
+    background: white; color: #0a0a0a;
+    border: none; border-radius: var(--radius);
+    font-size: 14px; font-weight: 700; font-family: var(--font-ui);
+    cursor: pointer; margin-top: 8px;
+    transition: opacity .15s, transform .1s;
+    letter-spacing: .01em;
+  }
+  .login-btn:hover  { opacity: .92; }
+  .login-btn:active { transform: scale(.99); }
+  .login-btn:disabled { opacity: .4; cursor: not-allowed; transform: none; }
+
+  .error-msg {
+    background: rgba(255,77,77,.12); border: 1px solid rgba(255,77,77,.25);
+    border-radius: var(--radius); padding: 10px 14px;
+    font-size: 13px; color: #ff8080;
+    margin-bottom: 16px; display: none;
+  }
+  .error-msg.show { display: block; }
+
+  .login-footer {
+    text-align: center; margin-top: 20px;
+    font-size: 12px; color: rgba(255,255,255,.18);
+  }
+  .login-footer a {
+    color: rgba(255,255,255,.3); text-decoration: none;
+  }
+  .login-footer a:hover { color: rgba(255,255,255,.55); }
+
+  /* Spinner inside button */
+  .btn-spinner {
+    display: inline-block; width: 14px; height: 14px;
+    border: 2px solid rgba(0,0,0,.2);
+    border-top-color: #0a0a0a;
+    border-radius: 50%;
+    animation: spin .6s linear infinite;
+    vertical-align: middle; margin-right: 6px;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  @media (max-width: 440px) {
+    .login-card { padding: 24px 20px; }
+  }
+</style>
+</head>
+<body>
+<div class="login-wrap">
+
+  <div class="login-logo">
+    <div class="login-logo-mark">Bix<span>cart</span></div>
+    <div class="login-logo-sub">Admin Access</div>
+  </div>
+
+  <div class="login-card">
+    <div class="login-heading">Sign in</div>
+    <div class="login-sub">Restricted to authorised administrators only.</div>
+
+    <div class="error-msg" id="error-msg"></div>
+
+    <div class="field">
+      <label class="field-label" for="email">Email address</label>
+      <input class="field-input" type="email" id="email"
+             placeholder="admin@bixcart.ng"
+             autocomplete="username" autocapitalize="none" spellcheck="false">
+    </div>
+    <div class="field">
+      <label class="field-label" for="password">Password</label>
+      <input class="field-input" type="password" id="password"
+             placeholder="••••••••"
+             autocomplete="current-password">
+    </div>
+
+    <button class="login-btn" id="login-btn" onclick="doLogin()">Sign in</button>
+  </div>
+
+  <div class="login-footer">
+    Not an admin? <a href="auth.html">Go to Bixcart →</a>
+  </div>
+</div>
+
+<script>
+// ── Admin auth uses SEPARATE localStorage keys from user auth ──────────────
+const ADMIN_TOKEN_KEY = 'cm_admin_token';
+const ADMIN_USER_KEY  = 'cm_admin_user';
+const API_BASE        = '/api';
+
+const adminAuth = {
+  getToken: () => localStorage.getItem(ADMIN_TOKEN_KEY),
+  getUser:  () => { try { return JSON.parse(localStorage.getItem(ADMIN_USER_KEY)); } catch { return null; } },
+  save(token, user) {
+    localStorage.setItem(ADMIN_TOKEN_KEY, token);
+    localStorage.setItem(ADMIN_USER_KEY, JSON.stringify(user));
+  },
+  clear() {
+    localStorage.removeItem(ADMIN_TOKEN_KEY);
+    localStorage.removeItem(ADMIN_USER_KEY);
+  },
+};
+
+// If already logged in as admin, go straight to dashboard
+if (adminAuth.getToken() && adminAuth.getUser()?.role === 'admin') {
+  window.location.replace('admin.html');
+}
+
+// ── Enter key submits ──────────────────────────────────────────────────────
+document.addEventListener('keydown', e => {
+  if (e.key === 'Enter') doLogin();
+});
+
+// ── Login ──────────────────────────────────────────────────────────────────
+async function doLogin() {
+  const email    = document.getElementById('email').value.trim();
+  const password = document.getElementById('password').value;
+  const btn      = document.getElementById('login-btn');
+  const errEl    = document.getElementById('error-msg');
+
+  errEl.classList.remove('show');
+
+  if (!email || !password) {
+    showError('Please enter your email and password.');
+    return;
+  }
+
+  btn.disabled = true;
+  btn.innerHTML = '<span class="btn-spinner"></span>Signing in…';
+
+  try {
+    const res = await fetch(`${API_BASE}/auth/login`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, password }),
+    });
+    const data = await res.json();
+
+    if (!res.ok) {
+      showError(data.error || 'Login failed.');
+      return;
+    }
+
+    if (data.user?.role !== 'admin') {
+      showError('Access denied. This portal is for administrators only.');
+      return;
+    }
+
+    // Store under ADMIN keys — never touches user's cm_token
+    adminAuth.save(data.token, data.user);
+
+    btn.innerHTML = '✓ Redirecting…';
+    setTimeout(() => window.location.replace('admin.html'), 400);
+
+  } catch (e) {
+    showError('Network error. Please try again.');
+  } finally {
+    if (btn.textContent !== '✓ Redirecting…') {
+      btn.disabled = false;
+      btn.textContent = 'Sign in';
+    }
+  }
+}
+
+function showError(msg) {
+  const el = document.getElementById('error-msg');
+  el.textContent = msg;
+  el.classList.add('show');
+  document.getElementById('login-btn').disabled = false;
+  document.getElementById('login-btn').textContent = 'Sign in';
+}
+</script>
+</body>
+</html>
