@@ -269,10 +269,10 @@
       <!-- Orders panel (cart checkouts — delivery orders to fulfill) -->
       <div id="tab-orders" style="display:none;">
         <div style="display:flex;gap:8px;margin-bottom:12px;">
-          <button class="btn btn-ghost btn-sm ord-filter-btn active" data-of="pending" onclick="setOrderFilter('pending',this)">Pending</button>
+          <button class="btn btn-ghost btn-sm ord-filter-btn" data-of="pending" onclick="setOrderFilter('pending',this)">Pending</button>
           <button class="btn btn-ghost btn-sm ord-filter-btn" data-of="completed" onclick="setOrderFilter('completed',this)">Completed</button>
           <button class="btn btn-ghost btn-sm ord-filter-btn" data-of="cancelled" onclick="setOrderFilter('cancelled',this)">Cancelled</button>
-          <button class="btn btn-ghost btn-sm ord-filter-btn" data-of="all" onclick="setOrderFilter('all',this)">All</button>
+          <button class="btn btn-ghost btn-sm ord-filter-btn active" data-of="all" onclick="setOrderFilter('all',this)">All</button>
         </div>
         <div class="card" style="padding:0 20px;" id="orders-container">
           <div style="padding:40px;text-align:center;color:var(--ink-3);">Loading…</div>
@@ -468,7 +468,7 @@
   }
 
   // Orders created from a buyer's cart checkout — delivery, already paid, seller fulfills.
-  let allOrders = [], currentOrderFilter = 'pending';
+  let allOrders = [], currentOrderFilter = 'all';
 
   async function loadOrders() {
     const el = document.getElementById('orders-container');
