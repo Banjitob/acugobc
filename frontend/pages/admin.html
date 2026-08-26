@@ -664,6 +664,7 @@ body {
   .admin-topbar-title { font-size: 13px; }
   .admin-table { min-width: 460px; }
 }
+.control-mode [data-ur-uphold], .control-mode [data-ur-dismiss], .control-mode .notify-actions, .control-mode #resolve-btn, .control-mode .flagged-card-actions .action-btn:not(.view) { display:none !important; }
 </style>
 </head>
 <body>
@@ -691,7 +692,9 @@ body {
       Seller Approvals
     </button>
     <button class="admin-nav-item" data-tab="deletion-requests">Account Deletions</button>
-    <button class="admin-nav-item" data-tab="actions">
+    <button class="admin-nav-item admin-only" data-tab="controls">🛡️ Controls</button>
+    <button class="admin-nav-item admin-only" data-tab="control-actions">↩ Control Actions</button>
+    <button class="admin-nav-item admin-only" data-tab="actions">
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20V10"/><path d="M18 20V4"/><path d="M6 20v-6"/></svg>
       Admin Actions
     </button>
@@ -729,7 +732,7 @@ body {
   </nav>
   <div class="sidebar-footer">
     <div class="sidebar-footer-name" id="sidebar-admin-name">Admin</div>
-    <div class="sidebar-footer-role">Administrator</div>
+    <div class="sidebar-footer-role" id="sidebar-admin-role">Administrator</div>
   </div>
 </aside>
 
@@ -801,24 +804,32 @@ api.patch = (path, body) => api.request('PATCH', path, body, true);
 (function() {
   const token = adminAuth.getToken();
   const u     = adminAuth.getUser();
-  if (!token || u?.role !== 'admin') {
+  if (!token || !['admin','control'].includes(u?.role)) {
     window.location.replace('admin-login.html'); return;
   }
   // Populate admin identity
   document.getElementById('admin-user-badge').textContent   = u.full_name || 'Admin';
   const sidebarName = document.getElementById('sidebar-admin-name');
   if (sidebarName) sidebarName.textContent = u.full_name || u.email || 'Admin';
+  const roleEl = document.getElementById('sidebar-admin-role');
+  if (roleEl) roleEl.textContent = u.role === 'control' ? 'Control · Limited Admin' : 'Administrator';
+  if (u.role === 'control') {
+    document.body.classList.add('control-mode');
+    document.querySelectorAll('.admin-only').forEach(el => el.style.display = 'none');
+    ['overview','deletion-requests','users','listings','broadcast','hostels'].forEach(tab => document.querySelector(`[data-tab="${tab}"]`)?.style.setProperty('display','none'));
+  }
 })();
 
 function adminLogout() { adminAuth.clear(); window.location.replace('admin-login.html'); }
 
 // ── Tab routing ─────────────────────────────────────────────────────────────
-const TABS = { overview: 'Overview', 'seller-approvals': 'Seller Approvals', 'deletion-requests': 'Account Deletions', actions: 'Admin Actions', users: 'Users', listings: 'Listings', broadcast: 'Broadcast', hostels: 'Hostels', messages: 'Conversation Reports', 'user-reports': 'User Reports', flagged: 'AI Flagged' };
-let currentTab = 'overview';
+const isControlUser = () => adminAuth.getUser()?.role === 'control';
+const controlPath = path => isControlUser() ? path.replace(/^\/admin/, '/control') : path;
+const TABS = { overview: 'Overview', controls: 'Controls', 'control-actions': 'Control Actions', 'seller-approvals': 'Seller Approvals', 'deletion-requests': 'Account Deletions', actions: 'Admin Actions', users: 'Users', listings: 'Listings', broadcast: 'Broadcast', hostels: 'Hostels', messages: 'Conversation Reports', 'user-reports': 'User Reports', flagged: 'AI Flagged' };
+let currentTab = isControlUser() ? 'seller-approvals' : 'overview';
 
-document.querySelectorAll('.admin-nav-item[data-tab]').forEach(btn => {
-  btn.addEventListener('click', () => switchTab(btn.dataset.tab));
-});
+document.querySelectorAll('.admin-nav-item[data-tab]').forEach(btn => { btn.addEventListener('click', () => switchTab(btn.dataset.tab)); });
+if (isControlUser()) switchTab('seller-approvals');
 
 // ── Mobile sidebar ────────────────────────────────────────────────────────────
 const sidebar  = document.getElementById('admin-sidebar');
@@ -851,6 +862,8 @@ function switchTab(tab) {
   const content = document.getElementById('admin-content');
   content.innerHTML = '<div class="admin-empty">Loading…</div>';
   if (tab === 'overview')  renderOverview();
+  if (tab === 'controls') renderControls();
+  if (tab === 'control-actions') renderControlActions();
   if (tab === 'seller-approvals') renderSellerApprovals();
   if (tab === 'deletion-requests') renderDeletionRequests();
   if (tab === 'actions') renderAdminActions();
@@ -864,13 +877,28 @@ function switchTab(tab) {
 }
 
 // ══════════════════════════════════════════════════════════════════════════════
+// CONTROLS
+// ══════════════════════════════════════════════════════════════════════════════
+async function renderControls() {
+  const c=document.getElementById('admin-content');
+  c.innerHTML='<div style="margin-bottom:18px"><div class="section-kicker">Access management</div><h2 style="font-size:28px">Control accounts</h2><p style="color:var(--ink-3);font-size:13px">Create limited administrators who can approve/reject sellers and read reports.</p></div><div class="card" style="padding:18px;margin-bottom:18px"><h3>Add a new Control</h3><div style="display:grid;grid-template-columns:1fr 1fr;gap:10px"><input id="control-name" class="form-input" placeholder="Full name"><input id="control-email" class="form-input" type="email" placeholder="Email"><input id="control-password" class="form-input" type="password" placeholder="Password (8+ characters)"></div><button id="create-control-btn" class="btn btn-primary" style="margin-top:12px">Create Control</button></div><div id="controls-list">Loading…</div>';
+  document.getElementById('create-control-btn').onclick=async()=>{try{await api.post('/admin/controls',{full_name:document.getElementById('control-name').value.trim(),email:document.getElementById('control-email').value.trim(),password:document.getElementById('control-password').value});toast('Control account created.','success');renderControls();}catch(e){toast(e.message,'error');}};
+  try{const d=await api.get('/admin/controls');const rows=d.controls||[];document.getElementById('controls-list').innerHTML=rows.length?'<div class="admin-table-wrap"><table class="admin-table"><thead><tr><th>Name</th><th>Email</th><th>Status</th></tr></thead><tbody>'+rows.map(u=>`<tr><td><strong>${escHtml(u.full_name)}</strong></td><td>${escHtml(u.email)}</td><td>${escHtml(u.account_status)}</td></tr>`).join('')+'</tbody></table></div>':'<div class="admin-empty">No Control accounts yet.</div>';}catch(e){document.getElementById('controls-list').textContent=e.message;}
+}
+async function renderControlActions(){
+  const c=document.getElementById('admin-content');c.innerHTML='<div style="margin-bottom:18px"><div class="section-kicker">Audit trail</div><h2 style="font-size:28px">Control Actions</h2><p style="color:var(--ink-3);font-size:13px">Every action by a Control is recorded with the Control name. Admins can reverse seller approval decisions.</p></div><div id="control-actions-list">Loading…</div>';
+  try{const d=await api.get('/admin/control-actions?limit=100');const rows=d.actions||[];document.getElementById('control-actions-list').innerHTML=rows.length?'<div class="admin-table-wrap"><table class="admin-table"><thead><tr><th>Date</th><th>Control</th><th>Action</th><th>Target</th><th>Reversed</th><th></th></tr></thead><tbody>'+rows.map(a=>`<tr><td>${fmtTime(a.created_at)}</td><td><strong>${escHtml(a.admin_name)}</strong></td><td>${escHtml(labels[a.action]||a.action)}</td><td>${escHtml(a.target_user_name||a.target_user_email||'—')}</td><td>${a.reversed_at?fmtTime(a.reversed_at):'No'}</td><td>${a.reversible&&!a.reversed_at?`<button class="btn btn-surface btn-sm" onclick="reverseControlAction('${a.id}')">Reverse</button>`:''}</td></tr>`).join('')+'</tbody></table></div>':'<div class="admin-empty">No Control actions recorded.</div>';}catch(e){document.getElementById('control-actions-list').textContent=e.message;}
+}
+window.reverseControlAction=async function(id){if(!confirm('Reverse this Control action?'))return;try{await api.post(`/admin/control-actions/${id}/reverse`,{});toast('Control action reversed.','success');renderControlActions();}catch(e){toast(e.message,'error');}};
+
+// ══════════════════════════════════════════════════════════════════════════════
 // SELLER APPROVALS
 // ══════════════════════════════════════════════════════════════════════════════
 async function renderSellerApprovals() {
   const c = document.getElementById('admin-content');
   c.innerHTML = '<div class="admin-empty">Loading seller applications…</div>';
   try {
-    const data = await api.get('/admin/seller-applications?status=pending&limit=100');
+    const data = await api.get(controlPath('/admin/seller-applications?status=pending&limit=100'));
     const sellers = data.sellers || [];
     c.innerHTML = `
       <div style="margin-bottom:18px;"><div class="section-kicker" style="margin-bottom:6px;">Seller onboarding</div><h2 style="font-size:28px;letter-spacing:-.5px;">Pending seller applications</h2><p style="color:var(--ink-3);font-size:13px;margin-top:6px;">Review identity documents and profile details before approving access. Sellers are told to allow up to 6 hours.</p></div>
@@ -901,12 +929,12 @@ async function renderSellerApprovals() {
     c.querySelectorAll('[data-approve-seller]').forEach(btn => btn.addEventListener('click', async () => {
       if (!confirm('Approve this seller? They will be able to use the seller account immediately.')) return;
       btn.disabled = true;
-      try { await api.post(`/admin/seller-applications/${btn.dataset.approveSeller}/approve`, {}); toast('Seller approved.', 'success'); renderSellerApprovals(); }
+      try { await api.post(`${controlPath('/admin/seller-applications')}/${btn.dataset.approveSeller}/approve`, {}); toast('Seller approved.', 'success'); renderSellerApprovals(); }
       catch(e) { toast(e.message, 'error'); btn.disabled = false; }
     }));
     c.querySelectorAll('[data-reject-seller]').forEach(btn => btn.addEventListener('click', () => {
       showModal({ title:'Reject seller application', sub:'A rejection reason is compulsory and will be shown to the seller.', placeholder:'Explain why this seller application is being rejected…', confirmLabel:'Reject application', confirmClass:'btn-danger', onConfirm: async reason => {
-        try { await api.post(`/admin/seller-applications/${btn.dataset.rejectSeller}/reject`, { reason }); toast('Seller rejected and notified.', 'success'); renderSellerApprovals(); }
+        try { await api.post(`${controlPath('/admin/seller-applications')}/${btn.dataset.rejectSeller}/reject`, { reason }); toast('Seller rejected and notified.', 'success'); renderSellerApprovals(); }
         catch(e) { toast(e.message, 'error'); }
       }});
     }));
@@ -1890,7 +1918,7 @@ async function fetchUserReports(status = 'pending') {
   const c = document.getElementById('user-report-list');
   if (!c) return;
   try {
-    const data = await api.get(`/admin/user-reports?status=${status}`);
+    const data = await api.get(`${controlPath('/admin/user-reports')}?status=${status}`);
     const reports = data.reports || [];
     c.innerHTML = `<div style="display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap;">
       ${['pending','resolved','dismissed','all'].map(s => `<button class="btn btn-${s===status?'primary':'surface'} btn-sm" data-ur-status="${s}">${s[0].toUpperCase()+s.slice(1)}</button>`).join('')}
@@ -1906,7 +1934,7 @@ async function fetchUserReports(status = 'pending') {
         <div style="display:flex;gap:14px;flex-wrap:wrap;margin-top:10px;font-size:12px;color:var(--ink-3);">
           <span>Reports upheld: ${u.report_count || 0}</span><span>Discoverability: ${u.discoverability_score ?? 100}/100</span><span>Rating: ${u.rating ? Number(u.rating).toFixed(1) : '—'}</span>
         </div>
-        ${r.status === 'pending' ? `<div style="display:flex;gap:8px;align-items:center;margin-top:12px;flex-wrap:wrap;">
+        ${r.status === 'pending' && !isControlUser() ? `<div style="display:flex;gap:8px;align-items:center;margin-top:12px;flex-wrap:wrap;">
           <select class="form-input" data-ur-action="${r.id}" style="max-width:150px;"><option value="none">No account action</option><option value="warn">Warn user</option><option value="suspend">Suspend user</option></select>
           <input class="form-input" data-ur-note="${r.id}" placeholder="Admin note / reason" style="flex:1;min-width:220px;">
           <button class="btn btn-primary btn-sm" data-ur-uphold="${r.id}">Uphold report</button>
@@ -1922,6 +1950,7 @@ async function fetchUserReports(status = 'pending') {
 }
 
 async function resolveUserReport(id, upheld) {
+  if (isControlUser()) return toast('Control accounts can only read user reports.', 'warning');
   const action = document.querySelector(`[data-ur-action="${id}"]`)?.value || 'none';
   const note = document.querySelector(`[data-ur-note="${id}"]`)?.value?.trim() || '';
   if (upheld && !note) { toast('Add an admin note/reason before upholding a report.', 'error'); return; }
@@ -1980,7 +2009,7 @@ async function fetchConversations(page, statusFilter = 'pending') {
   const pgDiv = document.getElementById('conv-list-pg');
   if (!inner) return;
   try {
-    const data = await api.get(`/admin/conversations?page=${page}&limit=30&status=${statusFilter}`);
+    const data = await api.get(`${controlPath('/admin/conversations')}?page=${page}&limit=30&status=${statusFilter}`);
     if (!data.conversations.length) {
       inner.innerHTML = `<div style="padding:24px;text-align:center;color:var(--ink-3);font-size:13px">No ${statusFilter === 'all' ? '' : statusFilter + ' '}reports</div>`;
       pgDiv.innerHTML = ''; return;
@@ -2039,7 +2068,7 @@ async function openConversation(reportId) {
   if (!panel) return;
   panel.innerHTML = '<div class="msg-panel-empty">Loading…</div>';
   try {
-    const data = await api.get(`/admin/conversations/${reportId}`);
+    const data = await api.get(`${controlPath('/admin/conversations')}/${reportId}`);
     const { conversation: cv, report, messages } = data;
     const buyerName  = cv.buyer_id?.full_name  || 'Buyer';
     const sellerName = cv.seller_id?.full_name || 'Seller';
@@ -2255,7 +2284,7 @@ async function loadFlagged(type = 'all') {
   if (!el) return;
   el.innerHTML = '<div style="padding:24px;color:var(--ink-3)">Loading…</div>';
   try {
-    const data = await api.get(`/admin/flagged?type=${type}`);
+    const data = await api.get(`${controlPath('/admin/flagged')}?type=${type}`);
     let html = '';
 
     // ── Flagged Conversations ──────────────────────────────────────────────

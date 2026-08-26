@@ -681,8 +681,9 @@ router.get('/:id/delivery-info', sellerApprovalMiddleware, async (req, res) => {
 
     return res.json({
       mode: 'delivery_chat',
-      message: 'You and the buyer are not in the same hostel. Use the delivery chat to arrange a meeting point and handoff.',
+      message: 'You and the buyer are not in the same hostel. The buyer’s checkout delivery information is shown below. Use the delivery chat to arrange the handoff.',
       conversation_id: conversation._id,
+      buyer: { name: buyer.full_name, hostel: buyer.hostel_name || '', room: buyer.room_number || '', delivery_address: order.delivery_address || null },
       chat_url: `/pages/messages.html?conv=${conversation._id}`,
       listing_title: listing?.title || '',
     });

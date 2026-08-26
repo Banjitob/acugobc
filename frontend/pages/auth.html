@@ -447,9 +447,15 @@
   // Redirect if already logged in
   if (!action && !getParam('mode')) {
     if (auth.isLoggedIn()) {
-      const u = auth.getUser();
-      if (!u?.registration_complete) window.location.replace('register.html');
-      else window.location.href = u?.role === 'seller' ? 'seller-dashboard.html' : 'buyer-dashboard.html';
+      // Refresh the role from the database before redirecting. This prevents a stale
+      // buyer token/localStorage record from sending an account to the buyer dashboard
+      // after an admin has upgraded the same email to admin/control.
+      api.get('/auth/me').then(fresh => {
+        auth.save(auth.getToken(), fresh);
+        if (!fresh.registration_complete) window.location.replace('register.html');
+        else if (fresh.role === 'admin' || fresh.role === 'control') window.location.replace('admin.html');
+        else window.location.replace(fresh.role === 'seller' ? 'seller-dashboard.html' : 'buyer-dashboard.html');
+      }).catch(() => auth.clear());
     }
   }
 
@@ -470,7 +476,7 @@
       const dest = !data.user.registration_complete
         ? 'register.html'
         : (data.user.role === 'seller' ? 'seller-dashboard.html'
-          : data.user.role === 'admin' ? 'admin.html' : 'buyer-dashboard.html');
+          : (data.user.role === 'admin' || data.user.role === 'control') ? 'admin.html' : 'buyer-dashboard.html');
       setTimeout(() => window.location.replace(dest), 600);
     } catch (err) {
       toast(err.message, 'error');

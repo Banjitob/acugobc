@@ -513,7 +513,7 @@
             <div class="order-title">${o.listing_title}</div>
             <div class="order-meta">
               ${statusBadge(orderDisplayStatus(o))}
-              <span style="display:flex;align-items:center;gap:4px;">${icons.user} ${o.buyer_name || 'Buyer'}</span>
+              <span style="display:flex;align-items:center;gap:4px;">${icons.user} ${o.buyer_id ? `<a href="user-profile.html?id=${o.buyer_id}" style="color:inherit;text-decoration:underline;text-underline-offset:2px;">${escHtml(o.buyer_name || 'Buyer')}</a>` : escHtml(o.buyer_name || 'Buyer')}</span>
               <span>${formatDate(o.created_at)}</span>
             </div>
             ${groupCounts[o.checkout_group] > 1 ? `<div style="font-size:12px;color:var(--ink-3);margin-top:6px;">Part of a ${groupCounts[o.checkout_group]}-item order</div>` : ''}
@@ -554,7 +554,9 @@
           loadOrders();
         }
       } else if (info.mode === 'delivery_chat') {
-        if (confirm('You and the buyer are not in the same hostel. Open the delivery chat to arrange the handoff?')) {
+        const d = info.buyer?.delivery_address;
+        const delivery = d ? `\n\nBuyer delivery details:\nName: ${d.full_name || info.buyer?.name || 'Buyer'}\nPhone: ${d.phone || 'Not provided'}\nCampus: ${d.campus || 'Ajayi Crowther University'}\n${d.address ? `Address: ${d.address}\n` : ''}${d.note ? `Note: ${d.note}` : ''}` : '';
+        if (confirm(`${info.message}${delivery}\n\nOpen the delivery chat to coordinate the handoff?`)) {
           window.location.href = info.chat_url;
         }
       }

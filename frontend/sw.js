@@ -17,7 +17,7 @@ self.addEventListener('push', e => {
     badge: '/favicon.ico',
     tag: payload.tag || payload.type || 'bixcart',
     renotify: true,
-    data: { url: payload.url || '/pages/messages.html', type: payload.type },
+    data: { url: payload.url || '/', type: payload.type },
     actions: [],
   };
 
@@ -33,7 +33,7 @@ self.addEventListener('push', e => {
 // ── NOTIFICATION CLICK ──
 self.addEventListener('notificationclick', e => {
   e.notification.close();
-  const url = e.notification.data?.url || '/pages/messages.html';
+  const url = '/';
   e.waitUntil(
     clients.matchAll({ type: 'window', includeUncontrolled: true }).then(list => {
       for (const c of list) {

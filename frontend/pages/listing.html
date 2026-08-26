@@ -121,27 +121,6 @@
   </div>
 </div>
 
-<!-- Message Modal -->
-<div class="modal-overlay" id="msg-modal">
-  <div class="modal">
-    <div class="modal-header">
-      <span class="modal-title">Message seller</span>
-      <button class="btn btn-ghost btn-icon-circle btn-sm" onclick="closeModal('msg-modal')" style="font-size:18px;line-height:1;">&#x2715;</button>
-    </div>
-    <div class="modal-body">
-      <div id="msg-listing-info" style="padding:12px;background:var(--bg);border-radius:var(--radius-md);margin-bottom:16px;font-size:13px;"></div>
-      <div class="form-group">
-        <label class="form-label">Your message</label>
-        <textarea class="form-textarea msg-modal-input" id="msg-input" placeholder="Hi, I'm interested in this item. Is it still available?"></textarea>
-      </div>
-    </div>
-    <div class="modal-footer">
-      <button class="btn btn-ghost" onclick="closeModal('msg-modal')">Cancel</button>
-      <button class="btn btn-primary" id="send-msg-btn">Send message</button>
-    </div>
-  </div>
-</div>
-
 <footer class="footer"></footer>
 <script src="../js/app.js"></script>
 <script>
@@ -150,25 +129,13 @@
 
   let listingData = null;
 
-  function openModal(id) {
-    document.getElementById(id).classList.add('open');
-  }
-  function closeModal(id) {
-    document.getElementById(id).classList.remove('open');
-  }
-  window.closeModal = closeModal;
-
-  // close on backdrop click
-  document.querySelectorAll('.modal-overlay').forEach(o => {
-    o.addEventListener('click', e => { if (e.target === o) o.classList.remove('open'); });
-  });
-
   async function loadListing() {
     const id = getParam('id');
     if (!id) { window.location.href = 'marketplace.html'; return; }
 
     try {
       const listing = await api.get(`/listings/${id}`, true);
+      if (auth.isLoggedIn()) { try { const freshUser = await api.get('/auth/me'); auth.save(auth.getToken(), freshUser); } catch (_) {} }
       listingData = listing;
       renderListing(listing);
     } catch(e) {
@@ -176,7 +143,7 @@
         <div class="empty-state">
           <div class="empty-state-icon">${icons.alertCircle}</div>
           <h3>Listing not found</h3>
-          <p>${e.message}</p>
+          <p>${e.message || 'This listing may have been removed, sold, or no longer exists.'}</p>
           <a href="marketplace.html" class="btn btn-primary">Back to marketplace</a>
         </div>`;
     }
@@ -184,7 +151,7 @@
 
   function renderListing(l) {
     const user = auth.getUser();
-    const isSeller = user?.id === l.seller_id;
+    const isSeller = String(user?.id || '') === String(l.seller_id || '');
     const discount = l.original_price ? Math.round((1 - l.price / l.original_price) * 100) : 0;
     const sameHostel = !!(user?.hostel_name && l.seller_hostel && String(user.hostel_name).toLowerCase() === String(l.seller_hostel).toLowerCase());
 
@@ -200,7 +167,7 @@
 
     const condClass = { 'New': 'green', 'Like New': 'green', 'Good': 'amber', 'Fair': 'amber' }[l.condition] || 'surface';
 
-    const sameHostelLabel = sameHostel ? 'Arrange hostel pickup' : 'Message seller';
+    const sameHostelLabel = 'Arrange hostel pickup';
     const hostelStatusHTML = !isSeller && l.status === 'active' ? (sameHostel ? `
       <div class="hostel-status-box" style="background:var(--green-bg,#eaf6ee);border:1.5px solid #bfe3cc;">
         <div style="display:flex;align-items:flex-start;gap:10px;">
@@ -215,7 +182,7 @@
         <div style="display:flex;align-items:flex-start;gap:10px;">
           <span style="color:var(--ink-3);flex-shrink:0;margin-top:1px;">${icons.mapPin}</span>
           <div style="font-size:13px;color:var(--ink-2);line-height:1.6;">
-            You're in a different hostel from the seller${l.seller_hostel ? ` (they're in ${l.seller_hostel})` : ''}. Message them to arrange delivery.
+            You're in a different hostel from the seller${l.seller_hostel ? ` (they're in ${l.seller_hostel})` : ''}. Delivery will be arranged using the checkout details.
           </div>
         </div>
       </div>
@@ -226,7 +193,7 @@
       <button class="btn btn-surface w-full" disabled>${icons.package} ${l.status === 'sold' ? 'Item sold' : 'Not available'}</button>
     ` : `
       <button class="btn btn-accent btn-lg w-full" id="add-cart-btn" data-cart-listing-id="${l.id}" data-cart-type="listing" onclick="addToCartFromListing('${l.id}')">${isInCart(l.id) ? icons.check + ' In your cart — view cart' : icons.shoppingBag + ' Add to cart'}</button>
-      ${!sameHostel ? `<button class="btn btn-surface w-full" id="contact-btn" onclick="openMsgModal()">${icons.messageCircle} ${sameHostelLabel}</button>` : ''}
+
     `);
 
     document.getElementById('page-content').innerHTML = `
@@ -414,26 +381,6 @@
   }
   window.addToCartFromListing = addToCartFromListing;
 
-  function openMsgModal() {
-    if (!auth.requireAuth()) return;
-    document.getElementById('msg-listing-info').innerHTML = `<strong>${listingData?.title}</strong> · ${formatPrice(listingData?.price)}`;
-    document.getElementById('msg-input').value = `Hi! I'm interested in this item. Can we arrange delivery, or agree on a place to meet?`;
-    openModal('msg-modal');
-  }
-  window.openMsgModal = openMsgModal;
-
-  document.getElementById('send-msg-btn').addEventListener('click', async () => {
-    const content = document.getElementById('msg-input').value.trim();
-    if (!content) { toast('Please enter a message', 'error'); return; }
-    const btn = document.getElementById('send-msg-btn');
-    btn.disabled = true; btn.innerHTML = icons.loader + ' Sending…';
-    try {
-      const r = await api.post('/messages/send', { receiver_id: listingData.seller_id, listing_id: listingData.id, content });
-      closeModal('msg-modal');
-      toast('Message sent!', 'success');
-      setTimeout(() => window.location.href = `/pages/messages.html?conv=${r.conversation_id}`, 800);
-    } catch(e) { toast(e.message, 'error'); btn.disabled = false; btn.textContent = 'Send message'; }
-  });
 
   async function handleSave() {
     if (!auth.requireAuth()) return;

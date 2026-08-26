@@ -9,10 +9,11 @@ const { sendSellerDecisionEmail } = require('../utils/email');
 // All admin routes require admin role
 router.use(adminMiddleware);
 
-async function logAdminAction(req, action, target = null, reason = '', metadata = {}) {
+async function logAdminAction(req, action, target = null, reason = '', metadata = {}, reversible = false) {
   const admin = await User.findById(req.user.id).select('full_name email').lean();
   return AdminAction.create({
     admin_id: req.user.id,
+    actor_role: req.user.role === 'control' ? 'control' : 'admin',
     admin_name: admin?.full_name || admin?.email || 'Admin',
     action,
     target_user_id: target?._id || null,
@@ -20,6 +21,7 @@ async function logAdminAction(req, action, target = null, reason = '', metadata 
     target_user_email: target?.email || '',
     reason: reason || '',
     metadata,
+    reversible,
   });
 }
 
@@ -84,7 +86,7 @@ router.post('/seller-applications/:id/approve', async (req, res) => {
     seller.seller_approval_reviewed_by = req.user.id;
     await seller.save();
 
-    await logAdminAction(req, 'seller_approved', seller, '', { application_id: String(seller._id) });
+    await logAdminAction(req, 'seller_approved', seller, '', { application_id: String(seller._id), previous_status: 'pending', previous_reason: '', previous_reviewed_by: null }, true);
     await notifyUser(String(seller._id), { title: '✅ Seller account approved', body: 'Your Bixcart seller account has been approved. You can now sign in and start selling.', type: 'seller_approval', url: '/pages/seller-dashboard.html' }).catch(() => {});
     sendSellerDecisionEmail(seller.email, { sellerName: seller.full_name, approved: true }).catch(err => console.error('[email] seller approval email failed:', err.message));
 
@@ -107,7 +109,7 @@ router.post('/seller-applications/:id/reject', async (req, res) => {
     seller.seller_approval_reviewed_by = req.user.id;
     await seller.save();
 
-    await logAdminAction(req, 'seller_rejected', seller, reason, { application_id: String(seller._id) });
+    await logAdminAction(req, 'seller_rejected', seller, reason, { application_id: String(seller._id), previous_status: 'pending', previous_reason: '', previous_reviewed_by: null }, true);
     await notifyUser(String(seller._id), { title: 'Seller application rejected', body: `Your seller application was rejected. Reason: ${reason}`, type: 'seller_approval', url: '/pages/auth.html' }).catch(() => {});
     sendSellerDecisionEmail(seller.email, { sellerName: seller.full_name, approved: false, reason }).catch(err => console.error('[email] seller rejection email failed:', err.message));
 
@@ -129,12 +131,72 @@ router.get('/actions', async (req, res) => {
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
+// ── CONTROL ACCOUNTS ─────────────────────────────────────────────────────────
+router.get('/controls', async (req, res) => {
+  try {
+    const controls = await User.find({ role: 'control' }).select('-password_hash -push_subscriptions -used_payment_refs').sort({ created_at: -1 }).lean();
+    res.json({ controls: controls.map(u => ({ ...u, id: u._id })) });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+router.post('/controls', async (req, res) => {
+  try {
+    const { email, password, full_name } = req.body || {};
+    if (!email || !password || !full_name) return res.status(400).json({ error: 'Full name, email and password are required' });
+    const normalizedEmail = String(email).trim().toLowerCase();
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalizedEmail)) return res.status(400).json({ error: 'Please enter a valid email address' });
+    if (String(password).length < 8) return res.status(400).json({ error: 'Password must be at least 8 characters' });
+    if (await User.exists({ email: normalizedEmail })) return res.status(409).json({ error: 'That email is already registered. A Control account needs a unique email.' });
+    const bcrypt = require('bcryptjs');
+    const control = await User.create({ email: normalizedEmail, password_hash: bcrypt.hashSync(password, 12), full_name: String(full_name).trim(), role: 'control', account_status: 'active', registration_complete: true, listing_credits: 0 });
+    await logAdminAction(req, 'control_created', control, '', { control_id: String(control._id) });
+    res.status(201).json({ success: true, control: { ...control.toObject(), id: control._id } });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+// ── CONTROL ACTION AUDIT / REVERSAL ─────────────────────────────────────────
+router.get('/control-actions', async (req, res) => {
+  try {
+    const page = Math.max(1, parseInt(req.query.page || 1));
+    const limit = Math.min(100, Math.max(1, parseInt(req.query.limit || 100)));
+    const skip = (page - 1) * limit;
+    const [total, actions] = await Promise.all([
+      AdminAction.countDocuments({ actor_role: 'control' }),
+      AdminAction.find({ actor_role: 'control' }).sort({ created_at: -1 }).skip(skip).limit(limit).lean(),
+    ]);
+    res.json({ actions: actions.map(a => ({ ...a, id: a._id })), total, page, pages: Math.ceil(total / limit) });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+router.post('/control-actions/:id/reverse', async (req, res) => {
+  try {
+    const action = await AdminAction.findOne({ _id: req.params.id, actor_role: 'control', reversible: true });
+    if (!action) return res.status(404).json({ error: 'Reversible control action not found' });
+    if (action.reversed_at) return res.status(409).json({ error: 'This control action has already been reversed' });
+    const meta = action.metadata || {};
+
+    if (['seller_approved','seller_rejected'].includes(action.action)) {
+      const seller = await User.findById(action.target_user_id);
+      if (!seller) return res.status(404).json({ error: 'Seller no longer exists' });
+      seller.seller_approval_status = meta.previous_status || 'pending';
+      seller.seller_approval_reason = meta.previous_reason || '';
+      seller.seller_approval_reviewed_at = null;
+      seller.seller_approval_reviewed_by = meta.previous_reviewed_by || null;
+      await seller.save();
+      action.reversed_at = new Date(); action.reversed_by = req.user.id; await action.save();
+      await logAdminAction(req, 'control_action_reversed', seller, `Reversed ${action.action}`, { original_action_id: String(action._id) });
+      return res.json({ success: true });
+    }
+    return res.status(400).json({ error: 'This control action type cannot be reversed' });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
 // ── USERS ─────────────────────────────────────────────────────────────────────
 // GET /api/admin/users?q=&role=&status=&page=&limit=
 router.get('/users', async (req, res) => {
   try {
     const { q, role, status, page = 1, limit = 20 } = req.query;
-    const filter = { role: { $ne: 'admin' } };
+    const filter = { role: { $nin: ['admin', 'control'] } };
     if (role && role !== 'all') filter.role = role;
     if (status && status !== 'all') filter.account_status = status;
     if (q) {
@@ -399,7 +461,7 @@ router.delete('/hostels/:id', async (req, res) => {
 // used by both the recipient list and the "select all matching" send path.
 function buildRecipientFilter(query) {
   const { q, role, status, verified, university } = query;
-  const filter = { role: { $ne: 'admin' } };
+  const filter = { role: { $nin: ['admin', 'control'] } };
   if (role && role !== 'all') filter.role = role;
   if (status && status !== 'all') filter.account_status = status;
   if (verified === 'yes') filter.is_verified = true;

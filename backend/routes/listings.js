@@ -170,12 +170,13 @@ router.get('/saved', authMiddleware, async (req, res) => {
 });
 router.get('/:id', optionalAuth, async (req, res) => {
   try {
+    if (!require('mongoose').Types.ObjectId.isValid(req.params.id)) return res.status(404).json({ error: 'Listing not found' });
     const listing = await Listing
       .findById(req.params.id)
-      .populate('seller_id', 'full_name rating rating_count bio is_verified created_at university')
+      .populate('seller_id', 'full_name rating rating_count bio is_verified created_at university seller_location_type hostel_name room_number shop_name shop_number shop_address delivery_info')
       .lean();
 
-    if (!listing) return res.status(404).json({ error: 'Listing not found' });
+    if (!listing || listing.status === 'deleted') return res.status(404).json({ error: 'Listing not found' });
 
     Listing.findByIdAndUpdate(req.params.id, { $inc: { views: 1 } }).exec();
 

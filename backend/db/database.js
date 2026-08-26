@@ -4,7 +4,7 @@ const userSchema = new mongoose.Schema({
   email:           { type: String, required: true, unique: true, lowercase: true, trim: true },
   password_hash:   { type: String, required: true },
   full_name:       { type: String, required: true, trim: true },
-  role:            { type: String, required: true, enum: ['buyer', 'seller', 'admin'] },
+  role:            { type: String, required: true, enum: ['buyer', 'seller', 'admin', 'control'] },
   account_status:  { type: String, enum: ['active', 'warned', 'suspended', 'deletion_pending', 'deleted'], default: 'active' },
   deletion_requested_at: { type: Date, default: null },
   deletion_reason: { type: String, default: '' },
@@ -264,6 +264,7 @@ orderSchema.index({ checkout_group: 1 });
 // user's own `admin_messages` array (see userSchema above).
 const adminActionSchema = new mongoose.Schema({
   admin_id: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
+  actor_role: { type: String, enum: ['admin','control'], default: 'admin' },
   admin_name: { type: String, default: '' },
   action: { type: String, required: true },
   target_user_id: { type: mongoose.Schema.Types.ObjectId, ref: 'User', default: null },
@@ -271,6 +272,9 @@ const adminActionSchema = new mongoose.Schema({
   target_user_email: { type: String, default: '' },
   reason: { type: String, default: '' },
   metadata: { type: mongoose.Schema.Types.Mixed, default: {} },
+  reversible: { type: Boolean, default: false },
+  reversed_at: { type: Date, default: null },
+  reversed_by: { type: mongoose.Schema.Types.ObjectId, ref: 'User', default: null },
 }, { timestamps: { createdAt: 'created_at', updatedAt: false } });
 
 
@@ -281,6 +285,9 @@ const userActivitySchema = new mongoose.Schema({
   path: { type: String, default: '' },
   status_code: { type: Number, default: null },
   metadata: { type: mongoose.Schema.Types.Mixed, default: {} },
+  reversible: { type: Boolean, default: false },
+  reversed_at: { type: Date, default: null },
+  reversed_by: { type: mongoose.Schema.Types.ObjectId, ref: 'User', default: null },
 }, { timestamps: { createdAt: 'created_at', updatedAt: false } });
 userActivitySchema.index({ user_id: 1, created_at: -1 });
 

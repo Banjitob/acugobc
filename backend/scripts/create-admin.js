@@ -41,7 +41,7 @@ async function prompt(rl, question) {
       if (existing.role === 'admin') {
         console.log(`Admin account already exists for ${email}`);
       } else {
-        await User.findByIdAndUpdate(existing._id, { $set: { role: 'admin', account_status: 'active' } });
+        await User.findByIdAndUpdate(existing._id, { $set: { role: 'admin', account_status: 'active', registration_complete: true } });
         console.log(`✅ Upgraded existing account ${email} to admin.`);
       }
     } else {

@@ -35,6 +35,14 @@ function adminMiddleware(req, res, next) {
   });
 }
 
+function controlMiddleware(req, res, next) {
+  authMiddleware(req, res, () => {
+    if (req.user?.role !== 'control') {
+      return res.status(403).json({ error: 'Control access required' });
+    }
+    next();
+  });
+}
 
 function sellerApprovalMiddleware(req, res, next) {
   authMiddleware(req, res, async () => {
@@ -51,4 +59,4 @@ function sellerApprovalMiddleware(req, res, next) {
   });
 }
 
-module.exports = { authMiddleware, optionalAuth, adminMiddleware, sellerApprovalMiddleware };
+module.exports = { authMiddleware, optionalAuth, adminMiddleware, controlMiddleware, sellerApprovalMiddleware };

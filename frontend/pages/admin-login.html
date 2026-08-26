@@ -198,7 +198,7 @@ const adminAuth = {
 };
 
 // If already logged in as admin, go straight to dashboard
-if (adminAuth.getToken() && adminAuth.getUser()?.role === 'admin') {
+if (adminAuth.getToken() && ['admin','control'].includes(adminAuth.getUser()?.role)) {
   window.location.replace('admin.html');
 }
 
@@ -237,8 +237,8 @@ async function doLogin() {
       return;
     }
 
-    if (data.user?.role !== 'admin') {
-      showError('Access denied. This portal is for administrators only.');
+    if (!['admin','control'].includes(data.user?.role)) {
+      showError('Access denied. This portal is for administrators or Controls only.');
       return;
     }
 

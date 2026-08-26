@@ -99,6 +99,7 @@ app.use('/api/cart',     require('./routes/cart'));
 app.use('/api/uploads',  require('./routes/uploads'));
 app.use('/api/push',     require('./routes/push'));
 app.use('/api/admin',    require('./routes/admin'));
+app.use('/api/control',  require('./routes/control'));
 
 // Health check
 app.get('/api/health', (req, res) =>
