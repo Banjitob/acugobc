@@ -455,20 +455,32 @@ async function finalizeCheckoutPayment({ payment_reference, buyerId }) {
 
   const buyer = await User.findById(buyerId).select('full_name email').lean();
   for (const order of orders) {
-    const sellerId = String(order.seller_id);
+    // Always derive the notification recipient from the listing owner. Never use
+    // the buyer email for the seller-sale email, even if an old/corrupt order has
+    // incorrect seller_id data.
+    const listing = await Listing.findById(order.listing_id).select('title delivery_window seller_id').lean();
+    const sellerId = listing?.seller_id ? String(listing.seller_id) : String(order.seller_id);
     const seller = await User.findById(sellerId).select('email full_name').lean();
-    const listing = await Listing.findById(order.listing_id).select('title delivery_window').lean();
-    await notifyUser(sellerId, {
-      title: 'Payment received',
-      body: 'A buyer has paid for your item. Please fulfil the order and share the delivery details.',
-      type: 'order', url: `/pages/messages.html?conv=${order._id}`,
-    }).catch(() => {});
-    if (seller?.email) await sendOrderSellerAlertEmail(seller.email, {
-      buyerName: buyer?.full_name || 'A buyer',
-      listingTitle: listing?.title || 'your item',
-      orderId: String(order._id),
-      deliveryWindow: listing?.delivery_window || '1d',
-    }).catch(() => {});
+
+    // A buyer must never receive the seller's "you received a sale" email.
+    if (!seller?.email || String(seller._id) === String(buyerId) || seller.email.toLowerCase() === String(buyer?.email || '').toLowerCase()) {
+      console.error('[order-email] Refusing seller email because recipient resolves to buyer or is missing', {
+        order_id: String(order._id), seller_id: sellerId, buyer_id: String(buyerId),
+      });
+    } else {
+      await notifyUser(sellerId, {
+        title: 'Payment received',
+        body: 'A buyer has paid for your item. Please fulfil the order and share the delivery details.',
+        type: 'order', url: `/pages/seller-dashboard.html?tab=orders&order=${order._id}`,
+      }).catch(() => {});
+      await sendOrderSellerAlertEmail(seller.email, {
+        buyerName: buyer?.full_name || 'A buyer',
+        listingTitle: listing?.title || 'your item',
+        orderId: String(order._id),
+        deliveryWindow: listing?.delivery_window || '1d',
+        amount: order.amount,
+      }).catch(err => console.error('[email] seller sale alert failed:', err.message));
+    }
   }
 
   return {

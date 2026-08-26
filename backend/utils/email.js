@@ -103,16 +103,16 @@ async function sendPasswordResetEmail(to, token) {
   });
 }
 
-async function sendOrderSellerAlertEmail(to, { buyerName, listingTitle, orderId, deliveryWindow }) {
+async function sendOrderSellerAlertEmail(to, { buyerName, listingTitle, orderId, deliveryWindow, amount }) {
   await sendMail({
     to,
-    subject: `New sale alert for ${listingTitle}`,
+    subject: `You received a new sale — ${listingTitle}`,
     html: `
       <div style="font-family:sans-serif;max-width:520px;margin:auto;padding:32px;background:#fafafa;border-radius:12px;">
-        <h2 style="color:#1a1a1a;margin-bottom:8px;">New order received</h2>
+        <h2 style="color:#1a1a1a;margin-bottom:8px;">You have received a new sale</h2>
         <p style="color:#555;line-height:1.6;">
-          <strong>${buyerName}</strong> paid for <strong>${listingTitle}</strong> on Bixcart.
-          Please accept or decline the order within <strong>6 hours</strong>.
+          <strong>${buyerName}</strong> has paid for <strong>${listingTitle}</strong> on Bixcart.
+          <strong>Sale amount: ₦${Number(amount || 0).toLocaleString('en-NG')}</strong>. Please accept or decline the order within <strong>6 hours</strong>.
         </p>
         <p style="color:#555;line-height:1.6;">If you accept it, the item must be delivered within the selected window: <strong>${deliveryWindow}</strong>.</p>
         <div style="margin:24px 0;padding:14px 18px;border:1px solid #eee;border-radius:10px;background:white;">

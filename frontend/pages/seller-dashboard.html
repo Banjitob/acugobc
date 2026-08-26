@@ -477,7 +477,9 @@
       allOrders = await api.get('/orders/selling');
       renderSellerOrders();
     } catch (e) {
-      el.innerHTML = `<div style="padding:32px;text-align:center;color:var(--ink-3);">Could not load orders.<br><small>${escHtml(e.message || 'Please try again.')}</small></div>`;
+      // Allow a later tab click to retry instead of leaving the Orders tab permanently stuck.
+      ordersLoaded = false;
+      el.innerHTML = `<div style="padding:32px;text-align:center;color:var(--ink-3);">Could not load orders.<br><small>${escHtml(e.message || 'Please try again.')}</small><br><button class="btn btn-secondary" style="margin-top:12px;" onclick="ordersLoaded=true;loadOrders()">Retry</button></div>`;
     }
   }
 

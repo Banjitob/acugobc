@@ -9,11 +9,25 @@ const api = {
       const token = localStorage.getItem('cm_token');
       if (token) headers['Authorization'] = `Bearer ${token}`;
     }
-    const res = await fetch(`${API_BASE}${path}`, {
-      method, headers,
-      body: body ? JSON.stringify(body) : undefined,
-    });
-    const data = await res.json();
+    // Prevent dashboard sections from staying on "Loading…" forever when a request hangs.
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 20000);
+    let res;
+    try {
+      res = await fetch(`${API_BASE}${path}`, {
+        method, headers,
+        body: body ? JSON.stringify(body) : undefined,
+        signal: controller.signal,
+      });
+    } catch (err) {
+      if (err?.name === 'AbortError') throw new Error('Request timed out. Please try again.');
+      throw err;
+    } finally {
+      clearTimeout(timeout);
+    }
+    let data;
+    try { data = await res.json(); }
+    catch { data = { error: 'Server returned an invalid response' }; }
     if (!res.ok) throw new Error(data.error || 'Request failed');
     return data;
   },
