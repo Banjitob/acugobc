@@ -444,20 +444,9 @@
     showRegister();
   }
 
-  // Redirect if already logged in
-  if (!action && !getParam('mode')) {
-    if (auth.isLoggedIn()) {
-      // Refresh the role from the database before redirecting. This prevents a stale
-      // buyer token/localStorage record from sending an account to the buyer dashboard
-      // after an admin has upgraded the same email to admin/control.
-      api.get('/auth/me').then(fresh => {
-        auth.save(auth.getToken(), fresh);
-        if (!fresh.registration_complete) window.location.replace('register.html');
-        else if (fresh.role === 'admin' || fresh.role === 'control') window.location.replace('admin.html');
-        else window.location.replace(fresh.role === 'seller' ? 'seller-dashboard.html' : 'buyer-dashboard.html');
-      }).catch(() => auth.clear());
-    }
-  }
+  // Do not automatically redirect users just because a previous session exists.
+  // The auth page should always remain available so the user can explicitly sign in.
+  // After a successful login, the server-provided role determines the destination.
 
   // ── Login ──────────────────────────────────────────────────────────────────
   document.getElementById('login-form').addEventListener('submit', async e => {
