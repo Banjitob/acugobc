@@ -302,7 +302,7 @@
 
   // Escape dynamic text before inserting it into HTML. This helper is local to
   // the seller dashboard because app.js does not expose escHtml globally.
-  function escHtml(value) {
+  window.escHtml = function(value) {
     return String(value ?? '').replace(/&/g, '&amp;')
       .replace(/</g, '&lt;')
       .replace(/>/g, '&gt;')
