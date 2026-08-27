@@ -300,6 +300,16 @@
   // Nav
   renderNav();
 
+  // Escape dynamic text before inserting it into HTML. This helper is local to
+  // the seller dashboard because app.js does not expose escHtml globally.
+  function escHtml(value) {
+    return String(value ?? '').replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;');
+  }
+
   // Auth guard — seller only
   if (!auth.isLoggedIn()) { window.location.href = 'auth.html'; }
   const user = auth.getUser();
