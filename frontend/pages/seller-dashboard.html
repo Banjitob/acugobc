@@ -115,7 +115,25 @@
   .chip-completing{ background: #fffbeb; color: #92400e; }
   .chip-completed { background: #d1fae5; color: #065f46; }
   .chip-cancelled { background: #fee2e2; color: #991b1b; }
-  .order-filter-btn.active { background: var(--ink); color: white !important; border-color: var(--ink); }
+  .ord-filter-btn.active { background: var(--ink); color: white !important; border-color: var(--ink); }
+
+  /* ── Order cards (Orders tab — cart-checkout deliveries the seller fulfils) ──
+     Scoped to #orders-container so these don't collide with the .order-title /
+     .order-meta rules above, which style the differently-structured rows used
+     by the Transactions tab. */
+  #orders-container .order-card { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; padding: 18px 0; border-bottom: 1px solid var(--border); }
+  #orders-container .order-card:last-child { border-bottom: none; }
+  #orders-container .order-card-top { display: flex; gap: 14px; flex: 1; min-width: 0; align-items: flex-start; }
+  #orders-container .order-img { width: 64px; height: 64px; border-radius: var(--radius-md); background: var(--surface-2); flex-shrink: 0; overflow: hidden; display: flex; align-items: center; justify-content: center; color: var(--ink-3); }
+  #orders-container .order-img img { width: 100%; height: 100%; object-fit: cover; }
+  #orders-container .order-info { flex: 1; min-width: 0; }
+  #orders-container .order-info .order-title { font-size: 15px; font-weight: 700; margin-bottom: 4px; white-space: normal; overflow: visible; text-overflow: clip; }
+  #orders-container .order-info .order-meta { font-size: 12px; color: var(--ink-3); display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+  #orders-container .order-actions { display: flex; flex-direction: column; align-items: flex-end; gap: 8px; flex-shrink: 0; }
+  @media(max-width: 600px) {
+    #orders-container .order-card { flex-wrap: wrap; }
+    #orders-container .order-actions { width: 100%; align-items: flex-start; }
+  }
   @media(max-width: 900px) {
     .dash-grid { grid-template-columns: 1fr; }
     .stats-row { grid-template-columns: 1fr 1fr; }
@@ -300,16 +318,6 @@
   // Nav
   renderNav();
 
-  // Escape dynamic text before inserting it into HTML. This helper is local to
-  // the seller dashboard because app.js does not expose escHtml globally.
-  window.escHtml = function(value) {
-    return String(value ?? '').replace(/&/g, '&amp;')
-      .replace(/</g, '&lt;')
-      .replace(/>/g, '&gt;')
-      .replace(/"/g, '&quot;')
-      .replace(/'/g, '&#39;');
-  }
-
   // Auth guard — seller only
   if (!auth.isLoggedIn()) { window.location.href = 'auth.html'; }
   const user = auth.getUser();
@@ -405,6 +413,10 @@
 
   let allListings = [], currentFilter = 'all';
 
+  function escHtml(s) {
+    return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  }
+
   window.openUserProfile = (userId) => {
     if (!userId) return;
     window.location.href = `user-profile.html?id=${userId}`;
@@ -490,7 +502,7 @@
     } catch (e) {
       // Allow a later tab click to retry instead of leaving the Orders tab permanently stuck.
       ordersLoaded = false;
-      el.innerHTML = `<div style="padding:32px;text-align:center;color:var(--ink-3);">Could not load orders.<br><small>${window.escHtml(e.message || 'Please try again.')}</small><br><button class="btn btn-secondary" style="margin-top:12px;" onclick="ordersLoaded=true;loadOrders()">Retry</button></div>`;
+      el.innerHTML = `<div style="padding:32px;text-align:center;color:var(--ink-3);">Could not load orders.<br><small>${escHtml(e.message || 'Please try again.')}</small><br><button class="btn btn-secondary" style="margin-top:12px;" onclick="ordersLoaded=true;loadOrders()">Retry</button></div>`;
     }
   }
 
@@ -536,7 +548,7 @@
             <div class="order-title">${o.listing_title}</div>
             <div class="order-meta">
               ${statusBadge(orderDisplayStatus(o))}
-              <span style="display:flex;align-items:center;gap:4px;">${icons.user} ${o.buyer_id ? `<a href="user-profile.html?id=${o.buyer_id}" style="color:inherit;text-decoration:underline;text-underline-offset:2px;">${window.escHtml(o.buyer_name || 'Buyer')}</a>` : window.escHtml(o.buyer_name || 'Buyer')}</span>
+              <span style="display:flex;align-items:center;gap:4px;">${icons.user} ${o.buyer_id ? `<a href="user-profile.html?id=${o.buyer_id}" style="color:inherit;text-decoration:underline;text-underline-offset:2px;">${escHtml(o.buyer_name || 'Buyer')}</a>` : escHtml(o.buyer_name || 'Buyer')}</span>
               <span>${formatDate(o.created_at)}</span>
             </div>
             ${groupCounts[o.checkout_group] > 1 ? `<div style="font-size:12px;color:var(--ink-3);margin-top:6px;">Part of a ${groupCounts[o.checkout_group]}-item order</div>` : ''}
