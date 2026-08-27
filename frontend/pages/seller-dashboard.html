@@ -464,7 +464,7 @@
     document.getElementById('tab-orders').style.display       = tab === 'orders'       ? '' : 'none';
     document.getElementById('tab-transactions').style.display = tab === 'transactions' ? '' : 'none';
     if (tab === 'transactions' && !txnsLoaded) { txnsLoaded = true; loadTxns(); }
-    if (tab === 'orders' && !ordersLoaded) { ordersLoaded = true; loadOrders(); }
+    if (tab === 'orders') { ordersLoaded = true; loadOrders(); }
   }
 
   // Orders created from a buyer's cart checkout — delivery, already paid, seller fulfills.
@@ -472,6 +472,7 @@
 
   async function loadOrders() {
     const el = document.getElementById('orders-container');
+    if (!el) return;
     el.innerHTML = '<div style="padding:40px;text-align:center;color:var(--ink-3);">Loading…</div>';
     try {
       allOrders = await api.get('/orders/selling');
@@ -482,6 +483,16 @@
       el.innerHTML = `<div style="padding:32px;text-align:center;color:var(--ink-3);">Could not load orders.<br><small>${escHtml(e.message || 'Please try again.')}</small><br><button class="btn btn-secondary" style="margin-top:12px;" onclick="ordersLoaded=true;loadOrders()">Retry</button></div>`;
     }
   }
+
+  // Orders can be created by a different browser/user after this dashboard was
+  // opened. Refresh whenever the seller returns to the tab/window so a newly paid
+  // order does not remain hidden behind an old empty state.
+  document.addEventListener('visibilitychange', () => {
+    if (!document.hidden && document.getElementById('tab-orders')?.style.display !== 'none') loadOrders();
+  });
+  window.addEventListener('focus', () => {
+    if (document.getElementById('tab-orders')?.style.display !== 'none') loadOrders();
+  });
 
   function setOrderFilter(f, btn) {
     currentOrderFilter = f;

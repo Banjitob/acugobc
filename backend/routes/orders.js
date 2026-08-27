@@ -189,13 +189,35 @@ router.get('/buying', authMiddleware, async (req, res) => {
 // GET /api/orders/selling
 router.get('/selling', sellerApprovalMiddleware, async (req, res) => {
   try {
+    // The listing owner is the source of truth for seller ownership. Include
+    // both the direct seller_id and any legacy orders whose seller_id may be
+    // stale, then deduplicate by order id. This keeps paid orders visible even
+    // if an older checkout wrote incomplete seller ownership data.
+    const sellerId = String(req.user.id);
+    const sellerListings = await Listing.find({ seller_id: req.user.id }).select('_id').lean();
+    const listingIds = sellerListings.map(l => l._id);
+
     const orders = await Order
-      .find({ seller_id: req.user.id })
-      .populate('listing_id', 'title images category')
+      .find({ $or: [
+        { seller_id: req.user.id },
+        ...(listingIds.length ? [{ listing_id: { $in: listingIds } }] : []),
+      ] })
+      .populate('listing_id', 'title images category seller_id')
       .populate('buyer_id',   'full_name university')
       .sort({ created_at: -1 }).lean();
 
-    res.json(orders.map(o => ({
+    const seen = new Set();
+    const sellerOrders = orders.filter(o => {
+      const id = String(o._id);
+      if (seen.has(id)) return false;
+      seen.add(id);
+      // Never expose another seller's order just because an order's listing
+      // query matched accidentally. Ownership is checked against the listing.
+      const listingOwner = o.listing_id?.seller_id ? String(o.listing_id.seller_id) : null;
+      return String(o.seller_id) === sellerId || listingOwner === sellerId;
+    });
+
+    res.json(sellerOrders.map(o => ({
       ...o, id: o._id,
       listing_title:   o.listing_id?.title,
       listing_images:  o.listing_id?.images || [],
@@ -204,7 +226,10 @@ router.get('/selling', sellerApprovalMiddleware, async (req, res) => {
       buyer_name:      o.buyer_id?.full_name,
       buyer_university:o.buyer_id?.university,
     })));
-  } catch (e) { res.status(500).json({ error: e.message }); }
+  } catch (e) {
+    console.error('[orders/selling] failed:', e);
+    res.status(500).json({ error: e.message || 'Could not load seller orders' });
+  }
 });
 
 // POST /api/orders
