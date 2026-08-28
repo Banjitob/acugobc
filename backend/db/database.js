@@ -93,12 +93,6 @@ const listingSchema = new mongoose.Schema({
   images:          { type: [String], default: [] },
   delivery_window:  { type: String, default: '1d', enum: ['5m','6h','12h','1d','3d','7d'] },
   status:          { type: String, default: 'active', enum: ['active','pending','sold','deleted','flagged'] },
-  // How many units of this exact listing the seller has available. Each paid
-  // order consumes exactly one unit. The listing stays 'active' (and buyable)
-  // as long as stock remains, and is auto-marked 'sold' once it hits zero;
-  // a cancelled/refunded order restores one unit. Sellers can also manually
-  // mark-sold/relist regardless of remaining stock (see listings.js).
-  stock_quantity:  { type: Number, default: 1, min: 0 },
   views:           { type: Number, default: 0 },
   saves:           { type: Number, default: 0 },
   ai_flagged:      { type: Boolean, default: false },
@@ -226,6 +220,10 @@ const orderSchema = new mongoose.Schema({
   delivered_at:           { type: Date, default: null },
   meetup_location:        { type: String, default: null },
   meetup_time:            { type: String, default: null },
+  delivery_scheduled_for: { type: Date, default: null },
+  delivery_spot_id:       { type: mongoose.Schema.Types.ObjectId, ref: 'DeliverySpot', default: null },
+  delivery_spot_name:     { type: String, default: null },
+  delivery_schedule_set_at: { type: Date, default: null },
   buyer_marked_complete:  { type: Boolean, default: false },
   seller_marked_complete: { type: Boolean, default: false },
   buyer_rating:           { type: Number, default: null, min: 1, max: 5 },
@@ -263,6 +261,15 @@ const orderSchema = new mongoose.Schema({
 orderSchema.index({ buyer_id: 1 });
 orderSchema.index({ seller_id: 1 });
 orderSchema.index({ checkout_group: 1 });
+
+
+const deliverySpotSchema = new mongoose.Schema({
+  name: { type: String, required: true, trim: true },
+  campus: { type: String, default: 'Ajayi Crowther University', trim: true },
+  is_active: { type: Boolean, default: true },
+  sort_order: { type: Number, default: 0 },
+}, { timestamps: { createdAt: 'created_at', updatedAt: 'updated_at' } });
+deliverySpotSchema.index({ name: 1, campus: 1 }, { unique: true });
 
 // ── Admin broadcast messages ──
 // Records each "send to selected users" action from the admin panel, for
@@ -305,37 +312,7 @@ const checkoutIntentSchema = new mongoose.Schema({
   items: { type: [mongoose.Schema.Types.Mixed], required: true },
   expires_at: { type: Date, required: true },
   used_at: { type: Date, default: null },
-  // Where this checkout came from. 'buy_request' means every listing in it was
-  // already accepted by its seller before payment — see buyRequests.js — so
-  // finalizeCheckoutPayment skips the post-payment "seller must accept" step.
-  source: { type: String, enum: ['cart', 'buy_request'], default: 'cart' },
-  buy_request_group: { type: String, default: null },
 }, { timestamps: { createdAt: 'created_at', updatedAt: 'updated_at' } });
-
-// A buyer's request to purchase a listing, made BEFORE any money moves. The
-// seller must accept it before the buyer is allowed to pay — see
-// routes/buyRequests.js for the full lifecycle (pending -> accepted -> paid,
-// or -> declined / expired). Several requests created from one cart
-// submission share a `request_group` so the frontend can treat them as one
-// batch, but each is accepted/declined independently by its own seller.
-const buyRequestSchema = new mongoose.Schema({
-  buyer_id:       { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
-  seller_id:      { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
-  listing_id:      { type: mongoose.Schema.Types.ObjectId, ref: 'Listing', required: true },
-  amount:         { type: Number, required: true }, // listing price captured at request time
-  status:         { type: String, enum: ['pending','accepted','declined','expired','paid','cancelled'], default: 'pending' },
-  request_group:  { type: String, default: null },
-  decline_reason: { type: String, default: '' },
-  response_deadline_at: { type: Date, default: null }, // seller must accept/decline by this time
-  responded_at:   { type: Date, default: null },
-  payment_deadline_at: { type: Date, default: null },  // buyer must pay by this time once accepted
-  order_id:       { type: mongoose.Schema.Types.ObjectId, ref: 'Order', default: null },
-}, { timestamps: { createdAt: 'created_at', updatedAt: 'updated_at' } });
-
-buyRequestSchema.index({ buyer_id: 1 });
-buyRequestSchema.index({ seller_id: 1 });
-buyRequestSchema.index({ status: 1 });
-buyRequestSchema.index({ request_group: 1 });
 
 const broadcastSchema = new mongoose.Schema({
   title:            { type: String, default: '' },
@@ -358,7 +335,6 @@ const ConversationReport = mongoose.model('ConversationReport', conversationRepo
 const Order              = mongoose.model('Order',              orderSchema);
 const Broadcast          = mongoose.model('Broadcast',          broadcastSchema);
 const CheckoutIntent     = mongoose.model('CheckoutIntent',     checkoutIntentSchema);
-const BuyRequest         = mongoose.model('BuyRequest',         buyRequestSchema);
 
 const SELLER_COMMISSION_TIERS = [
   { level: 1, threshold: 0, commission_percent: 7.0, label: 'Starter', discount_cap: 0 },
@@ -410,6 +386,7 @@ async function connectDb() {
 const AdminAction = mongoose.model('AdminAction', adminActionSchema);
 const UserActivity = mongoose.model('UserActivity', userActivitySchema);
 const UserReport = mongoose.model('UserReport', userReportSchema);
+const DeliverySpot = mongoose.model('DeliverySpot', deliverySpotSchema);
 
 module.exports = {
   connectDb,
@@ -423,10 +400,10 @@ module.exports = {
   Message,
   ConversationReport,
   UserReport,
+  DeliverySpot,
   Order,
   Broadcast,
   CheckoutIntent,
-  BuyRequest,
   AdminAction,
   UserActivity,
   SELLER_COMMISSION_TIERS,

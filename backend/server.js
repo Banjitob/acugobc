@@ -95,7 +95,6 @@ app.use('/api/auth',     require('./routes/auth'));
 app.use('/api/listings', require('./routes/listings'));
 app.use('/api/messages', require('./routes/messages'));
 app.use('/api/orders',   require('./routes/orders'));
-app.use('/api/buy-requests', require('./routes/buyRequests'));
 app.use('/api/cart',     require('./routes/cart'));
 app.use('/api/uploads',  require('./routes/uploads'));
 app.use('/api/push',     require('./routes/push'));

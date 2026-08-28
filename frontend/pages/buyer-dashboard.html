@@ -306,6 +306,8 @@
     });
   });
 
+  let allOrders = [];
+
   async function loadProfile() {
     try {
       const user = await api.get('/auth/me');
@@ -364,8 +366,6 @@
   }
   window.uploadBuyerAvatar = uploadBuyerAvatar;
 
-  let allOrders = [], allRequests = [];
-
   async function loadOrders() {
     document.getElementById('orders-list').innerHTML = Array(3).fill(0).map(() =>
       `<div class="card" style="padding:18px;display:flex;gap:16px;">
@@ -377,14 +377,7 @@
         </div>
       </div>`).join('');
     try {
-      const [orders, requests] = await Promise.all([
-        api.get('/orders/buying'),
-        buyRequests.buying().catch(() => []),
-      ]);
-      allOrders = orders;
-      // Once a request is paid, it's a real Order (already in allOrders above) —
-      // exclude 'paid' here so it isn't shown twice.
-      allRequests = requests.filter(r => r.status !== 'paid');
+      allOrders = await api.get('/orders/buying');
       document.getElementById('p-purchases').textContent = allOrders.length;
       renderOrders();
     } catch(e) {
@@ -392,20 +385,8 @@
     }
   }
 
-  function buyerRequestDisplayStatus(r) {
-    if (r.status === 'pending' || r.status === 'accepted') return 'pending';
-    if (r.status === 'declined' || r.status === 'expired') return 'cancelled';
-    return 'pending';
-  }
-
   function renderOrders() {
-    const feed = [
-      ...allOrders.map(o => ({ ...o, _kind: 'order' })),
-      ...allRequests.map(r => ({ ...r, _kind: 'request' })),
-    ].sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
-
-    const filtered = orderStatusFilter === 'all' ? feed
-      : feed.filter(item => (item._kind === 'order' ? orderDisplayStatus(item) : buyerRequestDisplayStatus(item)) === orderStatusFilter);
+    const filtered = orderStatusFilter === 'all' ? allOrders : allOrders.filter(o => orderDisplayStatus(o) === orderStatusFilter);
     const el = document.getElementById('orders-list');
     if (!filtered.length) {
       el.innerHTML = `<div class="empty-state"><div class="empty-state-icon">${icons.package}</div><h3>No ${orderStatusFilter === 'all' ? '' : orderStatusFilter} orders</h3><p>Your ${orderStatusFilter === 'all' ? '' : orderStatusFilter + ' '}orders will appear here.</p></div>`;
@@ -416,45 +397,7 @@
     const groupCounts = {};
     allOrders.forEach(o => { if (o.checkout_group) groupCounts[o.checkout_group] = (groupCounts[o.checkout_group] || 0) + 1; });
 
-    el.innerHTML = filtered.map(item => item._kind === 'request' ? renderRequestCard(item) : renderOrderCard(item, groupCounts)).join('');
-  }
-
-  function requestBadge(r) {
-    if (r.status === 'pending') return `<span class="order-status-chip chip-pending">Waiting for seller</span>`;
-    if (r.status === 'accepted') return `<span class="order-status-chip chip-confirmed">Accepted — pay now</span>`;
-    if (r.status === 'declined') return `<span class="order-status-chip chip-cancelled">Declined</span>`;
-    if (r.status === 'expired') return `<span class="order-status-chip chip-cancelled">Expired</span>`;
-    return '';
-  }
-
-  function renderRequestCard(r) {
-    return `
-      <div class="order-card">
-        <div class="order-card-top">
-          <div class="order-img">${r.listing_images?.[0] ? `<img src="${r.listing_images[0]}" alt="">` : icons.package}</div>
-          <div class="order-info">
-            <div class="order-title">${r.listing_title || 'Listing'}</div>
-            <div class="order-meta">
-              ${requestBadge(r)}
-              <span style="display:flex;align-items:center;gap:4px;">${icons.user} ${r.seller_name || 'Seller'}</span>
-              <span>${formatDate(r.created_at)}</span>
-            </div>
-            ${r.status === 'pending' ? `<div style="font-size:12px;color:#b45309;margin-top:6px;font-weight:600;">No payment taken yet — you'll be notified when the seller responds.</div>` : ''}
-            ${r.status === 'accepted' ? `<div style="font-size:12px;color:#059669;margin-top:6px;font-weight:600;">Pay within 2 hours or this request expires.</div>` : ''}
-            ${r.decline_reason ? `<div style="font-size:12px;color:var(--ink-3);margin-top:6px;">Reason: ${r.decline_reason}</div>` : ''}
-          </div>
-        </div>
-        <div class="order-actions">
-          <div style="font-size:18px;font-weight:700;">${formatCurrency(r.amount)}</div>
-          <div style="display:flex;gap:6px;flex-wrap:wrap;">
-            ${r.status === 'accepted' ? `<a href="checkout.html?group=${r.request_group}" class="btn btn-accent btn-sm">${icons.creditCard || ''} Pay now</a>` : ''}
-            <a href="listing.html?id=${r.listing_id}" class="btn btn-ghost btn-sm">View listing</a>
-          </div>
-        </div>
-      </div>`;
-  }
-
-  function renderOrderCard(o, groupCounts) {
+    el.innerHTML = filtered.map(o => {
       const stageMessage = o.status === 'paid'
         ? '<div style="font-size:12px;color:#b45309;margin-top:6px;font-weight:600;">🔒 Waiting for the seller to accept your order.</div>'
         : o.status === 'confirmed'
@@ -483,6 +426,8 @@
               ? `<div style="font-size:12px;color:var(--ink-3);margin-top:6px;display:flex;align-items:center;gap:4px;">${icons.truck} Delivery on ${o.delivery_address.campus || 'Ajayi Crowther University'}${o.delivery_address.note ? ' · ' + o.delivery_address.note : ''}</div>`
               : (o.meetup_location ? `<div style="font-size:12px;color:var(--ink-3);margin-top:6px;display:flex;align-items:center;gap:4px;">${icons.mapPin} Meetup: ${o.meetup_location}</div>` : '')}
             ${stageMessage}
+            ${o.status === 'confirmed' && !o.delivery_scheduled_for ? `<div class="delivery-schedule-box" style="margin-top:10px;padding:12px;border:1px solid var(--border);border-radius:12px;background:var(--bg);"><div style="font-size:12px;font-weight:700;margin-bottom:8px;">Choose delivery time & campus spot</div><div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;"><input class="form-input" type="datetime-local" id="delivery-at-${o.id}" style="font-size:12px;"><select class="form-input" id="delivery-spot-${o.id}" style="font-size:12px;"><option value="">Loading spots…</option></select></div><button class="btn btn-primary btn-sm" style="margin-top:8px;" onclick="scheduleDelivery('${o.id}')">Confirm delivery time</button></div>` : ''}
+            ${o.delivery_scheduled_for ? `<div style="font-size:12px;color:#065f46;margin-top:8px;font-weight:600;">📍 Delivery: ${escHtml(o.delivery_spot_name || o.meetup_location || 'Campus spot')} · ${new Date(o.delivery_scheduled_for).toLocaleString('en-NG')}</div>` : ''}
             ${o.status === 'completed' && !o.buyer_rating ? `<div style="font-size:12px;color:#059669;margin-top:6px;font-weight:600;">✓ Complete — tap ★ to rate</div>` : ''}
             ${o.status === 'fulfilled' ? `
               <div style="display:flex;gap:8px;margin-top:10px;">
@@ -502,8 +447,28 @@
           </div>
         </div>
       </div>`;
+    }).join('');
   }
 
+  let deliverySpotsCache = null;
+  async function getDeliverySpots() {
+    if (deliverySpotsCache) return deliverySpotsCache;
+    const data = await api.get('/orders/delivery-spots');
+    deliverySpotsCache = data.spots || [];
+    return deliverySpotsCache;
+  }
+  async function populateDeliverySpots(id) {
+    const select = document.getElementById(`delivery-spot-${id}`); if (!select) return;
+    try { const spots = await getDeliverySpots(); select.innerHTML = spots.length ? '<option value="">Choose a campus spot</option>' + spots.map(x => `<option value="${x.id}">${escHtml(x.name)}</option>`).join('') : '<option value="">No spots configured yet</option>'; } catch(e) { select.innerHTML = `<option value="">${escHtml(e.message)}</option>`; }
+  }
+  window.scheduleDelivery = async (id) => {
+    const at = document.getElementById(`delivery-at-${id}`)?.value;
+    const spot = document.getElementById(`delivery-spot-${id}`)?.value;
+    if (!at) { toast('Choose a delivery date and time', 'error'); return; }
+    if (!spot) { toast('Choose a campus delivery spot', 'error'); return; }
+    try { await api.post(`/orders/${id}/schedule-delivery`, { delivery_at: new Date(at).toISOString(), delivery_spot_id: spot }); toast('Delivery scheduled. The seller has been notified.', 'success'); loadOrders(); } catch(e) { toast(e.message,'error'); }
+  };
+  
   window.confirmDelivery = async (id) => {
     const input = document.getElementById(`code-input-${id}`);
     const code = input?.value.trim();

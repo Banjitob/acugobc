@@ -4,7 +4,7 @@
  * for policy violations and flags anything suspicious.
  */
 
-const { Listing, Conversation, Message, Order, User, BuyRequest } = require('../db/database');
+const { Listing, Conversation, Message, Order, User } = require('../db/database');
 const { moderateListing, moderateMessage } = require('./aiModerator');
 const { notifyUser } = require('../db/push');
 const { sendOrderRefundEmail } = require('./email');
@@ -205,43 +205,6 @@ async function sweepExpiredOrders() {
   }
 }
 
-// Buy requests the seller never answered (still 'pending' past their
-// response deadline), and requests the seller accepted but the buyer never
-// paid for (past the payment deadline), both auto-expire. Nothing needs to
-// be restored on the listing side — a pending/accepted request never
-// reserved stock, since listings stay live/buyable the whole time.
-async function sweepExpiredBuyRequests() {
-  const now = new Date();
-  const [pendingExpired, acceptedExpired] = await Promise.all([
-    BuyRequest.find({ status: 'pending', response_deadline_at: { $ne: null, $lt: now } }).limit(100),
-    BuyRequest.find({ status: 'accepted', payment_deadline_at: { $ne: null, $lt: now } }).limit(100),
-  ]);
-  const expired = [...pendingExpired, ...acceptedExpired];
-  if (!expired.length) return;
-  console.log(`[buy-requests] Found ${expired.length} expired request(s)`);
-
-  for (const reqDoc of expired) {
-    try {
-      const wasAccepted = reqDoc.status === 'accepted';
-      reqDoc.status = 'expired';
-      await reqDoc.save();
-
-      const listing = await Listing.findById(reqDoc.listing_id).select('title').lean();
-      const title = listing?.title || 'this item';
-      await notifyUser(String(reqDoc.buyer_id), {
-        title: 'Buy request expired',
-        body: wasAccepted
-          ? `Your request for "${title}" expired because payment wasn't completed in time.`
-          : `Your request for "${title}" expired because the seller didn't respond in time.`,
-        type: 'order',
-        url: `/pages/buyer-dashboard.html?tab=orders`,
-      }).catch(() => {});
-    } catch (e) {
-      console.error(`[buy-requests] Failed to expire ${reqDoc._id}:`, e.message);
-    }
-  }
-}
-
 async function sweepListings() {
   const listings = await Listing.find({ status: 'active', ai_flagged: { $ne: true } })
     .select('_id title description category seller_id').lean();
@@ -331,13 +294,11 @@ function startSweepScheduler() {
   // Order deadlines are time-sensitive, so they run independently of Gemini.
   setTimeout(() => {
     sweepExpiredOrders().catch(e => console.error('[orders] Initial expiry sweep failed:', e.message));
-    sweepExpiredBuyRequests().catch(e => console.error('[buy-requests] Initial expiry sweep failed:', e.message));
     syncRefundStatuses().catch(e => console.error('[refunds] Initial sync failed:', e.message));
     retryFailedRefunds().catch(e => console.error('[refund-retry] Initial retry failed:', e.message));
   }, 15 * 1000);
   setInterval(() => {
     sweepExpiredOrders().catch(e => console.error('[orders] Expiry sweep failed:', e.message));
-    sweepExpiredBuyRequests().catch(e => console.error('[buy-requests] Expiry sweep failed:', e.message));
     syncRefundStatuses().catch(e => console.error('[refunds] Sync failed:', e.message));
     retryFailedRefunds().catch(e => console.error('[refund-retry] Retry failed:', e.message));
   }, ORDER_SWEEP_INTERVAL_MS);

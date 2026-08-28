@@ -120,11 +120,10 @@
           <div class="cart-summary-row"><span>Subtotal (${available.length})</span><span>${formatPrice(subtotal)}</span></div>
           <div class="cart-summary-row"><span>Delivery</span><span>Free</span></div>
           <div class="cart-summary-row total"><span>Total</span><span>${formatPrice(subtotal)}</span></div>
-          ${hasBlocked ? `<p style="font-size:12px;color:var(--red);margin:10px 0 0;">Remove unavailable items before requesting to buy.</p>` : ''}
-          <button class="btn btn-accent w-full" style="margin-top:16px;" id="checkout-btn" ${hasBlocked || !available.length ? 'disabled' : ''} onclick="requestToBuy()">
-            Request to buy ${icons.chevronRight}
+          ${hasBlocked ? `<p style="font-size:12px;color:var(--red);margin:10px 0 0;">Remove unavailable items before checking out.</p>` : ''}
+          <button class="btn btn-accent w-full" style="margin-top:16px;" id="checkout-btn" ${hasBlocked || !available.length ? 'disabled' : ''} onclick="window.location.href='checkout.html'">
+            Checkout ${icons.chevronRight}
           </button>
-          <p style="font-size:12px;color:var(--ink-3);margin-top:10px;text-align:center;">You won't be charged yet — each seller has 2 hours to accept before you pay.</p>
           <a href="marketplace.html" style="display:block;text-align:center;font-size:13px;color:var(--ink-3);margin-top:12px;">Continue shopping</a>
         </div>
       </div>`;
@@ -154,36 +153,6 @@
       items = items.filter(i => i.id !== id);
       render();
     } catch (e) { toast(e.message, 'error'); }
-  }
-
-  let requesting = false;
-  async function requestToBuy() {
-    if (requesting) return;
-    const btn = document.getElementById('checkout-btn');
-    requesting = true;
-    if (btn) { btn.disabled = true; btn.innerHTML = icons.loader + ' Sending request…'; }
-    try {
-      const result = await buyRequests.createFromCart();
-      showRequestConfirmation(result);
-    } catch (e) {
-      toast(e.message || 'Could not send buy request', 'error');
-      requesting = false;
-      if (btn) { btn.disabled = false; btn.innerHTML = 'Request to buy ' + icons.chevronRight; }
-    }
-  }
-
-  function showRequestConfirmation(result) {
-    document.getElementById('cart-content').innerHTML = `
-      <div class="empty-state">
-        <div class="empty-state-icon" style="background:var(--green-bg);color:var(--green);">${icons.check}</div>
-        <h3>Request${result.count === 1 ? '' : 's'} sent!</h3>
-        <p>${result.count} ${result.count === 1 ? 'seller has' : 'sellers have'} 2 hours to accept. You'll be notified the moment they respond, and you can pay right after.</p>
-        <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap;">
-          <a href="buyer-dashboard.html?tab=orders" class="btn btn-accent">Track my requests</a>
-          <a href="marketplace.html" class="btn btn-surface">Continue shopping</a>
-        </div>
-      </div>`;
-    document.getElementById('cart-subtitle').textContent = 'Your cart is empty';
   }
 
   loadCart();

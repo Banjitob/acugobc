@@ -129,16 +129,6 @@ const cart = {
   },
 };
 
-const buyRequests = {
-  createFromCart()          { return api.post('/buy-requests', {}); },
-  buying(status)             { return api.get(`/buy-requests/buying${status ? '?status=' + encodeURIComponent(status) : ''}`); },
-  selling(status)            { return api.get(`/buy-requests/selling${status ? '?status=' + encodeURIComponent(status) : ''}`); },
-  accept(id)                 { return api.post(`/buy-requests/${id}/accept`, {}); },
-  decline(id, reason)        { return api.post(`/buy-requests/${id}/decline`, { reason }); },
-  group(group)                { return api.get(`/buy-requests/group/${group}`); },
-  initPayment(group, delivery_address) { return api.post(`/buy-requests/${group}/initialize-payment`, { delivery_address }); },
-};
-
 async function refreshCartBadge() {
   await refreshCartState();
 }

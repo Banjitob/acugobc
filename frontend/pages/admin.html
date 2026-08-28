@@ -716,6 +716,10 @@ body {
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 21V7l9-4 9 4v14"/><path d="M9 11h6M9 15h6M9 19h6"/></svg>
       Hostels
     </button>
+    <button class="admin-nav-item" data-tab="delivery-spots">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 10c0 5-8 11-8 11S4 15 4 10a8 8 0 1 1 16 0Z"/><circle cx="12" cy="10" r="2.5"/></svg>
+      Delivery Spots
+    </button>
     <button class="admin-nav-item" data-tab="messages">
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
       Reports
@@ -825,7 +829,7 @@ function adminLogout() { adminAuth.clear(); window.location.replace('admin-login
 // ── Tab routing ─────────────────────────────────────────────────────────────
 const isControlUser = () => adminAuth.getUser()?.role === 'control';
 const controlPath = path => isControlUser() ? path.replace(/^\/admin/, '/control') : path;
-const TABS = { overview: 'Overview', controls: 'Controls', 'control-actions': 'Control Actions', 'seller-approvals': 'Seller Approvals', 'deletion-requests': 'Account Deletions', actions: 'Admin Actions', users: 'Users', listings: 'Listings', broadcast: 'Broadcast', hostels: 'Hostels', messages: 'Conversation Reports', 'user-reports': 'User Reports', flagged: 'AI Flagged' };
+const TABS = { overview: 'Overview', 'delivery-spots': 'Delivery Spots', controls: 'Controls', 'control-actions': 'Control Actions', 'seller-approvals': 'Seller Approvals', 'deletion-requests': 'Account Deletions', actions: 'Admin Actions', users: 'Users', listings: 'Listings', broadcast: 'Broadcast', hostels: 'Hostels', messages: 'Conversation Reports', 'user-reports': 'User Reports', flagged: 'AI Flagged' };
 let currentTab = isControlUser() ? 'seller-approvals' : 'overview';
 
 document.querySelectorAll('.admin-nav-item[data-tab]').forEach(btn => { btn.addEventListener('click', () => switchTab(btn.dataset.tab)); });
@@ -871,6 +875,7 @@ function switchTab(tab) {
   if (tab === 'listings')  renderListings();
   if (tab === 'broadcast') renderBroadcast();
   if (tab === 'hostels')   renderHostels();
+  if (tab === 'delivery-spots') renderDeliverySpots();
   if (tab === 'messages')  renderMessages();
   if (tab === 'user-reports') renderUserReports();
   if (tab === 'flagged')   renderFlagged();
@@ -1122,6 +1127,31 @@ async function renderOverview() {
       btn.addEventListener('click', () => switchTab(btn.dataset.goto));
     });
   } catch(e) { c.innerHTML = `<div class="admin-empty">Failed to load stats: ${e.message}</div>`; }
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
+// DELIVERY SPOTS
+// ══════════════════════════════════════════════════════════════════════════════
+async function renderDeliverySpots() {
+  const c = document.getElementById('admin-content');
+  c.innerHTML = `<div style="display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:18px;flex-wrap:wrap;"><div><div class="section-kicker">Campus settings</div><h2 style="font-size:28px;margin-top:6px;">Popular Delivery Spots</h2><p style="color:var(--ink-3);font-size:13px;margin-top:4px;">These are the campus locations buyers can choose when scheduling delivery.</p></div><button class="btn btn-primary" id="add-delivery-spot">+ Add spot</button></div><div class="admin-table-wrap"><table class="admin-table"><thead><tr><th>Spot</th><th>Campus</th><th>Status</th><th>Actions</th></tr></thead><tbody id="delivery-spots-tbody"><tr><td colspan="4" style="padding:24px;text-align:center;color:var(--ink-3);">Loading delivery spots…</td></tr></tbody></table></div>`;
+  document.getElementById('add-delivery-spot').onclick = addDeliverySpot;
+  try {
+    const data = await api.get('/admin/delivery-spots'); const rows = data.spots || []; const tbody = document.getElementById('delivery-spots-tbody');
+    if (!rows.length) { tbody.innerHTML = '<tr><td colspan="4" style="padding:24px;text-align:center;color:var(--ink-3);">No delivery spots yet. Add one for buyers to choose.</td></tr>'; return; }
+    tbody.innerHTML = rows.map(x => `<tr><td>${escHtml(x.name)}</td><td>${escHtml(x.campus || 'Ajayi Crowther University')}</td><td><span class="badge ${x.is_active === false ? 'badge-surface' : 'badge-green'}">${x.is_active === false ? 'Hidden' : 'Active'}</span></td><td><div class="action-btns"><button class="action-btn view" onclick="editDeliverySpot('${x.id}')">Edit</button><button class="action-btn kick" onclick="deleteDeliverySpot('${x.id}')">Delete</button></div></td></tr>`).join('');
+  } catch(e) { c.innerHTML = `<div class="admin-empty">Failed to load delivery spots: ${escHtml(e.message)}</div>`; }
+}
+async function addDeliverySpot() {
+  const name = prompt('Popular campus spot name:', ''); if (!name?.trim()) return;
+  try { await api.post('/admin/delivery-spots', { name: name.trim(), campus: 'Ajayi Crowther University', is_active: true }); toast('Delivery spot added','success'); renderDeliverySpots(); } catch(e) { toast(e.message,'error'); }
+}
+async function editDeliverySpot(id) {
+  try { const d=await api.get('/admin/delivery-spots'); const x=(d.spots||[]).find(v=>String(v.id)===String(id)); if(!x)return; const name=prompt('Edit delivery spot name:',x.name||''); if(!name?.trim())return; await api.patch(`/admin/delivery-spots/${id}`,{name:name.trim()}); toast('Delivery spot updated','success'); renderDeliverySpots(); } catch(e){toast(e.message,'error');}
+}
+async function deleteDeliverySpot(id) {
+  if(!confirm('Delete this delivery spot? Buyers will no longer be able to choose it.'))return;
+  try { await api.delete(`/admin/delivery-spots/${id}`); toast('Delivery spot deleted','success'); renderDeliverySpots(); } catch(e){toast(e.message,'error');}
 }
 
 // ══════════════════════════════════════════════════════════════════════════════
