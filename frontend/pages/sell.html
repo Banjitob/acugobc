@@ -236,6 +236,11 @@
           <div id="discount-preview" style="margin-top:10px;display:none;">
             <span class="badge badge-accent" id="discount-badge"></span>
           </div>
+          <div class="form-group" style="margin-top:16px;">
+            <label class="form-label">How many do you have? <span style="color:var(--ink-3);font-weight:400;">(optional)</span></label>
+            <input class="form-input" id="f-stock" type="number" min="1" step="1" placeholder="1" style="max-width:140px;">
+            <span class="form-hint">Buyers can each get one unit until you run out — the listing stays live until stock hits 0.</span>
+          </div>
         </div>
 
         <!-- Delivery Window -->
@@ -377,6 +382,7 @@
       
       document.getElementById('f-price').value = l.price;
       document.getElementById('f-orig-price').value = l.original_price || '';
+      document.getElementById('f-stock').value = l.stock_quantity ?? 1;
       document.getElementById('f-condition').value = l.condition;
       document.getElementById('f-delivery-window').value = l.delivery_window || '1d';
       document.querySelectorAll('.cond-option').forEach(b => b.classList.toggle('selected', b.dataset.cond === l.condition));
@@ -540,6 +546,8 @@
     const deliveryWindow = document.getElementById('f-delivery-window').value;
     const price = parseFloat(document.getElementById('f-price').value);
     const origPrice = parseFloat(document.getElementById('f-orig-price').value) || null;
+    const stockRaw = document.getElementById('f-stock').value;
+    const stockQuantity = stockRaw ? parseInt(stockRaw, 10) : 1;
 
     if (!title) { toast('Please enter a title', 'error'); document.getElementById('f-title').focus(); return; }
     if (!desc) { toast('Please enter a description', 'error'); return; }
@@ -547,6 +555,7 @@
     if (!condition) { toast('Please select the item condition', 'error'); return; }
     if (!deliveryWindow) { toast('Please select a delivery timeframe', 'error'); return; }
     if (!price || price <= 0) { toast('Please enter a valid price', 'error'); return; }
+    if (!Number.isFinite(stockQuantity) || stockQuantity < 1) { toast('Stock quantity must be at least 1', 'error'); return; }
 
     const btn = document.getElementById('submit-btn');
     btn.disabled = true;
@@ -554,7 +563,7 @@
     document.getElementById('submit-label').textContent = editId ? 'Saving…' : 'Publishing…';
 
     try {
-      const payload = { title, description: desc, price, original_price: origPrice, category, condition, delivery_window: deliveryWindow, images: uploadedImages };
+      const payload = { title, description: desc, price, original_price: origPrice, category, condition, delivery_window: deliveryWindow, stock_quantity: stockQuantity, images: uploadedImages };
       let result;
       if (editId) {
         result = await api.put(`/listings/${editId}`, payload);

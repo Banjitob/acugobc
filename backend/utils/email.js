@@ -123,6 +123,38 @@ async function sendOrderSellerAlertEmail(to, { buyerName, listingTitle, orderId,
   });
 }
 
+async function sendBuyRequestSellerAlertEmail(to, { buyerName, listingTitle, amount }) {
+  await sendMail({
+    to,
+    subject: `New buy request — ${listingTitle}`,
+    html: `
+      <div style="font-family:sans-serif;max-width:520px;margin:auto;padding:32px;background:#fafafa;border-radius:12px;">
+        <h2 style="color:#1a1a1a;margin-bottom:8px;">You have a new buy request</h2>
+        <p style="color:#555;line-height:1.6;">
+          <strong>${buyerName}</strong> wants to buy <strong>${listingTitle}</strong> for
+          <strong>₦${Number(amount || 0).toLocaleString('en-NG')}</strong>. No payment has been taken yet —
+          please accept or decline within <strong>2 hours</strong>. The buyer can only pay once you accept.
+        </p>
+      </div>`,
+  });
+}
+
+async function sendBuyRequestAcceptedEmail(to, { sellerName, listingTitle, amount }) {
+  await sendMail({
+    to,
+    subject: `${sellerName} accepted your request — pay now for ${listingTitle}`,
+    html: `
+      <div style="font-family:sans-serif;max-width:520px;margin:auto;padding:32px;background:#fafafa;border-radius:12px;">
+        <h2 style="color:#1a1a1a;margin-bottom:8px;">Your buy request was accepted</h2>
+        <p style="color:#555;line-height:1.6;">
+          <strong>${sellerName}</strong> accepted your request for <strong>${listingTitle}</strong>
+          (<strong>₦${Number(amount || 0).toLocaleString('en-NG')}</strong>). Complete payment within
+          <strong>2 hours</strong> or the request will expire and the item may go to someone else.
+        </p>
+      </div>`,
+  });
+}
+
 async function sendOrderRefundEmail(to, { buyerName, listingTitle, reason, amount, refundStatus = 'pending' }) {
   const statusText = refundStatus === 'processed'
     ? 'Your refund has been processed by Paystack and will be returned through the original payment method.'
@@ -174,6 +206,8 @@ module.exports = {
   sendVerificationEmail,
   sendPasswordResetEmail,
   sendOrderSellerAlertEmail,
+  sendBuyRequestSellerAlertEmail,
+  sendBuyRequestAcceptedEmail,
   sendOrderRefundEmail,
   sendSellerApplicationEmail,
   sendSellerDecisionEmail,

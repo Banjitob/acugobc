@@ -306,8 +306,6 @@
     });
   });
 
-  let allOrders = [];
-
   async function loadProfile() {
     try {
       const user = await api.get('/auth/me');
@@ -366,6 +364,8 @@
   }
   window.uploadBuyerAvatar = uploadBuyerAvatar;
 
+  let allOrders = [], allRequests = [];
+
   async function loadOrders() {
     document.getElementById('orders-list').innerHTML = Array(3).fill(0).map(() =>
       `<div class="card" style="padding:18px;display:flex;gap:16px;">
@@ -377,7 +377,14 @@
         </div>
       </div>`).join('');
     try {
-      allOrders = await api.get('/orders/buying');
+      const [orders, requests] = await Promise.all([
+        api.get('/orders/buying'),
+        buyRequests.buying().catch(() => []),
+      ]);
+      allOrders = orders;
+      // Once a request is paid, it's a real Order (already in allOrders above) —
+      // exclude 'paid' here so it isn't shown twice.
+      allRequests = requests.filter(r => r.status !== 'paid');
       document.getElementById('p-purchases').textContent = allOrders.length;
       renderOrders();
     } catch(e) {
@@ -385,8 +392,20 @@
     }
   }
 
+  function buyerRequestDisplayStatus(r) {
+    if (r.status === 'pending' || r.status === 'accepted') return 'pending';
+    if (r.status === 'declined' || r.status === 'expired') return 'cancelled';
+    return 'pending';
+  }
+
   function renderOrders() {
-    const filtered = orderStatusFilter === 'all' ? allOrders : allOrders.filter(o => orderDisplayStatus(o) === orderStatusFilter);
+    const feed = [
+      ...allOrders.map(o => ({ ...o, _kind: 'order' })),
+      ...allRequests.map(r => ({ ...r, _kind: 'request' })),
+    ].sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+
+    const filtered = orderStatusFilter === 'all' ? feed
+      : feed.filter(item => (item._kind === 'order' ? orderDisplayStatus(item) : buyerRequestDisplayStatus(item)) === orderStatusFilter);
     const el = document.getElementById('orders-list');
     if (!filtered.length) {
       el.innerHTML = `<div class="empty-state"><div class="empty-state-icon">${icons.package}</div><h3>No ${orderStatusFilter === 'all' ? '' : orderStatusFilter} orders</h3><p>Your ${orderStatusFilter === 'all' ? '' : orderStatusFilter + ' '}orders will appear here.</p></div>`;
@@ -397,7 +416,45 @@
     const groupCounts = {};
     allOrders.forEach(o => { if (o.checkout_group) groupCounts[o.checkout_group] = (groupCounts[o.checkout_group] || 0) + 1; });
 
-    el.innerHTML = filtered.map(o => {
+    el.innerHTML = filtered.map(item => item._kind === 'request' ? renderRequestCard(item) : renderOrderCard(item, groupCounts)).join('');
+  }
+
+  function requestBadge(r) {
+    if (r.status === 'pending') return `<span class="order-status-chip chip-pending">Waiting for seller</span>`;
+    if (r.status === 'accepted') return `<span class="order-status-chip chip-confirmed">Accepted — pay now</span>`;
+    if (r.status === 'declined') return `<span class="order-status-chip chip-cancelled">Declined</span>`;
+    if (r.status === 'expired') return `<span class="order-status-chip chip-cancelled">Expired</span>`;
+    return '';
+  }
+
+  function renderRequestCard(r) {
+    return `
+      <div class="order-card">
+        <div class="order-card-top">
+          <div class="order-img">${r.listing_images?.[0] ? `<img src="${r.listing_images[0]}" alt="">` : icons.package}</div>
+          <div class="order-info">
+            <div class="order-title">${r.listing_title || 'Listing'}</div>
+            <div class="order-meta">
+              ${requestBadge(r)}
+              <span style="display:flex;align-items:center;gap:4px;">${icons.user} ${r.seller_name || 'Seller'}</span>
+              <span>${formatDate(r.created_at)}</span>
+            </div>
+            ${r.status === 'pending' ? `<div style="font-size:12px;color:#b45309;margin-top:6px;font-weight:600;">No payment taken yet — you'll be notified when the seller responds.</div>` : ''}
+            ${r.status === 'accepted' ? `<div style="font-size:12px;color:#059669;margin-top:6px;font-weight:600;">Pay within 2 hours or this request expires.</div>` : ''}
+            ${r.decline_reason ? `<div style="font-size:12px;color:var(--ink-3);margin-top:6px;">Reason: ${r.decline_reason}</div>` : ''}
+          </div>
+        </div>
+        <div class="order-actions">
+          <div style="font-size:18px;font-weight:700;">${formatCurrency(r.amount)}</div>
+          <div style="display:flex;gap:6px;flex-wrap:wrap;">
+            ${r.status === 'accepted' ? `<a href="checkout.html?group=${r.request_group}" class="btn btn-accent btn-sm">${icons.creditCard || ''} Pay now</a>` : ''}
+            <a href="listing.html?id=${r.listing_id}" class="btn btn-ghost btn-sm">View listing</a>
+          </div>
+        </div>
+      </div>`;
+  }
+
+  function renderOrderCard(o, groupCounts) {
       const stageMessage = o.status === 'paid'
         ? '<div style="font-size:12px;color:#b45309;margin-top:6px;font-weight:600;">🔒 Waiting for the seller to accept your order.</div>'
         : o.status === 'confirmed'
@@ -445,7 +502,6 @@
           </div>
         </div>
       </div>`;
-    }).join('');
   }
 
   window.confirmDelivery = async (id) => {

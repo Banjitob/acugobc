@@ -490,14 +490,23 @@
   }
 
   // Orders created from a buyer's cart checkout — delivery, already paid, seller fulfills.
-  let allOrders = [], currentOrderFilter = 'all';
+  // Also merges in pending "buy requests" (not yet paid — buyer is waiting on this
+  // seller's accept/decline) so the whole Orders tab shows one continuous timeline.
+  let allOrders = [], allRequests = [], currentOrderFilter = 'all';
 
   async function loadOrders() {
     const el = document.getElementById('orders-container');
     if (!el) return;
     el.innerHTML = '<div style="padding:40px;text-align:center;color:var(--ink-3);">Loading…</div>';
     try {
-      allOrders = await api.get('/orders/selling');
+      const [orders, requests] = await Promise.all([
+        api.get('/orders/selling'),
+        buyRequests.selling().catch(() => []), // don't let a request-fetch hiccup hide real orders
+      ]);
+      allOrders = orders;
+      // A request that's been paid becomes a real Order (already in allOrders above),
+      // so exclude 'paid' here to avoid showing the same purchase twice.
+      allRequests = requests.filter(r => r.status !== 'paid');
       renderSellerOrders();
     } catch (e) {
       // Allow a later tab click to retry instead of leaving the Orders tab permanently stuck.
@@ -516,6 +525,20 @@
     if (document.getElementById('tab-orders')?.style.display !== 'none') loadOrders();
   });
 
+  // Maps a buy request's own status onto the same 4 filter buckets the
+  // Orders tab already uses for real orders, so requests slot in naturally.
+  function requestDisplayStatus(r) {
+    if (r.status === 'pending' || r.status === 'accepted') return 'pending';
+    if (r.status === 'declined' || r.status === 'expired') return 'cancelled';
+    return 'pending';
+  }
+
+  function mergedFeed() {
+    const orders = allOrders.map(o => ({ ...o, _kind: 'order' }));
+    const requests = allRequests.map(r => ({ ...r, _kind: 'request' }));
+    return [...orders, ...requests].sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+  }
+
   function setOrderFilter(f, btn) {
     currentOrderFilter = f;
     document.querySelectorAll('.ord-filter-btn').forEach(b => b.classList.remove('active'));
@@ -524,8 +547,9 @@
   }
 
   function renderSellerOrders() {
-    const filtered = currentOrderFilter === 'all' ? allOrders
-      : allOrders.filter(o => orderDisplayStatus(o) === currentOrderFilter);
+    const feed = mergedFeed();
+    const filtered = currentOrderFilter === 'all' ? feed
+      : feed.filter(item => (item._kind === 'order' ? orderDisplayStatus(item) : requestDisplayStatus(item)) === currentOrderFilter);
 
     const el = document.getElementById('orders-container');
     if (!filtered.length) {
@@ -539,8 +563,48 @@
     const groupCounts = {};
     allOrders.forEach(o => { if (o.checkout_group) groupCounts[o.checkout_group] = (groupCounts[o.checkout_group] || 0) + 1; });
 
-    el.innerHTML = filtered.map(o => {
-      return `
+    el.innerHTML = filtered.map(item => item._kind === 'request' ? renderRequestCard(item) : renderOrderCard(item, groupCounts)).join('');
+  }
+
+  function requestStatusBadge(r) {
+    if (r.status === 'pending') return `<span class="order-status-chip chip-pending">Awaiting your response</span>`;
+    if (r.status === 'accepted') return `<span class="order-status-chip chip-confirmed">Accepted — waiting for payment</span>`;
+    if (r.status === 'declined') return `<span class="order-status-chip chip-cancelled">Declined</span>`;
+    if (r.status === 'expired') return `<span class="order-status-chip chip-cancelled">Expired</span>`;
+    return '';
+  }
+
+  function renderRequestCard(r) {
+    return `
+      <div class="order-card">
+        <div class="order-card-top">
+          <div class="order-img">${r.listing_images?.[0] ? `<img src="${r.listing_images[0]}" alt="">` : icons.package}</div>
+          <div class="order-info">
+            <div class="order-title">${escHtml(r.listing_title || 'Listing')}</div>
+            <div class="order-meta">
+              ${requestStatusBadge(r)}
+              <span style="display:flex;align-items:center;gap:4px;">${icons.user} ${r.buyer_id ? `<a href="user-profile.html?id=${r.buyer_id}" style="color:inherit;text-decoration:underline;text-underline-offset:2px;">${escHtml(r.buyer_name || 'Buyer')}</a>` : escHtml(r.buyer_name || 'Buyer')}</span>
+              <span>${formatDate(r.created_at)}</span>
+            </div>
+            ${r.status === 'pending' ? `<div style="font-size:12px;color:#b45309;margin-top:6px;font-weight:600;">No payment taken yet — respond within 2 hours or this request expires.</div>` : ''}
+            ${r.status === 'accepted' ? `<div style="font-size:12px;color:#059669;margin-top:6px;font-weight:600;">Buyer has up to 2 hours to pay. You'll see it here once they do.</div>` : ''}
+            ${r.decline_reason ? `<div style="font-size:12px;color:var(--ink-3);margin-top:6px;">Reason: ${escHtml(r.decline_reason)}</div>` : ''}
+          </div>
+        </div>
+        <div class="order-actions">
+          <div style="font-size:18px;font-weight:700;">${formatCurrency(r.amount)}</div>
+          <div style="display:flex;gap:6px;flex-wrap:wrap;">
+            ${r.status === 'pending' ? `
+              <button class="btn btn-primary btn-sm" onclick="acceptBuyRequest('${r.id}')">${icons.check} Accept</button>
+              <button class="btn btn-danger btn-sm" onclick="declineBuyRequest('${r.id}')">Decline</button>` : ''}
+            ${r.status === 'accepted' ? `<span style="font-size:13px;color:#d69e2e;font-weight:600;">⏳ Waiting for payment</span>` : ''}
+          </div>
+        </div>
+      </div>`;
+  }
+
+  function renderOrderCard(o, groupCounts) {
+    return `
       <div class="order-card">
         <div class="order-card-top">
           <div class="order-img">${o.listing_images?.[0] ? `<img src="${o.listing_images[0]}" alt="">` : icons.package}</div>
@@ -574,8 +638,24 @@
           </div>
         </div>
       </div>`;
-    }).join('');
   }
+
+  window.acceptBuyRequest = async (id) => {
+    try {
+      await buyRequests.accept(id);
+      toast('Request accepted — the buyer can now pay.', 'success');
+      loadOrders();
+    } catch (e) { toast(e.message, 'error'); }
+  };
+
+  window.declineBuyRequest = async (id) => {
+    const reason = prompt('Optional: let the buyer know why (e.g. "Out of stock")') || '';
+    try {
+      await buyRequests.decline(id, reason);
+      toast('Request declined.', 'success');
+      loadOrders();
+    } catch (e) { toast(e.message, 'error'); }
+  };
 
   window.getDeliveryInfo = async (id) => {
     try {

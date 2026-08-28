@@ -45,7 +45,7 @@
   renderFooter();
   if (!auth.requireAuth()) throw new Error('redirect');
 
-  let items = [], subtotal = 0, paying = false;
+  let items = [], subtotal = 0, paying = false, requestGroup = null;
 
   async function init() {
     try {
@@ -61,21 +61,44 @@
         await finalizeOrder(returnedReference);
         return;
       }
-      items = (await cart.list()).filter(i => i.status === 'active');
+
+      requestGroup = params.get('group');
+      if (!requestGroup) {
+        document.getElementById('checkout-content').innerHTML = `
+          <div class="empty-state">
+            <div class="empty-state-icon">${icons.shoppingBag}</div>
+            <h3>Nothing to pay for yet</h3>
+            <p>Send a buy request from your cart first — you can pay here once the seller accepts.</p>
+            <a href="cart.html" class="btn btn-accent">Go to your cart</a>
+          </div>`;
+        return;
+      }
+
+      const requests = await buyRequests.group(requestGroup);
+      items = requests.map(r => ({
+        id: r.listing_id, title: r.listing_title, price: r.listing_price,
+        images: r.listing_images, request_id: r.id,
+      }));
       if (!items.length) {
         document.getElementById('checkout-content').innerHTML = `
           <div class="empty-state">
             <div class="empty-state-icon">${icons.shoppingBag}</div>
-            <h3>Nothing to check out</h3>
-            <p>Your cart is empty, or the items in it are no longer available.</p>
-            <a href="marketplace.html" class="btn btn-accent">Browse marketplace</a>
+            <h3>Nothing to pay for</h3>
+            <p>These requests may have expired or already been paid for.</p>
+            <a href="buyer-dashboard.html?tab=orders" class="btn btn-accent">View my requests</a>
           </div>`;
         return;
       }
       subtotal = items.reduce((s, i) => s + i.price, 0);
       renderCheckout();
     } catch (e) {
-      document.getElementById('checkout-content').innerHTML = `<div class="empty-state"><h3>Couldn't load checkout</h3><p>${e.message}</p></div>`;
+      document.getElementById('checkout-content').innerHTML = `
+        <div class="empty-state">
+          <div class="empty-state-icon">${icons.alertCircle}</div>
+          <h3>Nothing to pay for</h3>
+          <p>${e.message}</p>
+          <a href="buyer-dashboard.html?tab=orders" class="btn btn-accent">View my requests</a>
+        </div>`;
     }
   }
 
@@ -83,8 +106,8 @@
     const user = auth.getUser();
     document.getElementById('checkout-content').innerHTML = `
       <div class="page-header">
-        <h1 class="display" style="font-size:28px;">Checkout</h1>
-        <p style="color:var(--ink-3);font-size:14px;margin-top:4px;">${items.length} ${items.length === 1 ? 'item' : 'items'} · pay now to place your order</p>
+        <h1 class="display" style="font-size:28px;">Pay for your order</h1>
+        <p style="color:var(--ink-3);font-size:14px;margin-top:4px;">${items.length} ${items.length === 1 ? 'item' : 'items'} · accepted by the seller — pay now to confirm</p>
       </div>
       <div class="checkout-layout">
         <div class="card" style="padding:24px;">
@@ -145,7 +168,6 @@
   async function finalizeOrder(reference) {
     try {
       const result = await api.post('/orders/checkout', { payment_reference: reference });
-      await cart.clear().catch(() => {});
       const cleanUrl = window.location.pathname;
       window.history.replaceState({}, document.title, cleanUrl);
       showConfirmation(result);
@@ -174,7 +196,7 @@
     const btn = document.getElementById('pay-btn');
     if (btn) { btn.disabled = true; btn.innerHTML = icons.loader + ' Preparing secure payment…'; }
     try {
-      const result = await api.post('/orders/initialize-payment', { delivery_address });
+      const result = await buyRequests.initPayment(requestGroup, delivery_address);
       if (!result.authorization_url) throw new Error('Paystack did not return a payment link');
       window.location.href = result.authorization_url;
     } catch (e) {
