@@ -5,7 +5,7 @@ const bcrypt     = require('bcryptjs');
 const jwt        = require('jsonwebtoken');
 const crypto     = require('crypto');
 const rateLimit  = require('express-rate-limit');
-const { User, Order, Listing, Waitlist, Hostel, AdminAction, UserReport } = require('../db/database');
+const { User, Order, Listing, Waitlist, Hostel, DeliverySpot, AdminAction, UserReport } = require('../db/database');
 const { authMiddleware } = require('../middleware/auth');
 const { sendVerificationEmail, sendPasswordResetEmail, sendSellerApplicationEmail, sendSellerDecisionEmail } = require('../utils/email');
 const { notifyUser } = require('../db/push');
@@ -321,6 +321,15 @@ router.get('/hostels', async (req, res) => {
   try {
     const hostels = await Hostel.find({ is_active: { $ne: false } }).sort({ sort_order: 1, name: 1 }).lean();
     res.json({ hostels: hostels.map(h => ({ ...h, id: h._id })) });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+// GET /api/auth/delivery-spots — the admin-curated list of popular on-campus
+// meetup spots buyers can pick from at checkout.
+router.get('/delivery-spots', async (req, res) => {
+  try {
+    const spots = await DeliverySpot.find({ is_active: { $ne: false } }).sort({ sort_order: 1, name: 1 }).lean();
+    res.json({ spots: spots.map(s => ({ ...s, id: s._id })) });
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 

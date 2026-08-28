@@ -1,7 +1,7 @@
 const express = require('express');
 const router  = express.Router();
 const { v4: uuidv4 } = require('uuid');
-const { Order, Listing, User, Conversation, SavedListing, CartItem, CheckoutIntent, getSellerCommissionInfo } = require('../db/database');
+const { Order, Listing, User, Conversation, SavedListing, CartItem, CheckoutIntent, BuyRequest, getSellerCommissionInfo } = require('../db/database');
 const { authMiddleware, sellerApprovalMiddleware } = require('../middleware/auth');
 const { notifyUser } = require('../db/push');
 const { generateVerificationCode, verifyDeliveryCode } = require('../utils/deliveryCode');
@@ -106,7 +106,16 @@ async function cancelOrderAndRefund(order, reason) {
   order.payout_status = 'refunded';
   if (order.payment_reference && refund.initiated) order.payment_status = order.refund_status === 'processed' ? 'refunded' : 'paid';
   await order.save();
-  await Listing.findByIdAndUpdate(order.listing_id, { $set: { status: 'active' } });
+  // Restore the one unit of stock this order consumed at creation time, and
+  // bring the listing back onto the marketplace if it had been auto-marked
+  // 'sold' because stock hit zero. A listing the seller separately deleted
+  // or that AI-flagged is left alone.
+  const listing = await Listing.findById(order.listing_id);
+  if (listing && !['deleted', 'flagged'].includes(listing.status)) {
+    listing.stock_quantity = Math.max(0, Number(listing.stock_quantity || 0)) + 1;
+    listing.status = 'active';
+    await listing.save();
+  }
   return refund;
 }
 
@@ -157,15 +166,6 @@ router.get('/saved', authMiddleware, async (req, res) => {
         };
       });
     res.json(results);
-  } catch (e) { res.status(500).json({ error: e.message }); }
-});
-
-
-// Active popular campus delivery spots configured by admins.
-router.get('/delivery-spots', authMiddleware, async (req, res) => {
-  try {
-    const spots = await DeliverySpot.find({ is_active: true }).sort({ sort_order: 1, name: 1 }).lean();
-    res.json({ spots: spots.map(s => ({ id: s._id, name: s.name, campus: s.campus })) });
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
@@ -241,133 +241,139 @@ router.get('/selling', sellerApprovalMiddleware, async (req, res) => {
   }
 });
 
-// POST /api/orders
+// POST /api/orders — retired. Buyers can no longer create an order directly;
+// they must go through /api/buy-requests so the seller accepts before any
+// payment happens. Kept as a 410 (not removed) in case anything old still
+// calls it, so the failure is loud and explicit rather than silently
+// bypassing seller acceptance.
 router.post('/', authMiddleware, async (req, res) => {
-  try {
-    const { listing_id, meetup_location, meetup_time } = req.body;
-    const listing = await Listing.findOne({ _id: listing_id, status: 'active' });
-    if (!listing) return res.status(404).json({ error: 'Listing not found or no longer available' });
-    if (String(listing.seller_id) === String(req.user.id))
-      return res.status(400).json({ error: 'Cannot buy your own listing' });
-
-    const order = await Order.create({
-      listing_id, buyer_id: req.user.id, seller_id: listing.seller_id,
-      amount: listing.price,
-      meetup_location: meetup_location || null,
-      meetup_time:     meetup_time     || null,
-    });
-    await Listing.findByIdAndUpdate(listing_id, { $set: { status: 'pending' } });
-    res.json({ ...order.toObject(), id: order._id });
-  } catch (e) { res.status(500).json({ error: e.message }); }
+  res.status(410).json({ error: 'Direct order creation is no longer supported. Use /api/buy-requests to request an item — the seller must accept before you can pay.' });
 });
 
-// POST /api/orders/initialize-payment — creates a server-controlled Paystack split.
-// Seller shares are determined by Bixcart's commission tier and cannot be changed by the browser.
+// POST /api/orders/initialize-payment — retired for the same reason as above.
+// Paying from the cart directly, with no seller acceptance step, would let a
+// buyer bypass the seller's accept/decline entirely. Payment now only ever
+// starts from an accepted buy request — see POST
+// /api/buy-requests/:group/initialize-payment, which builds the exact same
+// server-controlled Paystack split this endpoint used to.
 router.post('/initialize-payment', authMiddleware, async (req, res) => {
-  try {
-    const delivery_contact = req.body?.delivery_contact || req.body?.delivery_address || {};
-    if (!delivery_contact?.full_name || !delivery_contact?.phone)
-      return res.status(400).json({ error: 'Full name and phone number are required' });
-
-    const checkoutDelivery = {
-      full_name: String(delivery_contact.full_name).trim(),
-      phone: String(delivery_contact.phone).trim(),
-      campus: 'Ajayi Crowther University',
-      note: String(delivery_contact.note || '').trim(),
-    };
-
-    const cartItems = await CartItem.find({ user_id: req.user.id }).populate('listing_id');
-    if (!cartItems.length) return res.status(400).json({ error: 'Your cart is empty' });
-
-    const unavailable = cartItems.filter(c => !c.listing_id || c.listing_id.status !== 'active');
-    if (unavailable.length) return res.status(409).json({
-      error: 'Some items in your cart are no longer available',
-      unavailable_ids: unavailable.map(c => c.listing_id?._id).filter(Boolean),
-    });
-
-    const sellerIds = [...new Set(cartItems.map(c => String(c.listing_id.seller_id)))];
-    const sellers = await User.find({ _id: { $in: sellerIds } })
-      .select('full_name email phone role seller_approval_status successful_sales_count paystack_subaccount_code')
-      .lean();
-    const sellerMap = new Map(sellers.map(s => [String(s._id), s]));
-
-    for (const sid of sellerIds) {
-      const seller = sellerMap.get(sid);
-      if (!seller || seller.role !== 'seller' || seller.seller_approval_status !== 'approved')
-        return res.status(409).json({ error: 'One or more sellers are not approved yet.' });
-      if (!seller.paystack_subaccount_code)
-        return res.status(409).json({ error: 'One or more sellers have not connected a Paystack payment account yet.' });
-    }
-
-    const totalKobo = Math.round(cartItems.reduce((sum, c) => sum + Number(c.listing_id.price || 0), 0) * 100);
-    if (totalKobo <= 0) return res.status(400).json({ error: 'Invalid cart total' });
-
-    const grouped = new Map();
-    for (const item of cartItems) {
-      const amount = Number(item.listing_id.price || 0);
-      const sid = String(item.listing_id.seller_id);
-      if (!grouped.has(sid)) grouped.set(sid, { amount: 0, seller: sellerMap.get(sid), listing_ids: [] });
-      const g = grouped.get(sid);
-      g.amount += amount;
-      g.listing_ids.push(String(item.listing_id._id));
-    }
-
-    // Flat shares preserve each seller's exact 7%→5.5% commission even when
-    // one cart contains sellers on different tiers. Paystack keeps the remainder
-    // in Bixcart's main account. bearer_type=all makes Bixcart and participating
-    // seller accounts share Paystack's processing fee.
-    const splitSubaccounts = [];
-    const intentItems = [];
-    for (const [sid, g] of grouped.entries()) {
-      const commission = getSellerCommissionInfo(Number(g.seller.successful_sales_count || 0));
-      const sellerShareKobo = Math.max(0, Math.round(g.amount * 100 * (1 - commission.commission_percent / 100)));
-      splitSubaccounts.push({ subaccount: g.seller.paystack_subaccount_code, share: sellerShareKobo });
-      intentItems.push({
-        seller_id: sid,
-        listing_ids: g.listing_ids,
-        amount: Number(g.amount.toFixed(2)),
-        commission_percent: commission.commission_percent,
-        commission_amount: Number((g.amount * commission.commission_percent / 100).toFixed(2)),
-        seller_share_kobo: sellerShareKobo,
-      });
-    }
-
-    const reference = 'bixcart_' + Date.now() + '_' + Math.random().toString(36).slice(2, 10);
-    const intent = await CheckoutIntent.create({
-      reference,
-      buyer_id: req.user.id,
-      expected_total_kobo: totalKobo,
-      delivery_address: checkoutDelivery,
-      items: intentItems,
-      expires_at: new Date(Date.now() + 30 * 60 * 1000),
-    });
-
-    try {
-      const appUrl = process.env.PUBLIC_APP_URL || `${req.protocol}://${req.get('host')}`;
-      const payment = await initializeTransaction({
-        email: req.user.email,
-        amount: totalKobo,
-        currency: 'NGN',
-        reference,
-        callback_url: `${appUrl}/pages/checkout.html?payment=success&reference=${encodeURIComponent(reference)}`,
-        metadata: { user_id: String(req.user.id), checkout_intent_id: String(intent._id), item_count: cartItems.length },
-        split: {
-          type: 'flat',
-          bearer_type: 'all',
-          subaccounts: splitSubaccounts,
-          reference: `split_${reference}`,
-        },
-      });
-      res.json({ reference, authorization_url: payment.authorization_url, access_code: payment.access_code });
-    } catch (e) {
-      await CheckoutIntent.deleteOne({ _id: intent._id }).catch(() => {});
-      throw e;
-    }
-  } catch (e) {
-    console.error('[initialize-payment] Exception:', e);
-    res.status(502).json({ error: e.message || 'Could not initialize payment' });
-  }
+  res.status(410).json({ error: 'Paying directly from the cart is no longer supported. Send a buy request first — the seller must accept it before you can pay.' });
 });
+
+// Shared, reusable builder for a Paystack split checkout. This is the exact
+// logic the old direct-cart /initialize-payment route used to run inline;
+// it's now a plain function so routes/buyRequests.js can call it once a
+// seller has accepted, instead of duplicating payment-critical code.
+//
+// `listings` — array of populated Listing documents the buyer is paying for
+// (already validated as active/in-stock/etc by the caller).
+// `deliveryContact` — { full_name, phone, note }.
+// `source` — 'cart' (legacy) or 'buy_request'.
+// `buyRequestGroup` — the BuyRequest.request_group these listings came from, if any.
+// Returns { reference, authorization_url, access_code }. Throws on failure —
+// callers are responsible for turning that into an HTTP response.
+async function buildSplitCheckoutSession({ buyerId, buyerEmail, deliveryContact, listings, source = 'cart', buyRequestGroup = null, req }) {
+  if (!deliveryContact?.full_name || !deliveryContact?.phone)
+    throw Object.assign(new Error('Full name and phone number are required'), { status: 400 });
+  if (!deliveryContact?.spot || !String(deliveryContact.spot).trim())
+    throw Object.assign(new Error('Please choose a meetup spot'), { status: 400 });
+  if (!deliveryContact?.requested_delivery_at || isNaN(new Date(deliveryContact.requested_delivery_at).getTime()))
+    throw Object.assign(new Error('Please choose a delivery day and time'), { status: 400 });
+
+  const checkoutDelivery = {
+    full_name: String(deliveryContact.full_name).trim(),
+    phone: String(deliveryContact.phone).trim(),
+    campus: 'Ajayi Crowther University',
+    spot: String(deliveryContact.spot).trim(),
+    requested_delivery_at: new Date(deliveryContact.requested_delivery_at),
+    note: String(deliveryContact.note || '').trim(),
+  };
+
+  if (!listings.length) throw Object.assign(new Error('Nothing to pay for'), { status: 400 });
+
+  const sellerIds = [...new Set(listings.map(l => String(l.seller_id)))];
+  const sellers = await User.find({ _id: { $in: sellerIds } })
+    .select('full_name email phone role seller_approval_status successful_sales_count paystack_subaccount_code')
+    .lean();
+  const sellerMap = new Map(sellers.map(s => [String(s._id), s]));
+
+  for (const sid of sellerIds) {
+    const seller = sellerMap.get(sid);
+    if (!seller || seller.role !== 'seller' || seller.seller_approval_status !== 'approved')
+      throw Object.assign(new Error('One or more sellers are not approved yet.'), { status: 409 });
+    if (!seller.paystack_subaccount_code)
+      throw Object.assign(new Error('One or more sellers have not connected a Paystack payment account yet.'), { status: 409 });
+  }
+
+  const totalKobo = Math.round(listings.reduce((sum, l) => sum + Number(l.price || 0), 0) * 100);
+  if (totalKobo <= 0) throw Object.assign(new Error('Invalid checkout total'), { status: 400 });
+
+  const grouped = new Map();
+  for (const listing of listings) {
+    const amount = Number(listing.price || 0);
+    const sid = String(listing.seller_id);
+    if (!grouped.has(sid)) grouped.set(sid, { amount: 0, seller: sellerMap.get(sid), listing_ids: [] });
+    const g = grouped.get(sid);
+    g.amount += amount;
+    g.listing_ids.push(String(listing._id));
+  }
+
+  // Flat shares preserve each seller's exact 7%→5.5% commission even when
+  // one checkout contains sellers on different tiers. Paystack keeps the
+  // remainder in Bixcart's main account. bearer_type=all makes Bixcart and
+  // participating seller accounts share Paystack's processing fee.
+  const splitSubaccounts = [];
+  const intentItems = [];
+  for (const [sid, g] of grouped.entries()) {
+    const commission = getSellerCommissionInfo(Number(g.seller.successful_sales_count || 0));
+    const sellerShareKobo = Math.max(0, Math.round(g.amount * 100 * (1 - commission.commission_percent / 100)));
+    splitSubaccounts.push({ subaccount: g.seller.paystack_subaccount_code, share: sellerShareKobo });
+    intentItems.push({
+      seller_id: sid,
+      listing_ids: g.listing_ids,
+      amount: Number(g.amount.toFixed(2)),
+      commission_percent: commission.commission_percent,
+      commission_amount: Number((g.amount * commission.commission_percent / 100).toFixed(2)),
+      seller_share_kobo: sellerShareKobo,
+    });
+  }
+
+  const reference = 'bixcart_' + Date.now() + '_' + Math.random().toString(36).slice(2, 10);
+  const intent = await CheckoutIntent.create({
+    reference,
+    buyer_id: buyerId,
+    expected_total_kobo: totalKobo,
+    delivery_address: checkoutDelivery,
+    items: intentItems,
+    expires_at: new Date(Date.now() + 30 * 60 * 1000),
+    source,
+    buy_request_group: buyRequestGroup,
+  });
+
+  try {
+    const appUrl = process.env.PUBLIC_APP_URL || `${req.protocol}://${req.get('host')}`;
+    const payment = await initializeTransaction({
+      email: buyerEmail,
+      amount: totalKobo,
+      currency: 'NGN',
+      reference,
+      callback_url: `${appUrl}/pages/checkout.html?payment=success&reference=${encodeURIComponent(reference)}`,
+      metadata: { user_id: String(buyerId), checkout_intent_id: String(intent._id), item_count: listings.length },
+      split: {
+        type: 'flat',
+        bearer_type: 'all',
+        subaccounts: splitSubaccounts,
+        reference: `split_${reference}`,
+      },
+    });
+    return { reference, authorization_url: payment.authorization_url, access_code: payment.access_code };
+  } catch (e) {
+    await CheckoutIntent.deleteOne({ _id: intent._id }).catch(() => {});
+    throw e;
+  }
+}
+
+router.buildSplitCheckoutSession = buildSplitCheckoutSession;
 
 // Finalize a Paystack checkout exactly once. This is shared by the browser callback
 // and the Paystack webhook so a successful payment cannot get stuck just because the
@@ -412,7 +418,7 @@ async function finalizeCheckoutPayment({ payment_reference, buyerId }) {
   }
 
   const listingIds = intent.items.flatMap(i => i.listing_ids || []);
-  const listings = await Listing.find({ _id: { $in: listingIds }, status: 'active' }).lean();
+  const listings = await Listing.find({ _id: { $in: listingIds }, status: 'active', stock_quantity: { $gte: 1 } }).lean();
   if (listings.length !== listingIds.length) {
     await createRefund({
       transaction: payment_reference,
@@ -432,11 +438,20 @@ async function finalizeCheckoutPayment({ payment_reference, buyerId }) {
       const listing = listingMap.get(String(listingId));
       const amount = Number(listing.price || 0);
       const deliveryMinutes = { '5m': 5, '6h': 360, '12h': 720, '1d': 1440, '3d': 4320, '7d': 10080 }[listing.delivery_window || '1d'] || 1440;
+      // Under the new flow every checkout is 'buy_request'-sourced, meaning the
+      // seller already accepted this exact listing before the buyer paid — so
+      // the order can go straight to 'confirmed' and skip the old post-payment
+      // "seller must accept within 6h" step entirely. `source:'cart'` is kept
+      // only so any CheckoutIntent still in flight from before this change
+      // finalizes the same way it always did (harmless, since the direct-pay
+      // route that created those intents is now retired and creates no more).
+      const preAccepted = intent.source === 'buy_request';
       ordersToCreate.push({
         listing_id: listing._id, buyer_id: buyerId, seller_id: listing.seller_id, amount,
-        status: 'paid', delivery_code: deliveryCode,
+        status: preAccepted ? 'confirmed' : 'paid', delivery_code: deliveryCode,
         delivery_code_expires_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
-        response_deadline_at: new Date(Date.now() + 6 * 60 * 60 * 1000),
+        response_deadline_at: preAccepted ? null : new Date(Date.now() + 6 * 60 * 60 * 1000),
+        seller_accepted_at: preAccepted ? new Date() : null,
         delivery_deadline_at: new Date(Date.now() + deliveryMinutes * 60 * 1000),
         platform_fee_percent: item.commission_percent,
         platform_fee_amount: Number((amount * item.commission_percent / 100).toFixed(2)),
@@ -467,9 +482,23 @@ async function finalizeCheckoutPayment({ payment_reference, buyerId }) {
   }
 
   let orders;
+  const decrementedListingIds = [];
   try {
     orders = await Order.insertMany(ordersToCreate);
-    await Listing.updateMany({ _id: { $in: listingIds } }, { $set: { status: 'pending' } });
+    // Each order consumes exactly one unit of stock from its listing. Only
+    // mark the listing 'sold' once stock is actually exhausted — otherwise
+    // it stays 'active' so buyers can keep purchasing remaining units.
+    for (const listingId of listingIds) {
+      const updated = await Listing.findByIdAndUpdate(
+        listingId,
+        { $inc: { stock_quantity: -1 } },
+        { new: true }
+      );
+      decrementedListingIds.push(listingId);
+      if (updated && updated.stock_quantity <= 0) {
+        await Listing.findByIdAndUpdate(listingId, { $set: { status: 'sold', stock_quantity: 0 } });
+      }
+    }
   } catch (creationError) {
     await createRefund({
       transaction: payment_reference,
@@ -478,8 +507,27 @@ async function finalizeCheckoutPayment({ payment_reference, buyerId }) {
       merchant_note: `Bixcart automatic full refund for checkout ${intent._id}: ${creationError.message}`,
     }).catch(() => {});
     await Order.deleteMany({ _id: { $in: orders?.map(o => o._id) || [] } }).catch(() => {});
-    await Listing.updateMany({ _id: { $in: listingIds } }, { $set: { status: 'active' } }).catch(() => {});
+    // Restore stock for any listing we did manage to decrement before the failure.
+    for (const listingId of decrementedListingIds) {
+      await Listing.findByIdAndUpdate(listingId, { $inc: { stock_quantity: 1 }, $set: { status: 'active' } }).catch(() => {});
+    }
     throw creationError;
+  }
+
+  // If this checkout came from accepted buy requests, mark them paid and
+  // link each to the order it produced, so they stop showing as "awaiting
+  // payment" anywhere in the UI.
+  if (intent.source === 'buy_request' && intent.buy_request_group) {
+    await BuyRequest.updateMany(
+      { request_group: intent.buy_request_group, buyer_id: buyerId, status: 'accepted' },
+      { $set: { status: 'paid' } }
+    ).catch(() => {});
+    for (const order of orders) {
+      await BuyRequest.updateOne(
+        { request_group: intent.buy_request_group, buyer_id: buyerId, listing_id: order.listing_id },
+        { $set: { order_id: order._id } }
+      ).catch(() => {});
+    }
   }
 
   await CartItem.deleteMany({ user_id: buyerId, listing_id: { $in: listingIds } });
@@ -583,8 +631,9 @@ router.put('/:id/status', authMiddleware, async (req, res) => {
         }).catch(() => {});
       }
     } else {
+      // Stock for this listing was already decremented (and marked 'sold' if
+      // exhausted) when the order was created — completion doesn't touch it again.
       await Order.findByIdAndUpdate(req.params.id, { $set: { status } });
-      if (status === 'completed') await Listing.findByIdAndUpdate(order.listing_id, { $set: { status: 'sold' } });
     }
 
     res.json({ success: true, status: 'cancelled' === status ? 'cancelled' : status });
@@ -616,37 +665,14 @@ router.post('/:id/mark-complete', authMiddleware, async (req, res) => {
 
     if (buyerDone && sellerDone) {
       update.status = 'completed';
-      await Listing.findByIdAndUpdate(order.listing_id, { $set: { status: 'sold' } });
+      // Stock was already decremented (and marked 'sold' if exhausted) when
+      // this order was created — completion doesn't touch listing stock again.
     } else {
       update.status = 'completing'; // waiting for the other side
     }
 
     const updated = await Order.findByIdAndUpdate(req.params.id, { $set: update }, { new: true });
     res.json({ ...updated.toObject(), id: updated._id, needs_rating: isBuyer && buyerDone && sellerDone });
-  } catch (e) { res.status(500).json({ error: e.message }); }
-});
-
-
-// Buyer chooses the delivery day/time and an admin-configured popular campus spot.
-router.post('/:id/schedule-delivery', authMiddleware, async (req, res) => {
-  try {
-    const order = await Order.findById(req.params.id);
-    if (!order) return res.status(404).json({ error: 'Order not found' });
-    if (String(order.buyer_id) !== String(req.user.id)) return res.status(403).json({ error: 'Only the buyer can schedule delivery' });
-    if (order.status !== 'confirmed') return res.status(400).json({ error: 'The seller must accept the order before delivery can be scheduled' });
-    const when = new Date(req.body?.delivery_at);
-    if (Number.isNaN(when.getTime()) || when <= new Date()) return res.status(400).json({ error: 'Choose a valid future delivery date and time' });
-    const spot = await DeliverySpot.findOne({ _id: req.body?.delivery_spot_id, is_active: true }).lean();
-    if (!spot) return res.status(400).json({ error: 'Please choose an available campus delivery spot' });
-    order.delivery_scheduled_for = when;
-    order.delivery_spot_id = spot._id;
-    order.delivery_spot_name = spot.name;
-    order.meetup_location = spot.name;
-    order.meetup_time = when.toISOString();
-    order.delivery_schedule_set_at = new Date();
-    await order.save();
-    await notifyUser(String(order.seller_id), { title: 'Buyer scheduled delivery', body: `Delivery for ${spot.name} is scheduled for ${when.toLocaleString('en-NG')}.`, type: 'order', url: `/pages/seller-dashboard.html` }).catch(() => {});
-    res.json({ success: true, order: { ...order.toObject(), id: order._id } });
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
@@ -818,7 +844,9 @@ router.post('/:id/confirm-delivery', authMiddleware, async (req, res) => {
     order.payout_status = 'split';
     await order.save();
 
-    await Listing.findByIdAndUpdate(order.listing_id, { $set: { status: 'sold' } });
+    // Stock was already decremented (and the listing marked 'sold' if that
+    // exhausted it) when this order was created — completion doesn't need to
+    // touch listing stock again.
 
     const sellerUser = await User.findById(order.seller_id);
     if (sellerUser) {

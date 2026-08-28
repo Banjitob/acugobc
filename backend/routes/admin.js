@@ -117,6 +117,123 @@ router.post('/seller-applications/:id/reject', async (req, res) => {
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
+// ── ACCOUNT DELETION REQUESTS ────────────────────────────────────────────────
+// GET /api/admin/deletion-requests?status=pending|approved|rejected|all
+router.get('/deletion-requests', async (req, res) => {
+  try {
+    const { status = 'pending', page = 1, limit = 20 } = req.query;
+    const filter = status === 'all'
+      ? { deletion_requested_at: { $ne: null } }
+      : status === 'pending'
+        ? { account_status: 'deletion_pending' }
+        : status === 'approved'
+          ? { account_status: 'deleted', deletion_approved_at: { $ne: null } }
+          : { deletion_requested_at: { $ne: null }, deletion_reviewed_at: { $ne: null }, account_status: { $ne: 'deleted' } }; // 'rejected'
+    const skip = (parseInt(page) - 1) * parseInt(limit);
+    const [total, users] = await Promise.all([
+      User.countDocuments(filter),
+      User.find(filter).select('-password_hash -push_subscriptions -used_payment_refs').sort({ deletion_requested_at: -1 }).skip(skip).limit(parseInt(limit)).lean(),
+    ]);
+    res.json({ users: users.map(u => ({ ...u, id: u._id })), total, page: parseInt(page), pages: Math.ceil(total / parseInt(limit)) });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+router.post('/deletion-requests/:id/approve', async (req, res) => {
+  try {
+    if (!mongoose.Types.ObjectId.isValid(req.params.id)) return res.status(400).json({ error: 'Invalid user ID' });
+    const user = await User.findById(req.params.id);
+    if (!user) return res.status(404).json({ error: 'User not found' });
+    if (user.account_status !== 'deletion_pending') return res.status(400).json({ error: 'This user does not have a pending deletion request' });
+
+    user.account_status = 'deleted';
+    user.deletion_reviewed_at = new Date();
+    user.deletion_reviewed_by = req.user.id;
+    user.deletion_approved_at = new Date();
+    // Data is retained for one year after approval before being purged by a
+    // separate housekeeping job, per Bixcart's stated retention policy.
+    user.deletion_retention_until = new Date(Date.now() + 365 * 24 * 60 * 60 * 1000);
+    await user.save();
+
+    await logAdminAction(req, 'account_deletion_approved', user, '', { deletion_reason: user.deletion_reason });
+    res.json({ success: true, user: { ...user.toObject(), id: user._id } });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+router.post('/deletion-requests/:id/reject', async (req, res) => {
+  try {
+    const reason = String(req.body?.reason || '').trim();
+    if (!reason) return res.status(400).json({ error: 'A reason is required so the user understands why their request was rejected' });
+    if (!mongoose.Types.ObjectId.isValid(req.params.id)) return res.status(400).json({ error: 'Invalid user ID' });
+    const user = await User.findById(req.params.id);
+    if (!user) return res.status(404).json({ error: 'User not found' });
+    if (user.account_status !== 'deletion_pending') return res.status(400).json({ error: 'This user does not have a pending deletion request' });
+
+    user.account_status = 'active';
+    user.deletion_reviewed_at = new Date();
+    user.deletion_reviewed_by = req.user.id;
+    await user.save();
+
+    await logAdminAction(req, 'account_deletion_rejected', user, reason, { deletion_reason: user.deletion_reason });
+    await notifyUser(String(user._id), { title: 'Account deletion request rejected', body: `Your account deletion request was rejected. Reason: ${reason}`, type: 'account', url: '/pages/profile.html' }).catch(() => {});
+    res.json({ success: true, user: { ...user.toObject(), id: user._id } });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+// ── ADMIN OVERRIDE OF SELLER DECISIONS ───────────────────────────────────────
+// POST /api/admin/seller-applications/:id/override — set a seller's approval
+// decision to a specific new status regardless of the current status. This is
+// how an admin overrides a Control account's decision (or a prior admin
+// decision): "Reverse" (see /control-actions/:id/reverse below) restores the
+// exact prior state, this instead lets the admin choose the outcome directly.
+router.post('/seller-applications/:id/override', async (req, res) => {
+  try {
+    const { status, reason } = req.body || {};
+    if (!['approved', 'rejected', 'pending'].includes(status)) return res.status(400).json({ error: 'Status must be approved, rejected, or pending' });
+    if (status === 'rejected' && !String(reason || '').trim()) return res.status(400).json({ error: 'A reason is required when overriding to rejected' });
+    if (!mongoose.Types.ObjectId.isValid(req.params.id)) return res.status(400).json({ error: 'Invalid seller ID' });
+    const seller = await User.findOne({ _id: req.params.id, role: 'seller' });
+    if (!seller) return res.status(404).json({ error: 'Seller not found' });
+
+    const previous = {
+      status: seller.seller_approval_status,
+      reason: seller.seller_approval_reason || '',
+      reviewed_by: seller.seller_approval_reviewed_by ? String(seller.seller_approval_reviewed_by) : null,
+    };
+    if (previous.status === status) return res.status(409).json({ error: `Seller is already ${status}` });
+
+    seller.seller_approval_status = status;
+    seller.seller_approval_reason = status === 'rejected' ? String(reason).trim() : '';
+    seller.seller_approval_reviewed_at = new Date();
+    seller.seller_approval_reviewed_by = req.user.id;
+    await seller.save();
+
+    // Find the most recent Control decision on this seller, if any, so the
+    // audit trail clearly shows what this override superseded.
+    const priorControlAction = await AdminAction.findOne({ target_user_id: seller._id, actor_role: 'control', action: { $in: ['seller_approved', 'seller_rejected'] } }).sort({ created_at: -1 });
+
+    await logAdminAction(req, 'seller_override', seller, String(reason || '').trim(), {
+      application_id: String(seller._id),
+      new_status: status,
+      previous_status: previous.status,
+      previous_reason: previous.reason,
+      previous_reviewed_by: previous.reviewed_by,
+      overrides_control_action_id: priorControlAction ? String(priorControlAction._id) : null,
+    }, true);
+
+    if (status === 'approved') {
+      await notifyUser(String(seller._id), { title: '✅ Seller account approved', body: 'An admin has approved your Bixcart seller account. You can now sign in and start selling.', type: 'seller_approval', url: '/pages/seller-dashboard.html' }).catch(() => {});
+      sendSellerDecisionEmail(seller.email, { sellerName: seller.full_name, approved: true }).catch(() => {});
+    } else if (status === 'rejected') {
+      await notifyUser(String(seller._id), { title: 'Seller application decision updated', body: `An admin has reviewed your seller application again. Decision: rejected. Reason: ${reason}`, type: 'seller_approval', url: '/pages/auth.html' }).catch(() => {});
+      sendSellerDecisionEmail(seller.email, { sellerName: seller.full_name, approved: false, reason: String(reason).trim() }).catch(() => {});
+    } else {
+      await notifyUser(String(seller._id), { title: 'Seller application reopened', body: 'An admin has reopened your seller application for review.', type: 'seller_approval', url: '/pages/auth.html' }).catch(() => {});
+    }
+
+    res.json({ success: true, user: { ...seller.toObject(), id: seller._id } });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
 // ── ADMIN ACTIONS ────────────────────────────────────────────────────────────
 router.get('/actions', async (req, res) => {
   try {
@@ -399,45 +516,6 @@ router.post('/user-reports/:id/resolve', async (req, res) => {
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
-
-// ── POPULAR DELIVERY SPOTS ───────────────────────────────────────────────────
-router.get('/delivery-spots', async (req, res) => {
-  try {
-    const spots = await DeliverySpot.find().sort({ sort_order: 1, name: 1 }).lean();
-    res.json({ spots: spots.map(x => ({ ...x, id: x._id })) });
-  } catch (e) { res.status(500).json({ error: e.message }); }
-});
-router.post('/delivery-spots', async (req, res) => {
-  try {
-    const name = String(req.body?.name || '').trim();
-    if (!name) return res.status(400).json({ error: 'Spot name is required' });
-    const spot = await DeliverySpot.create({ name, campus: String(req.body?.campus || 'Ajayi Crowther University').trim(), is_active: req.body?.is_active !== false, sort_order: Number(req.body?.sort_order) || 0 });
-    await logAdminAction(req, 'delivery_spot_created', null, '', { spot_id: String(spot._id), spot_name: spot.name });
-    res.status(201).json({ ...spot.toObject(), id: spot._id });
-  } catch (e) { if (e.code === 11000) return res.status(409).json({ error: 'This delivery spot already exists' }); res.status(500).json({ error: e.message }); }
-});
-router.patch('/delivery-spots/:id', async (req, res) => {
-  try {
-    const update = {};
-    if (req.body?.name !== undefined) { const name = String(req.body.name).trim(); if (!name) return res.status(400).json({ error: 'Spot name is required' }); update.name = name; }
-    if (req.body?.campus !== undefined) update.campus = String(req.body.campus || 'Ajayi Crowther University').trim();
-    if (req.body?.is_active !== undefined) update.is_active = !!req.body.is_active;
-    if (req.body?.sort_order !== undefined) update.sort_order = Number(req.body.sort_order) || 0;
-    const spot = await DeliverySpot.findByIdAndUpdate(req.params.id, { $set: update }, { new: true });
-    if (!spot) return res.status(404).json({ error: 'Delivery spot not found' });
-    await logAdminAction(req, 'delivery_spot_updated', null, '', { spot_id: String(spot._id), changes: update });
-    res.json({ ...spot.toObject(), id: spot._id });
-  } catch (e) { if (e.code === 11000) return res.status(409).json({ error: 'This delivery spot already exists' }); res.status(500).json({ error: e.message }); }
-});
-router.delete('/delivery-spots/:id', async (req, res) => {
-  try {
-    const spot = await DeliverySpot.findByIdAndDelete(req.params.id);
-    if (!spot) return res.status(404).json({ error: 'Delivery spot not found' });
-    await logAdminAction(req, 'delivery_spot_deleted', null, '', { spot_id: String(spot._id), spot_name: spot.name });
-    res.json({ success: true });
-  } catch (e) { res.status(500).json({ error: e.message }); }
-});
-
 // ── HOSTELS ──────────────────────────────────────────────────────────────────
 // Admin-managed hostel catalog. Users choose from this list; room numbers remain free text.
 router.get('/hostels', async (req, res) => {
@@ -491,6 +569,64 @@ router.delete('/hostels/:id', async (req, res) => {
   try {
     const hostel = await Hostel.findByIdAndDelete(req.params.id);
     if (!hostel) return res.status(404).json({ error: 'Hostel not found' });
+    res.json({ success: true });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+// ── DELIVERY SPOTS ───────────────────────────────────────────────────────────
+// Admin-managed list of popular on-campus meetup/delivery spots. Buyers pick
+// from this list at checkout instead of typing a free-text location.
+router.get('/delivery-spots', async (req, res) => {
+  try {
+    const spots = await DeliverySpot.find().sort({ sort_order: 1, name: 1 }).lean();
+    res.json({ spots: spots.map(s => ({ ...s, id: s._id })) });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+router.post('/delivery-spots', async (req, res) => {
+  try {
+    const { name, campus, is_active, sort_order } = req.body;
+    if (!name || !String(name).trim()) return res.status(400).json({ error: 'Spot name is required' });
+
+    const spot = await DeliverySpot.create({
+      name: String(name).trim(),
+      campus: campus || 'Ajayi Crowther University',
+      is_active: is_active !== false,
+      sort_order: Number.isFinite(Number(sort_order)) ? Number(sort_order) : 0,
+    });
+
+    res.status(201).json({ ...spot.toObject(), id: spot._id });
+  } catch (e) {
+    if (e.code === 11000) return res.status(409).json({ error: 'This spot already exists' });
+    res.status(500).json({ error: e.message });
+  }
+});
+
+router.patch('/delivery-spots/:id', async (req, res) => {
+  try {
+    const { name, campus, is_active, sort_order } = req.body;
+    const update = {};
+    if (name !== undefined) {
+      if (!String(name).trim()) return res.status(400).json({ error: 'Spot name is required' });
+      update.name = String(name).trim();
+    }
+    if (campus !== undefined) update.campus = campus || 'Ajayi Crowther University';
+    if (is_active !== undefined) update.is_active = !!is_active;
+    if (sort_order !== undefined) update.sort_order = Number(sort_order) || 0;
+
+    const spot = await DeliverySpot.findByIdAndUpdate(req.params.id, { $set: update }, { new: true });
+    if (!spot) return res.status(404).json({ error: 'Spot not found' });
+    res.json({ ...spot.toObject(), id: spot._id });
+  } catch (e) {
+    if (e.code === 11000) return res.status(409).json({ error: 'This spot already exists' });
+    res.status(500).json({ error: e.message });
+  }
+});
+
+router.delete('/delivery-spots/:id', async (req, res) => {
+  try {
+    const spot = await DeliverySpot.findByIdAndDelete(req.params.id);
+    if (!spot) return res.status(404).json({ error: 'Spot not found' });
     res.json({ success: true });
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
@@ -634,44 +770,6 @@ router.get('/broadcasts', async (req, res) => {
       })),
       total, page: parseInt(page), pages: Math.ceil(total / parseInt(limit)),
     });
-  } catch (e) { res.status(500).json({ error: e.message }); }
-});
-
-
-// ── ACCOUNT DELETION REQUESTS ────────────────────────────────────────────────
-router.get('/deletion-requests', async (req, res) => {
-  try {
-    const status = String(req.query?.status || 'pending');
-    const filter = status === 'all' ? { deletion_requested_at: { $ne: null } } : { account_status: 'deletion_pending' };
-    const users = await User.find(filter).select('-password_hash -push_subscriptions -used_payment_refs').sort({ deletion_requested_at: -1 }).lean();
-    res.json({ users: users.map(u => ({ ...u, id: u._id })) });
-  } catch (e) { console.error('[admin] deletion requests:', e); res.status(500).json({ error: e.message }); }
-});
-router.post('/deletion-requests/:id/approve', async (req, res) => {
-  try {
-    const user = await User.findById(req.params.id);
-    if (!user) return res.status(404).json({ error: 'User not found' });
-    if (user.account_status !== 'deletion_pending') return res.status(409).json({ error: 'This deletion request is no longer pending' });
-    const now = new Date();
-    user.account_status = 'deleted'; user.deletion_reviewed_at = now; user.deletion_reviewed_by = req.user.id; user.deletion_approved_at = now; user.deletion_retention_until = new Date(now.getTime() + 365*24*60*60*1000);
-    await user.save();
-    await logAdminAction(req, 'account_deletion_approved', user, '', { previous_status: 'deletion_pending', retention_until: user.deletion_retention_until });
-    await notifyUser(String(user._id), { title: 'Account deletion approved', body: 'Your Bixcart account deletion request was approved. Your account is now disabled and your data will be retained according to our policy.', type: 'account', url: '/pages/auth.html' }).catch(() => {});
-    res.json({ success: true, status: user.account_status });
-  } catch (e) { res.status(500).json({ error: e.message }); }
-});
-router.post('/deletion-requests/:id/reject', async (req, res) => {
-  try {
-    const reason = String(req.body?.reason || '').trim();
-    if (!reason) return res.status(400).json({ error: 'Reason is required' });
-    const user = await User.findById(req.params.id);
-    if (!user) return res.status(404).json({ error: 'User not found' });
-    if (user.account_status !== 'deletion_pending') return res.status(409).json({ error: 'This deletion request is no longer pending' });
-    user.account_status = 'active'; user.deletion_reviewed_at = new Date(); user.deletion_reviewed_by = req.user.id; user.deletion_approved_at = null; user.deletion_retention_until = null;
-    await user.save();
-    await logAdminAction(req, 'account_deletion_rejected', user, reason, { previous_status: 'deletion_pending' });
-    await notifyUser(String(user._id), { title: 'Account deletion request rejected', body: `Your account deletion request was rejected. Reason: ${reason}`, type: 'account', url: '/pages/settings.html' }).catch(() => {});
-    res.json({ success: true, status: user.account_status });
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 

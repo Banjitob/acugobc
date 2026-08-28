@@ -235,12 +235,17 @@ router.post('/', sellerApprovalMiddleware, async (req, res) => {
     if (!user) return res.status(404).json({ error: 'User not found' });
     if (user.role !== 'seller') return res.status(403).json({ error: 'Only sellers can create listings' });
 
-    const { title, description, price, original_price, category, condition, images, delivery_window } = req.body;
+    const { title, description, price, original_price, category, condition, images, delivery_window, stock_quantity } = req.body;
     if (!title || !description || !price || !category || !condition)
       return res.status(400).json({ error: 'Missing required fields' });
     const allowedWindows = ['5m','6h','12h','1d','3d','7d'];
     if (delivery_window && !allowedWindows.includes(delivery_window))
       return res.status(400).json({ error: 'Invalid delivery window' });
+    let stockQty = 1;
+    if (stock_quantity !== undefined && stock_quantity !== null && stock_quantity !== '') {
+      stockQty = parseInt(stock_quantity, 10);
+      if (!Number.isFinite(stockQty) || stockQty < 1) return res.status(400).json({ error: 'Stock quantity must be at least 1' });
+    }
 
     if (Array.isArray(images) && images.length > 5)
       return res.status(400).json({ error: 'Maximum 5 photos allowed per listing' });
@@ -252,6 +257,7 @@ router.post('/', sellerApprovalMiddleware, async (req, res) => {
       original_price: original_price ? parseFloat(original_price) : null,
       category, condition,
       delivery_window: delivery_window || '1d',
+      stock_quantity: stockQty,
       images: Array.isArray(images) ? images.slice(0, 5) : [],
       expires_at: expiresAt,
     });
@@ -301,16 +307,22 @@ router.put('/:id', sellerApprovalMiddleware, async (req, res) => {
     if (isListingExpired(listing))
       return res.status(403).json({ error: 'This listing has expired. Renew it before editing.' });
 
-    const { title, description, price, original_price, category, condition, status, images, delivery_window } = req.body;
+    const { title, description, price, original_price, category, condition, status, images, delivery_window, stock_quantity } = req.body;
     const allowedWindows = ['5m','6h','12h','1d','3d','7d'];
     if (delivery_window && !allowedWindows.includes(delivery_window))
       return res.status(400).json({ error: 'Invalid delivery window' });
     if (Array.isArray(images) && images.length > 5)
       return res.status(400).json({ error: 'Maximum 5 photos allowed per listing' });
+    let stockUpdate = {};
+    if (stock_quantity !== undefined && stock_quantity !== null && stock_quantity !== '') {
+      const qty = parseInt(stock_quantity, 10);
+      if (!Number.isFinite(qty) || qty < 0) return res.status(400).json({ error: 'Stock quantity must be 0 or more' });
+      stockUpdate = { stock_quantity: qty };
+    }
 
     const updated = await Listing.findByIdAndUpdate(
       req.params.id,
-      { $set: { title, description, price: parseFloat(price), original_price: original_price ? parseFloat(original_price) : null, category, condition, ...(status ? { status } : {}), ...(delivery_window ? { delivery_window } : {}), ...(Array.isArray(images) ? { images: images.slice(0, 5) } : {}) } },
+      { $set: { title, description, price: parseFloat(price), original_price: original_price ? parseFloat(original_price) : null, category, condition, ...(status ? { status } : {}), ...(delivery_window ? { delivery_window } : {}), ...(Array.isArray(images) ? { images: images.slice(0, 5) } : {}), ...stockUpdate } },
       { new: true }
     ).lean();
     res.json({ ...updated, id: updated._id });
@@ -350,6 +362,30 @@ router.post('/:id/relist', sellerApprovalMiddleware, async (req, res) => {
         expires_at: new Date(Date.now() + (90 * 24 * 60 * 60 * 1000)),
       },
     }, { new: true }).lean();
+    res.json({ ...updated, id: updated._id });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+// POST /api/listings/:id/restock — seller updates how many units are
+// available, any time (not subject to the 90-minute content edit lock,
+// since this is a lifecycle/inventory action, not a content edit — same as
+// mark-sold/relist above). If the listing had been auto-marked 'sold'
+// because stock hit zero, setting a positive quantity brings it back to
+// 'active' automatically.
+router.post('/:id/restock', sellerApprovalMiddleware, async (req, res) => {
+  try {
+    const listing = await Listing.findById(req.params.id);
+    if (!listing) return res.status(404).json({ error: 'Not found' });
+    if (String(listing.seller_id) !== String(req.user.id)) return res.status(403).json({ error: 'Forbidden' });
+    if (listing.ai_flagged) return res.status(403).json({ error: 'This listing has been flagged by our AI and cannot be changed until an admin reviews it.' });
+    if (listing.status === 'deleted') return res.status(400).json({ error: 'This listing has been deleted' });
+
+    const qty = parseInt(req.body?.stock_quantity, 10);
+    if (!Number.isFinite(qty) || qty < 0) return res.status(400).json({ error: 'Stock quantity must be 0 or more' });
+
+    const update = { stock_quantity: qty };
+    if (listing.status === 'sold' && qty > 0) update.status = 'active';
+    const updated = await Listing.findByIdAndUpdate(req.params.id, { $set: update }, { new: true }).lean();
     res.json({ ...updated, id: updated._id });
   } catch (e) { res.status(500).json({ error: e.message }); }
 });

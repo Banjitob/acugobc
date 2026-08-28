@@ -717,7 +717,7 @@ body {
       Hostels
     </button>
     <button class="admin-nav-item" data-tab="delivery-spots">
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 10c0 5-8 11-8 11S4 15 4 10a8 8 0 1 1 16 0Z"/><circle cx="12" cy="10" r="2.5"/></svg>
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
       Delivery Spots
     </button>
     <button class="admin-nav-item" data-tab="messages">
@@ -820,7 +820,7 @@ api.patch = (path, body) => api.request('PATCH', path, body, true);
   if (u.role === 'control') {
     document.body.classList.add('control-mode');
     document.querySelectorAll('.admin-only').forEach(el => el.style.display = 'none');
-    ['overview','deletion-requests','users','listings','broadcast','hostels'].forEach(tab => document.querySelector(`[data-tab="${tab}"]`)?.style.setProperty('display','none'));
+    ['overview','deletion-requests','users','listings','broadcast','hostels','delivery-spots'].forEach(tab => document.querySelector(`[data-tab="${tab}"]`)?.style.setProperty('display','none'));
   }
 })();
 
@@ -829,7 +829,14 @@ function adminLogout() { adminAuth.clear(); window.location.replace('admin-login
 // ── Tab routing ─────────────────────────────────────────────────────────────
 const isControlUser = () => adminAuth.getUser()?.role === 'control';
 const controlPath = path => isControlUser() ? path.replace(/^\/admin/, '/control') : path;
-const TABS = { overview: 'Overview', 'delivery-spots': 'Delivery Spots', controls: 'Controls', 'control-actions': 'Control Actions', 'seller-approvals': 'Seller Approvals', 'deletion-requests': 'Account Deletions', actions: 'Admin Actions', users: 'Users', listings: 'Listings', broadcast: 'Broadcast', hostels: 'Hostels', messages: 'Conversation Reports', 'user-reports': 'User Reports', flagged: 'AI Flagged' };
+const TABS = { overview: 'Overview', controls: 'Controls', 'control-actions': 'Control Actions', 'seller-approvals': 'Seller Approvals', 'deletion-requests': 'Account Deletions', actions: 'Admin Actions', users: 'Users', listings: 'Listings', broadcast: 'Broadcast', hostels: 'Hostels', 'delivery-spots': 'Delivery Spots', messages: 'Conversation Reports', 'user-reports': 'User Reports', flagged: 'AI Flagged' };
+const ACTION_LABELS = {
+  seller_approved: 'Approved seller', seller_rejected: 'Rejected seller',
+  seller_override: 'Overrode seller decision',
+  user_warned: 'Warned user', user_suspended: 'Suspended user', user_unsuspended: 'Restored user',
+  account_deletion_approved: 'Approved account deletion', account_deletion_rejected: 'Rejected account deletion',
+  control_created: 'Created Control account', control_action_reversed: 'Reversed Control action',
+};
 let currentTab = isControlUser() ? 'seller-approvals' : 'overview';
 
 document.querySelectorAll('.admin-nav-item[data-tab]').forEach(btn => { btn.addEventListener('click', () => switchTab(btn.dataset.tab)); });
@@ -891,10 +898,48 @@ async function renderControls() {
   try{const d=await api.get('/admin/controls');const rows=d.controls||[];document.getElementById('controls-list').innerHTML=rows.length?'<div class="admin-table-wrap"><table class="admin-table"><thead><tr><th>Name</th><th>Email</th><th>Status</th></tr></thead><tbody>'+rows.map(u=>`<tr><td><strong>${escHtml(u.full_name)}</strong></td><td>${escHtml(u.email)}</td><td>${escHtml(u.account_status)}</td></tr>`).join('')+'</tbody></table></div>':'<div class="admin-empty">No Control accounts yet.</div>';}catch(e){document.getElementById('controls-list').textContent=e.message;}
 }
 async function renderControlActions(){
-  const c=document.getElementById('admin-content');c.innerHTML='<div style="margin-bottom:18px"><div class="section-kicker">Audit trail</div><h2 style="font-size:28px">Control Actions</h2><p style="color:var(--ink-3);font-size:13px">Every action by a Control is recorded with the Control name. Admins can reverse seller approval decisions.</p></div><div id="control-actions-list">Loading…</div>';
-  try{const d=await api.get('/admin/control-actions?limit=100');const rows=d.actions||[];document.getElementById('control-actions-list').innerHTML=rows.length?'<div class="admin-table-wrap"><table class="admin-table"><thead><tr><th>Date</th><th>Control</th><th>Action</th><th>Target</th><th>Reversed</th><th></th></tr></thead><tbody>'+rows.map(a=>`<tr><td>${fmtTime(a.created_at)}</td><td><strong>${escHtml(a.admin_name)}</strong></td><td>${escHtml(labels[a.action]||a.action)}</td><td>${escHtml(a.target_user_name||a.target_user_email||'—')}</td><td>${a.reversed_at?fmtTime(a.reversed_at):'No'}</td><td>${a.reversible&&!a.reversed_at?`<button class="btn btn-surface btn-sm" onclick="reverseControlAction('${a.id}')">Reverse</button>`:''}</td></tr>`).join('')+'</tbody></table></div>':'<div class="admin-empty">No Control actions recorded.</div>';}catch(e){document.getElementById('control-actions-list').textContent=e.message;}
+  const c=document.getElementById('admin-content');c.innerHTML='<div style="margin-bottom:18px"><div class="section-kicker">Audit trail</div><h2 style="font-size:28px">Control Actions</h2><p style="color:var(--ink-3);font-size:13px">Every action by a Control is recorded with the Control name. Admins can reverse a decision back to how it was, or override it with a specific new decision.</p></div><div id="control-actions-list">Loading…</div>';
+  try{
+    const d=await api.get('/admin/control-actions?limit=100');
+    const rows=d.actions||[];
+    document.getElementById('control-actions-list').innerHTML=rows.length?'<div class="admin-table-wrap"><table class="admin-table"><thead><tr><th>Date</th><th>Control</th><th>Action</th><th>Target</th><th>Reversed</th><th></th></tr></thead><tbody>'+rows.map(a=>`<tr><td>${fmtTime(a.created_at)}</td><td><strong>${escHtml(a.admin_name)}</strong></td><td>${escHtml(ACTION_LABELS[a.action]||a.action)}</td><td>${escHtml(a.target_user_name||a.target_user_email||'—')}</td><td>${a.reversed_at?fmtTime(a.reversed_at):'No'}</td><td style="white-space:nowrap;">${a.reversible&&!a.reversed_at?`<button class="btn btn-surface btn-sm" onclick="reverseControlAction('${a.id}')">Reverse</button> `:''}${['seller_approved','seller_rejected'].includes(a.action)&&!a.reversed_at&&a.target_user_id?`<button class="btn btn-primary btn-sm" onclick="overrideControlAction('${a.target_user_id}','${a.target_user_name?escHtml(a.target_user_name).replace(/'/g,"\\'"):''}')">Override</button>`:''}</td></tr>`).join('')+'</tbody></table></div>':'<div class="admin-empty">No Control actions recorded.</div>';
+  }catch(e){document.getElementById('control-actions-list').textContent=e.message;}
 }
-window.reverseControlAction=async function(id){if(!confirm('Reverse this Control action?'))return;try{await api.post(`/admin/control-actions/${id}/reverse`,{});toast('Control action reversed.','success');renderControlActions();}catch(e){toast(e.message,'error');}};
+window.reverseControlAction=async function(id){if(!confirm('Reverse this Control action? This restores the seller to exactly the state they were in before the Control acted.'))return;try{await api.post(`/admin/control-actions/${id}/reverse`,{});toast('Control action reversed.','success');renderControlActions();}catch(e){toast(e.message,'error');}};
+
+// Lets an admin set a seller's approval decision to a specific new state —
+// approved, rejected, or reopened to pending — regardless of what a Control
+// account (or a prior admin decision) already set it to. Unlike "Reverse",
+// which restores the exact prior state, this lets the admin choose the
+// outcome directly.
+window.overrideControlAction = function(sellerId, sellerName) {
+  const label = sellerName ? ` for ${sellerName}` : '';
+  const modalHtml = `
+    <div style="display:grid;gap:12px;">
+      <p style="font-size:13px;color:var(--ink-3);">Choose the new decision${label}. This overrides whatever the Control account (or a prior admin) decided, and the seller is notified immediately.</p>
+      <div style="display:flex;gap:8px;">
+        <button class="btn btn-primary btn-sm" id="override-approve-btn">Set: Approved</button>
+        <button class="btn btn-danger btn-sm" id="override-reject-btn">Set: Rejected</button>
+        <button class="btn btn-ghost btn-sm" id="override-pending-btn">Reopen: Pending</button>
+      </div>
+    </div>`;
+  showDrawer(`<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:18px;"><div><div class="section-kicker">Admin override</div><h2 style="margin:4px 0 0;font-size:22px;">Override seller decision</h2></div><button class="btn btn-ghost btn-sm" onclick="closeDrawer()">Close</button></div>${modalHtml}`);
+  document.getElementById('override-approve-btn').addEventListener('click', () => submitOverride(sellerId, 'approved'));
+  document.getElementById('override-reject-btn').addEventListener('click', () => {
+    closeDrawer();
+    showModal({ title: 'Override — reject seller', sub: 'A reason is required so the seller understands the decision.', placeholder: 'Explain why this seller is being rejected…', confirmLabel: 'Confirm override', confirmClass: 'btn-danger', onConfirm: reason => submitOverride(sellerId, 'rejected', reason) });
+  });
+  document.getElementById('override-pending-btn').addEventListener('click', () => submitOverride(sellerId, 'pending'));
+};
+
+async function submitOverride(sellerId, status, reason = '') {
+  try {
+    await api.post(`/admin/seller-applications/${sellerId}/override`, { status, reason });
+    closeDrawer();
+    toast('Decision overridden.', 'success');
+    renderControlActions();
+  } catch (e) { toast(e.message, 'error'); }
+}
 
 // ══════════════════════════════════════════════════════════════════════════════
 // SELLER APPROVALS
@@ -970,9 +1015,8 @@ async function renderAdminActions() {
   try {
     const data = await api.get('/admin/actions?limit=100');
     const actions = data.actions || [];
-    const labels = { seller_approved:'Approved seller', seller_rejected:'Rejected seller', user_warned:'Warned user', user_suspended:'Suspended user', user_unsuspended:'Restored user' };
     c.innerHTML = `<div style="margin-bottom:18px;"><div class="section-kicker" style="margin-bottom:6px;">Audit trail</div><h2 style="font-size:28px;letter-spacing:-.5px;">Admin Actions</h2><p style="color:var(--ink-3);font-size:13px;margin-top:6px;">Every important admin action is recorded here so other administrators can see who did what and when.</p></div>
-      ${actions.length ? `<div class="admin-table-wrap"><table class="admin-table"><thead><tr><th>Date</th><th>Admin</th><th>Action</th><th>Target</th><th>Reason</th></tr></thead><tbody>${actions.map(a => `<tr><td>${fmtTime(a.created_at)}</td><td><strong>${escHtml(a.admin_name)}</strong></td><td>${escHtml(labels[a.action] || a.action)}</td><td>${escHtml(a.target_user_name || a.target_user_email || '—')}</td><td>${escHtml(a.reason || '—')}</td></tr>`).join('')}</tbody></table></div>` : '<div class="admin-empty">No admin actions recorded yet.</div>'}`;
+      ${actions.length ? `<div class="admin-table-wrap"><table class="admin-table"><thead><tr><th>Date</th><th>Admin</th><th>Action</th><th>Target</th><th>Reason</th></tr></thead><tbody>${actions.map(a => `<tr><td>${fmtTime(a.created_at)}</td><td><strong>${escHtml(a.admin_name)}</strong></td><td>${escHtml(ACTION_LABELS[a.action] || a.action)}</td><td>${escHtml(a.target_user_name || a.target_user_email || '—')}</td><td>${escHtml(a.reason || '—')}</td></tr>`).join('')}</tbody></table></div>` : '<div class="admin-empty">No admin actions recorded yet.</div>'}`;
   } catch(e) { c.innerHTML = `<div class="admin-empty">Failed to load admin actions: ${escHtml(e.message)}</div>`; }
 }
 
@@ -1130,31 +1174,6 @@ async function renderOverview() {
 }
 
 // ══════════════════════════════════════════════════════════════════════════════
-// DELIVERY SPOTS
-// ══════════════════════════════════════════════════════════════════════════════
-async function renderDeliverySpots() {
-  const c = document.getElementById('admin-content');
-  c.innerHTML = `<div style="display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:18px;flex-wrap:wrap;"><div><div class="section-kicker">Campus settings</div><h2 style="font-size:28px;margin-top:6px;">Popular Delivery Spots</h2><p style="color:var(--ink-3);font-size:13px;margin-top:4px;">These are the campus locations buyers can choose when scheduling delivery.</p></div><button class="btn btn-primary" id="add-delivery-spot">+ Add spot</button></div><div class="admin-table-wrap"><table class="admin-table"><thead><tr><th>Spot</th><th>Campus</th><th>Status</th><th>Actions</th></tr></thead><tbody id="delivery-spots-tbody"><tr><td colspan="4" style="padding:24px;text-align:center;color:var(--ink-3);">Loading delivery spots…</td></tr></tbody></table></div>`;
-  document.getElementById('add-delivery-spot').onclick = addDeliverySpot;
-  try {
-    const data = await api.get('/admin/delivery-spots'); const rows = data.spots || []; const tbody = document.getElementById('delivery-spots-tbody');
-    if (!rows.length) { tbody.innerHTML = '<tr><td colspan="4" style="padding:24px;text-align:center;color:var(--ink-3);">No delivery spots yet. Add one for buyers to choose.</td></tr>'; return; }
-    tbody.innerHTML = rows.map(x => `<tr><td>${escHtml(x.name)}</td><td>${escHtml(x.campus || 'Ajayi Crowther University')}</td><td><span class="badge ${x.is_active === false ? 'badge-surface' : 'badge-green'}">${x.is_active === false ? 'Hidden' : 'Active'}</span></td><td><div class="action-btns"><button class="action-btn view" onclick="editDeliverySpot('${x.id}')">Edit</button><button class="action-btn kick" onclick="deleteDeliverySpot('${x.id}')">Delete</button></div></td></tr>`).join('');
-  } catch(e) { c.innerHTML = `<div class="admin-empty">Failed to load delivery spots: ${escHtml(e.message)}</div>`; }
-}
-async function addDeliverySpot() {
-  const name = prompt('Popular campus spot name:', ''); if (!name?.trim()) return;
-  try { await api.post('/admin/delivery-spots', { name: name.trim(), campus: 'Ajayi Crowther University', is_active: true }); toast('Delivery spot added','success'); renderDeliverySpots(); } catch(e) { toast(e.message,'error'); }
-}
-async function editDeliverySpot(id) {
-  try { const d=await api.get('/admin/delivery-spots'); const x=(d.spots||[]).find(v=>String(v.id)===String(id)); if(!x)return; const name=prompt('Edit delivery spot name:',x.name||''); if(!name?.trim())return; await api.patch(`/admin/delivery-spots/${id}`,{name:name.trim()}); toast('Delivery spot updated','success'); renderDeliverySpots(); } catch(e){toast(e.message,'error');}
-}
-async function deleteDeliverySpot(id) {
-  if(!confirm('Delete this delivery spot? Buyers will no longer be able to choose it.'))return;
-  try { await api.delete(`/admin/delivery-spots/${id}`); toast('Delivery spot deleted','success'); renderDeliverySpots(); } catch(e){toast(e.message,'error');}
-}
-
-// ══════════════════════════════════════════════════════════════════════════════
 // HOSTELS
 // ══════════════════════════════════════════════════════════════════════════════
 async function renderHostels() {
@@ -1245,6 +1264,97 @@ async function deleteHostel(id) {
     await api.delete(`/admin/hostels/${id}`);
     toast('Hostel removed', 'success');
     renderHostels();
+  } catch (e) { toast(e.message, 'error'); }
+}
+
+async function renderDeliverySpots() {
+  const c = document.getElementById('admin-content');
+  c.innerHTML = `
+    <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:18px;flex-wrap:wrap;">
+      <div>
+        <div class="section-kicker" style="margin-bottom:6px;">Campus settings</div>
+        <h2 style="font-size:28px;letter-spacing:-.5px;">Delivery Spots</h2>
+        <p style="color:var(--ink-3);font-size:13px;margin-top:6px;">Popular on-campus meetup points buyers pick from when paying for an accepted order.</p>
+      </div>
+      <button class="btn btn-primary" id="add-spot-btn">+ Add spot</button>
+    </div>
+    <div class="admin-table-wrap">
+      <table class="admin-table">
+        <thead>
+          <tr><th>Name</th><th>Campus</th><th>Status</th><th>Actions</th></tr>
+        </thead>
+        <tbody id="spots-tbody"><tr><td colspan="4" style="padding:24px;text-align:center;color:var(--ink-3);">Loading delivery spots…</td></tr></tbody>
+      </table>
+    </div>`;
+
+  document.getElementById('add-spot-btn').addEventListener('click', () => addDeliverySpot());
+
+  try {
+    const data = await api.get('/admin/delivery-spots');
+    const rows = data.spots || [];
+    const tbody = document.getElementById('spots-tbody');
+    if (!rows.length) {
+      tbody.innerHTML = '<tr><td colspan="4" style="padding:24px;text-align:center;color:var(--ink-3);">No delivery spots yet. Add the first one — e.g. "Main Gate", "Faculty of Science", "Female Hostel B".</td></tr>';
+      return;
+    }
+
+    tbody.innerHTML = rows.map(s => `
+      <tr>
+        <td>${escHtml(s.name)}</td>
+        <td>${escHtml(s.campus || 'Ajayi Crowther University')}</td>
+        <td><span class="badge ${s.is_active === false ? 'badge-surface' : 'badge-green'}">${s.is_active === false ? 'Hidden' : 'Active'}</span></td>
+        <td>
+          <div class="action-btns">
+            <button class="action-btn view" data-spot-action="edit" data-id="${s.id}">Edit</button>
+            <button class="action-btn kick" data-spot-action="delete" data-id="${s.id}">Delete</button>
+          </div>
+        </td>
+      </tr>
+    `).join('');
+
+    c.querySelectorAll('[data-spot-action]').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        const id = btn.dataset.id;
+        const action = btn.dataset.spotAction;
+        if (action === 'edit') return editDeliverySpot(id);
+        if (action === 'delete') return deleteDeliverySpot(id);
+      });
+    });
+  } catch (e) {
+    c.innerHTML = `<div class="admin-empty">Failed to load delivery spots: ${e.message}</div>`;
+  }
+}
+
+async function addDeliverySpot() {
+  const name = window.prompt('Spot name (e.g. "Main Gate", "Female Hostel B"):', '');
+  if (!name || !name.trim()) return;
+  try {
+    await api.post('/admin/delivery-spots', { name: name.trim(), campus: 'Ajayi Crowther University', is_active: true });
+    toast('Delivery spot added', 'success');
+    renderDeliverySpots();
+  } catch (e) { toast(e.message, 'error'); }
+}
+
+async function editDeliverySpot(id) {
+  const current = await api.get('/admin/delivery-spots');
+  const spot = (current.spots || []).find(s => String(s.id) === String(id));
+  if (!spot) return;
+  const nextName = window.prompt('Edit spot name:', spot.name || '');
+  if (!nextName || !nextName.trim()) return;
+  try {
+    await api.patch(`/admin/delivery-spots/${id}`, { name: nextName.trim() });
+    toast('Delivery spot updated', 'success');
+    renderDeliverySpots();
+  } catch (e) { toast(e.message, 'error'); }
+}
+
+async function deleteDeliverySpot(id) {
+  const ok = window.confirm('Delete this delivery spot from the list?');
+  if (!ok) return;
+  try {
+    await api.delete(`/admin/delivery-spots/${id}`);
+    toast('Delivery spot removed', 'success');
+    renderDeliverySpots();
   } catch (e) { toast(e.message, 'error'); }
 }
 
