@@ -1,0 +1,2605 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Admin — Bixcart</title>
+<link rel="stylesheet" href="../css/main.css">
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@700&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --sidebar-bg: #0f172a;
+  --sidebar-hover: rgba(255,255,255,.06);
+  --sidebar-active: rgba(255,255,255,.12);
+  --sidebar-text: rgba(255,255,255,.5);
+  --sidebar-text-active: #fff;
+  --sidebar-border: rgba(255,255,255,.07);
+  --topbar-h: 58px;
+}
+
+html { height: 100%; }
+body {
+  font-family: var(--font-body);
+  background: var(--bg);
+  color: var(--ink);
+  min-height: 100%;
+  display: flex;
+}
+
+/* ═══════════════════════════════════════════
+   SIDEBAR
+═══════════════════════════════════════════ */
+.admin-sidebar {
+  width: 240px;
+  min-width: 240px;
+  background: var(--sidebar-bg);
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  height: 100dvh;
+  position: sticky;
+  top: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  scrollbar-width: none;
+  flex-shrink: 0;
+  z-index: 10;
+}
+.admin-sidebar::-webkit-scrollbar { display: none; }
+
+.admin-logo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 0 20px;
+  height: 64px;
+  border-bottom: 1px solid var(--sidebar-border);
+  flex-shrink: 0;
+}
+.admin-logo-mark {
+  font-family: 'Fredoka', sans-serif;
+  font-size: 22px;
+  font-weight: 700;
+  color: white;
+  letter-spacing: .2px;
+  line-height: 1;
+}
+.admin-logo-mark span { color: var(--accent, #c8522a); }
+.admin-logo-badge {
+  font-size: 9px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .1em;
+  color: var(--accent, #c8522a);
+  background: rgba(200,82,42,.15);
+  border: 1px solid rgba(200,82,42,.3);
+  padding: 2px 7px;
+  border-radius: 99px;
+}
+
+.admin-nav { padding: 12px 10px 24px; flex: 1; }
+.admin-nav-section {
+  font-size: 9px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: .14em;
+  color: rgba(255,255,255,.2);
+  padding: 18px 12px 6px;
+}
+.admin-nav-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 9px 12px;
+  border-radius: 8px;
+  font-size: 13.5px;
+  font-weight: 500;
+  color: var(--sidebar-text);
+  cursor: pointer;
+  transition: background .12s, color .12s;
+  margin-bottom: 2px;
+  border: none;
+  background: none;
+  text-align: left;
+  font-family: var(--font-body);
+}
+.admin-nav-item svg { flex-shrink: 0; opacity: .7; transition: opacity .12s; }
+.admin-nav-item:hover  { background: var(--sidebar-hover); color: rgba(255,255,255,.85); }
+.admin-nav-item:hover svg { opacity: 1; }
+.admin-nav-item.active { background: var(--sidebar-active); color: var(--sidebar-text-active); font-weight: 600; }
+.admin-nav-item.active svg { opacity: 1; }
+
+.admin-nav-badge {
+  margin-left: auto;
+  font-size: 10px;
+  font-weight: 700;
+  background: var(--accent, #c8522a);
+  color: white;
+  padding: 1px 7px;
+  border-radius: 99px;
+  min-width: 18px;
+  text-align: center;
+}
+
+.sidebar-footer {
+  padding: 16px 20px;
+  border-top: 1px solid var(--sidebar-border);
+  flex-shrink: 0;
+}
+.sidebar-footer-name { font-size: 12px; font-weight: 600; color: rgba(255,255,255,.7); margin-bottom: 1px; }
+.sidebar-footer-role { font-size: 11px; color: rgba(255,255,255,.3); }
+
+/* ═══════════════════════════════════════════
+   MAIN AREA
+═══════════════════════════════════════════ */
+.admin-main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 100dvh;
+  min-width: 0;
+  overflow-x: hidden;
+}
+
+/* ── Topbar ── */
+.admin-topbar {
+  height: var(--topbar-h);
+  border-bottom: 1.5px solid var(--border);
+  display: flex;
+  align-items: center;
+  padding: 0 28px;
+  gap: 14px;
+  background: var(--surface);
+  flex-shrink: 0;
+  position: sticky;
+  top: 0;
+  z-index: 40;
+}
+.mob-nav-toggle {
+  display: none;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--ink);
+  padding: 6px;
+  border-radius: 8px;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  transition: background .12s;
+}
+.mob-nav-toggle:hover { background: var(--surface-2); }
+.admin-topbar-title {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--ink);
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.admin-topbar-right {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-shrink: 0;
+}
+.topbar-signout {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 14px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  font-family: var(--font-body);
+  color: var(--ink-3);
+  background: none;
+  border: 1.5px solid var(--border);
+  cursor: pointer;
+  transition: all .12s;
+}
+.topbar-signout:hover { background: var(--surface-2); color: var(--ink); }
+.topbar-signout .so-label { }
+
+/* ── Page content ── */
+.admin-content { flex: 1; padding: 28px 32px; }
+
+/* ═══════════════════════════════════════════
+   STAT CARDS
+═══════════════════════════════════════════ */
+.stat-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(175px, 1fr));
+  gap: 16px;
+  margin-bottom: 28px;
+}
+.stat-card {
+  background: var(--surface);
+  border: 1.5px solid var(--border);
+  border-radius: 14px;
+  padding: 20px;
+  position: relative;
+  overflow: hidden;
+  transition: box-shadow .15s;
+}
+.stat-card:hover { box-shadow: 0 4px 20px rgba(0,0,0,.07); }
+.stat-card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 3px;
+  background: var(--border);
+  border-radius: 14px 14px 0 0;
+}
+.stat-card.warn::before   { background: #f59e0b; }
+.stat-card.danger::before { background: #ef4444; }
+.stat-card.success::before{ background: #10b981; }
+.stat-card.warn   { background: #fffbeb; border-color: #fde68a; }
+.stat-card.danger { background: #fef2f2; border-color: #fecaca; }
+.stat-card-label {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .07em;
+  color: var(--ink-3);
+  margin-bottom: 10px;
+}
+.stat-card-value {
+  font-size: 32px;
+  font-weight: 800;
+  letter-spacing: -1.5px;
+  line-height: 1;
+  margin-bottom: 4px;
+  font-family: var(--font-display);
+}
+.stat-card-sub { font-size: 12px; color: var(--ink-3); }
+
+/* ═══════════════════════════════════════════
+   TABLES
+═══════════════════════════════════════════ */
+.admin-table-wrap {
+  background: var(--surface);
+  border: 1.5px solid var(--border);
+  border-radius: 14px;
+  overflow: hidden;
+}
+.admin-table { width: 100%; border-collapse: collapse; }
+.admin-table thead tr { background: var(--bg); }
+.admin-table th {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .07em;
+  color: var(--ink-3);
+  padding: 12px 18px;
+  border-bottom: 1.5px solid var(--border);
+  text-align: left;
+  white-space: nowrap;
+}
+.admin-table td {
+  padding: 13px 18px;
+  border-bottom: 1px solid var(--border);
+  font-size: 13px;
+  vertical-align: middle;
+}
+.admin-table tr:last-child td { border-bottom: none; }
+.admin-table tbody tr { transition: background .1s; }
+.admin-table tbody tr:hover td { background: var(--bg); }
+.mono { font-family: 'Courier New', monospace; font-size: 11px; color: var(--ink-3); }
+
+.admin-toolbar {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+}
+.admin-search {
+  flex: 1;
+  min-width: 200px;
+  padding: 9px 14px;
+  border: 1.5px solid var(--border);
+  border-radius: 10px;
+  font-family: var(--font-body);
+  font-size: 13px;
+  background: var(--surface);
+  color: var(--ink);
+  outline: none;
+  transition: border-color .15s;
+}
+.admin-search:focus { border-color: var(--ink); }
+.filter-select {
+  padding: 9px 12px;
+  border: 1.5px solid var(--border);
+  border-radius: 10px;
+  font-family: var(--font-body);
+  font-size: 13px;
+  background: var(--surface);
+  color: var(--ink);
+  outline: none;
+  cursor: pointer;
+}
+
+/* ── Broadcast tab ── */
+.bcast-layout { display: grid; grid-template-columns: 1fr 340px; gap: 20px; align-items: start; }
+.bcast-main { min-width: 0; }
+.bcast-select-bar {
+  display: flex; align-items: center; gap: 16px; flex-wrap: wrap;
+  margin-bottom: 10px; font-size: 13px; color: var(--ink-2);
+}
+.bcast-check-label { display: flex; align-items: center; gap: 6px; cursor: pointer; user-select: none; }
+.bcast-check-label input, .bcast-row-check { width: 16px; height: 16px; accent-color: var(--accent); cursor: pointer; }
+.link-btn {
+  background: none; border: none; padding: 0; color: var(--accent); font-weight: 600;
+  font-size: 13px; cursor: pointer; font-family: var(--font-body); text-decoration: underline;
+}
+.link-btn.active { color: var(--ink); }
+.bcast-selected-count {
+  margin-left: auto; font-weight: 700; color: var(--ink);
+  background: var(--bg); border: 1.5px solid var(--border); border-radius: 20px; padding: 4px 12px;
+}
+.bcast-compose {
+  background: var(--surface); border: 1.5px solid var(--border); border-radius: var(--radius-lg, 14px);
+  padding: 18px; position: sticky; top: 16px;
+}
+.bcast-compose-title { font-size: 14px; font-weight: 700; margin-bottom: 12px; }
+.bcast-field-label { display: block; font-size: 12px; font-weight: 600; color: var(--ink-2); margin: 10px 0 5px; }
+.bcast-input, .bcast-textarea {
+  width: 100%; padding: 9px 12px; border: 1.5px solid var(--border); border-radius: 10px;
+  font-family: var(--font-body); font-size: 13px; background: var(--bg); color: var(--ink);
+  outline: none; resize: vertical; box-sizing: border-box;
+}
+.bcast-input:focus, .bcast-textarea:focus { border-color: var(--ink); }
+.bcast-send-btn { width: 100%; margin-top: 14px; }
+.bcast-hint { font-size: 11.5px; color: var(--ink-3); margin-top: 8px; line-height: 1.5; }
+.bcast-history { margin-top: 22px; padding-top: 16px; border-top: 1.5px solid var(--border); }
+.bcast-history-item { padding: 10px 0; border-bottom: 1px solid var(--border); }
+.bcast-history-item:last-child { border-bottom: none; }
+.bcast-history-top { display: flex; justify-content: space-between; gap: 8px; font-size: 12.5px; font-weight: 700; }
+.bcast-history-date { font-weight: 500; color: var(--ink-3); white-space: nowrap; }
+.bcast-history-body { font-size: 12.5px; color: var(--ink-2); margin: 4px 0; line-height: 1.5; }
+.bcast-history-meta { font-size: 11px; color: var(--ink-3); }
+@media (max-width: 960px) {
+  .bcast-layout { grid-template-columns: 1fr; }
+  .bcast-compose { position: static; }
+}
+
+/* ── Action buttons ── */
+.action-btns { display: flex; gap: 5px; flex-wrap: wrap; align-items: center; }
+.action-btn {
+  font-size: 11px;
+  font-weight: 600;
+  padding: 4px 11px;
+  border-radius: 7px;
+  cursor: pointer;
+  border: 1.5px solid var(--border);
+  background: var(--surface);
+  color: var(--ink);
+  transition: all .12s;
+  white-space: nowrap;
+  font-family: var(--font-body);
+}
+.action-btn:hover     { background: var(--surface-2); }
+.action-btn.view      { border-color: #93c5fd; color: #1d4ed8; background: #eff6ff; }
+.action-btn.view:hover{ background: #dbeafe; }
+.action-btn.warn      { border-color: #fbbf24; color: #92400e; background: #fffbeb; }
+.action-btn.warn:hover{ background: #fef3c7; }
+.action-btn.kick      { border-color: #fca5a5; color: #991b1b; background: #fef2f2; }
+.action-btn.kick:hover{ background: #fee2e2; }
+.action-btn.restore   { border-color: #6ee7b7; color: #065f46; background: #ecfdf5; }
+.action-btn.restore:hover{ background: #d1fae5; }
+
+/* Pagination */
+.pg-btn {
+  padding: 6px 12px;
+  border: 1.5px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface);
+  cursor: pointer;
+  font-size: 13px;
+  font-family: var(--font-body);
+  transition: all .12s;
+}
+.pg-btn:hover:not(:disabled) { background: var(--surface-2); }
+.pg-btn:disabled { opacity: .35; cursor: not-allowed; }
+
+/* ═══════════════════════════════════════════
+   DRAWER
+═══════════════════════════════════════════ */
+.drawer-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,.5);
+  z-index: 900;
+  backdrop-filter: blur(2px);
+}
+.drawer {
+  position: fixed;
+  right: 0; top: 0;
+  height: 100dvh;
+  width: 420px;
+  max-width: 94vw;
+  background: var(--surface);
+  border-left: 1.5px solid var(--border);
+  z-index: 901;
+  overflow-y: auto;
+  box-shadow: -12px 0 48px rgba(0,0,0,.12);
+  display: flex;
+  flex-direction: column;
+}
+.drawer-header {
+  padding: 20px 22px;
+  border-bottom: 1.5px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-shrink: 0;
+  position: sticky;
+  top: 0;
+  background: var(--surface);
+  z-index: 2;
+}
+.drawer-header h3 { font-size: 15px; font-weight: 700; }
+.drawer-close {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--ink-3);
+  display: flex;
+  padding: 5px;
+  border-radius: 7px;
+  transition: background .12s;
+}
+.drawer-close:hover { background: var(--surface-2); color: var(--ink); }
+.drawer-body { padding: 22px; flex: 1; }
+.drawer-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--border);
+  font-size: 13px;
+  gap: 12px;
+}
+.drawer-row:last-child { border-bottom: none; }
+.drawer-row-label { color: var(--ink-3); font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .06em; flex-shrink: 0; padding-top: 1px; }
+#drawer-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 20px;
+}
+#drawer-actions button {
+  padding: 11px 16px;
+  border-radius: 10px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  text-align: left;
+  font-family: var(--font-body);
+  transition: all .12s;
+  border: 1.5px solid;
+}
+
+/* ═══════════════════════════════════════════
+   REPORT / FLAGGED
+═══════════════════════════════════════════ */
+.msg-layout {
+  display: grid;
+  grid-template-columns: 300px 1fr;
+  height: calc(100dvh - var(--topbar-h) - 56px);
+  border: 1.5px solid var(--border);
+  border-radius: 14px;
+  overflow: hidden;
+  background: var(--surface);
+}
+.msg-list {
+  border-right: 1.5px solid var(--border);
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+}
+.msg-panel { overflow-y: auto; background: var(--bg); }
+.msg-panel-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  color: var(--ink-3);
+  font-size: 14px;
+  gap: 10px;
+}
+.msg-panel-header {
+  padding: 16px 20px;
+  border-bottom: 1.5px solid var(--border);
+  background: var(--surface);
+  position: sticky;
+  top: 0;
+  z-index: 1;
+}
+.msg-panel-header h4 { margin: 0 0 3px; font-size: 14px; font-weight: 700; }
+.msg-panel-header p  { margin: 0; font-size: 12px; color: var(--ink-3); }
+.msg-thread { padding: 18px 20px; }
+.msg-bubble-wrap { display: flex; flex-direction: column; margin-bottom: 12px; }
+.msg-bubble-wrap.right { align-items: flex-end; }
+.msg-sender-label { font-size: 11px; color: var(--ink-3); margin-bottom: 4px; font-weight: 500; }
+.msg-bubble {
+  max-width: 72%;
+  padding: 10px 14px;
+  border-radius: 14px;
+  font-size: 13px;
+  line-height: 1.55;
+  background: var(--surface);
+  border: 1.5px solid var(--border);
+}
+.msg-bubble-wrap.right .msg-bubble { background: var(--ink); color: white; border-color: transparent; }
+.msg-time { font-size: 10px; color: var(--ink-3); margin-top: 4px; }
+
+.conv-list-item {
+  padding: 14px 16px;
+  border-bottom: 1.5px solid var(--border);
+  cursor: pointer;
+  transition: background .1s;
+}
+.conv-list-item:hover  { background: var(--bg); }
+.conv-list-item.active { background: var(--surface-2); border-left: 3px solid var(--accent, #c8522a); }
+.conv-participants { font-size: 13px; font-weight: 600; margin-bottom: 3px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.conv-snippet { font-size: 12px; color: var(--ink-3); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-style: italic; }
+.conv-meta { font-size: 11px; color: var(--ink-3); margin-top: 4px; }
+.report-badge { display: inline-block; font-size: 9px; font-weight: 800; padding: 2px 8px; border-radius: 99px; text-transform: uppercase; letter-spacing: .04em; }
+.report-badge.pending  { background: #fef3c7; color: #92400e; }
+.report-badge.resolved { background: #d1fae5; color: #065f46; }
+.report-filter-tabs { display: flex; background: var(--surface); border-bottom: 1.5px solid var(--border); }
+.report-filter-tab { padding: 10px 14px; font-size: 12px; font-weight: 600; cursor: pointer; border-bottom: 2.5px solid transparent; color: var(--ink-3); transition: all .13s; }
+.report-filter-tab.active { color: var(--ink); border-bottom-color: var(--accent, #c8522a); }
+
+.report-detail-card { margin: 14px 18px; padding: 14px 16px; background: var(--surface); border: 1.5px solid var(--border); border-radius: 12px; }
+.rdc-title { font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: .08em; color: var(--ink-3); margin-bottom: 10px; }
+.rdc-row { font-size: 13px; margin-bottom: 6px; }
+.rdc-label { color: var(--ink-3); font-size: 11px; }
+.fault-section { margin: 0 18px 18px; padding: 16px; background: var(--surface); border: 1.5px solid var(--border); border-radius: 12px; }
+.fs-title { font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: .08em; color: var(--ink-3); margin-bottom: 12px; }
+.fault-select, .fault-note-ta { width: 100%; padding: 9px 12px; border: 1.5px solid var(--border); border-radius: 9px; font-family: var(--font-body); font-size: 13px; background: var(--bg); color: var(--ink); outline: none; }
+.fault-note-ta { resize: vertical; min-height: 64px; box-sizing: border-box; margin-top: 10px; }
+.fault-select:focus, .fault-note-ta:focus { border-color: var(--ink); }
+.notify-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin: 0 18px 18px; }
+.notify-card { background: var(--surface); border: 1.5px solid var(--border); border-radius: 12px; padding: 14px; }
+.notify-card .nc-title { font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: .07em; color: var(--ink-3); margin-bottom: 6px; display: flex; align-items: center; gap: 5px; }
+.notify-card .nc-name { font-size: 13px; font-weight: 700; margin-bottom: 10px; }
+.notify-ta { width: 100%; padding: 9px 12px; border: 1.5px solid var(--border); border-radius: 9px; font-family: var(--font-body); font-size: 13px; background: var(--bg); color: var(--ink); resize: vertical; min-height: 64px; outline: none; box-sizing: border-box; margin-bottom: 8px; }
+.notify-ta:focus { border-color: #7c3aed; }
+.notify-actions { display: flex; gap: 6px; flex-wrap: wrap; }
+.nc-send-btn { font-size: 12px; font-weight: 700; padding: 6px 12px; border-radius: 8px; border: none; cursor: pointer; background: #7c3aed; color: white; font-family: var(--font-body); transition: background .12s; }
+.nc-send-btn:hover { background: #6d28d9; }
+.nc-warn-btn, .nc-susp-btn, .nc-rest-btn { font-size: 12px; font-weight: 600; padding: 6px 10px; border-radius: 8px; cursor: pointer; font-family: var(--font-body); }
+.nc-warn-btn { border: 1.5px solid #fbbf24; background: #fffbeb; color: #92400e; }
+.nc-susp-btn { border: 1.5px solid #fca5a5; background: #fef2f2; color: #991b1b; }
+.nc-rest-btn { border: 1.5px solid #6ee7b7; background: #ecfdf5; color: #065f46; }
+
+/* ═══════════════════════════════════════════
+   SKELETON
+═══════════════════════════════════════════ */
+.skeleton { background: var(--surface-2); border-radius: 6px; animation: shimmer 1.4s ease-in-out infinite; }
+@keyframes shimmer { 0%,100%{opacity:1} 50%{opacity:.45} }
+.tbl-skeleton td { padding: 14px 18px; }
+.admin-empty { padding: 48px; text-align: center; color: var(--ink-3); font-size: 14px; }
+
+/* ═══════════════════════════════════════════
+   SIDEBAR OVERLAY (mobile)
+═══════════════════════════════════════════ */
+.sidebar-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,.55);
+  z-index: 1099;
+  backdrop-filter: blur(2px);
+}
+.sidebar-overlay.open { display: block; }
+
+/* ═══════════════════════════════════════════
+   RESPONSIVE
+═══════════════════════════════════════════ */
+@media (max-width: 960px) {
+  body { display: block; overflow-y: auto; }
+
+  /* Sidebar off-canvas */
+  .admin-sidebar {
+    position: fixed;
+    left: -260px;
+    top: 0;
+    z-index: 1100;
+    height: 100dvh;
+    transition: left .25s cubic-bezier(.4,0,.2,1);
+    box-shadow: none;
+  }
+  .admin-sidebar.open {
+    left: 0;
+    box-shadow: 8px 0 48px rgba(0,0,0,.35);
+  }
+
+  /* Main fills viewport */
+  .admin-main { min-height: 100dvh; width: 100%; }
+  .admin-content { padding: 20px; }
+  .admin-topbar { padding: 0 18px; }
+
+  /* Show hamburger */
+  .mob-nav-toggle { display: flex !important; }
+
+  /* Hide sign-out text */
+  .so-label { display: none; }
+
+  .stat-grid { grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 12px; }
+  .stat-card { padding: 16px 14px; }
+  .stat-card-value { font-size: 28px; }
+}
+
+@media (max-width: 768px) {
+  .admin-content { padding: 14px; }
+  .admin-table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+  .admin-table { min-width: 540px; }
+  .admin-table th, .admin-table td { padding: 10px 14px; }
+  .admin-toolbar { flex-wrap: wrap; }
+  .admin-search, .filter-select { min-width: 100%; }
+  .msg-layout { grid-template-columns: 1fr; height: auto; }
+  .msg-list { max-height: 280px; border-right: none; border-bottom: 1.5px solid var(--border); }
+  .msg-panel { min-height: 360px; }
+  .drawer { width: 100%; max-width: 100%; }
+  .notify-grid { grid-template-columns: 1fr; margin: 0 14px 14px; }
+  .flagged-card-inner  { flex-direction: column !important; }
+  .flagged-card-actions { flex-direction: row !important; flex-wrap: wrap; gap: 6px !important; min-width: unset !important; width: 100% !important; }
+  .flagged-card-actions .action-btn { flex: 1 1 calc(50% - 4px); text-align: center; }
+}
+
+@media (max-width: 520px) {
+  .stat-grid { grid-template-columns: 1fr 1fr; gap: 10px; }
+  .stat-card-value { font-size: 24px; }
+  .admin-content { padding: 10px; }
+  .admin-topbar-title { font-size: 13px; }
+  .admin-table { min-width: 460px; }
+}
+.control-mode [data-ur-uphold], .control-mode [data-ur-dismiss], .control-mode .notify-actions, .control-mode #resolve-btn, .control-mode .flagged-card-actions .action-btn:not(.view) { display:none !important; }
+</style>
+</head>
+<body>
+
+<div class="sidebar-overlay" id="sidebar-overlay"></div>
+
+<!-- SIDEBAR -->
+<aside class="admin-sidebar" id="admin-sidebar">
+  <div class="admin-logo">
+    <div>
+      <div class="admin-logo-mark">Bix<span>cart</span></div>
+    </div>
+    <div class="admin-logo-badge">Admin</div>
+  </div>
+  <nav class="admin-nav">
+    <div class="admin-nav-section">Overview</div>
+    <button class="admin-nav-item active" data-tab="overview">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+      Overview
+    </button>
+
+    <div class="admin-nav-section">Manage</div>
+    <button class="admin-nav-item" data-tab="seller-approvals">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 7h-9"/><path d="M20 12h-9"/><path d="M20 17h-9"/><circle cx="5" cy="7" r="2"/><circle cx="5" cy="12" r="2"/><circle cx="5" cy="17" r="2"/></svg>
+      Seller Approvals
+    </button>
+    <button class="admin-nav-item" data-tab="deletion-requests">Account Deletions</button>
+    <button class="admin-nav-item admin-only" data-tab="controls">🛡️ Controls</button>
+    <button class="admin-nav-item admin-only" data-tab="control-actions">↩ Control Actions</button>
+    <button class="admin-nav-item admin-only" data-tab="commission">💰 Commission</button>
+    <button class="admin-nav-item admin-only" data-tab="actions">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20V10"/><path d="M18 20V4"/><path d="M6 20v-6"/></svg>
+      Admin Actions
+    </button>
+    <button class="admin-nav-item" data-tab="users">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+      Users
+    </button>
+    <button class="admin-nav-item" data-tab="listings">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg>
+      Listings
+    </button>
+
+    <div class="admin-nav-section">Moderation</div>
+    <button class="admin-nav-item" data-tab="broadcast">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 11l18-5v12L3 14v-3z"/><path d="M11.6 16.8a3 3 0 1 1-5.8-1.6"/></svg>
+      Broadcast
+    </button>
+    <button class="admin-nav-item" data-tab="hostels">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 21V7l9-4 9 4v14"/><path d="M9 11h6M9 15h6M9 19h6"/></svg>
+      Hostels
+    </button>
+    <button class="admin-nav-item" data-tab="delivery-spots">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+      Delivery Spots
+    </button>
+    <button class="admin-nav-item" data-tab="messages">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+      Reports
+    </button>
+    <button class="admin-nav-item" data-tab="user-reports">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 8v5M12 16h.01"/></svg>
+      User Reports
+    </button>
+    <button class="admin-nav-item" data-tab="flagged">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+      AI Flagged
+      <span class="admin-nav-badge" id="nav-flagged-badge" style="display:none">0</span>
+    </button>
+  </nav>
+  <div class="sidebar-footer">
+    <div class="sidebar-footer-name" id="sidebar-admin-name">Admin</div>
+    <div class="sidebar-footer-role" id="sidebar-admin-role">Administrator</div>
+  </div>
+</aside>
+
+<!-- MAIN -->
+<div class="admin-main">
+  <div class="admin-topbar">
+    <button class="mob-nav-toggle" id="mob-nav-toggle" aria-label="Open menu" style="display:none;">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+    </button>
+    <div class="admin-topbar-title" id="topbar-title">Overview</div>
+    <div class="admin-topbar-right">
+      <span style="font-size:12px;color:var(--ink-3);font-weight:500;" id="admin-user-badge"></span>
+      <button class="topbar-signout" id="admin-signout-btn">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+        <span class="so-label">Sign out</span>
+      </button>
+    </div>
+  </div>
+  <div class="admin-content" id="admin-content">
+    <div class="admin-empty">Loading…</div>
+  </div>
+</div>
+
+<!-- STATIC MODAL -->
+<div id="admin-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:9999;align-items:center;justify-content:center;padding:20px;box-sizing:border-box;">
+  <div style="background:var(--surface);border-radius:16px;padding:28px 24px;width:100%;max-width:420px;box-shadow:0 20px 60px rgba(0,0,0,.22);">
+    <button id="admin-modal-back" style="display:flex;align-items:center;gap:5px;background:none;border:none;cursor:pointer;color:var(--ink-3);font-size:13px;font-family:var(--font-body);padding:0 0 16px 0;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"/></svg>Back</button>
+    <div id="admin-modal-title" style="font-size:17px;font-weight:700;margin-bottom:6px;"></div>
+    <div id="admin-modal-sub"   style="font-size:13px;color:var(--ink-3);margin-bottom:18px;line-height:1.6;"></div>
+    <div id="admin-modal-reason-wrap" style="margin-bottom:16px;"><label style="font-size:12px;font-weight:600;display:block;margin-bottom:5px;">Reason</label><textarea id="admin-modal-reason" rows="3" style="width:100%;padding:10px 12px;border:1.5px solid var(--border);border-radius:var(--radius-md);font-family:var(--font-body);font-size:13px;resize:vertical;outline:none;background:var(--bg);color:var(--ink);box-sizing:border-box;" placeholder="Enter reason…"></textarea></div>
+    <div style="display:flex;justify-content:flex-end;"><button id="admin-modal-confirm" class="btn btn-primary">Confirm</button></div>
+  </div>
+</div>
+<div id="modal-root" style="display:none;"></div>
+<div id="drawer-root"></div>
+
+<script src="../js/app.js"></script>
+<script>
+// ── Admin auth — uses SEPARATE localStorage keys from user auth ────────────
+const ADMIN_TOKEN_KEY = 'cm_admin_token';
+const ADMIN_USER_KEY  = 'cm_admin_user';
+
+const adminAuth = {
+  getToken: () => localStorage.getItem(ADMIN_TOKEN_KEY),
+  getUser:  () => { try { return JSON.parse(localStorage.getItem(ADMIN_USER_KEY)); } catch { return null; } },
+  clear()   { localStorage.removeItem(ADMIN_TOKEN_KEY); localStorage.removeItem(ADMIN_USER_KEY); },
+};
+
+// Override api.request to always use the admin token on this page
+api.request = async function(method, path, body, useAuth = true) {
+  const headers = { 'Content-Type': 'application/json' };
+  if (useAuth) {
+    const token = adminAuth.getToken();
+    if (token) headers['Authorization'] = `Bearer ${token}`;
+  }
+  const res = await fetch(`/api${path}`, {
+    method, headers,
+    body: body ? JSON.stringify(body) : undefined,
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || 'Request failed');
+  return data;
+};
+
+// ── api.patch — not in app.js ────────────────────────────────────────────────
+api.patch = (path, body) => api.request('PATCH', path, body, true);
+
+// ── Auth guard ──────────────────────────────────────────────────────────────
+(function() {
+  const token = adminAuth.getToken();
+  const u     = adminAuth.getUser();
+  if (!token || !['admin','control'].includes(u?.role)) {
+    window.location.replace('admin-login.html'); return;
+  }
+  // Populate admin identity
+  document.getElementById('admin-user-badge').textContent   = u.full_name || 'Admin';
+  const sidebarName = document.getElementById('sidebar-admin-name');
+  if (sidebarName) sidebarName.textContent = u.full_name || u.email || 'Admin';
+  const roleEl = document.getElementById('sidebar-admin-role');
+  if (roleEl) roleEl.textContent = u.role === 'control' ? 'Control · Limited Admin' : 'Administrator';
+  if (u.role === 'control') {
+    document.body.classList.add('control-mode');
+    document.querySelectorAll('.admin-only').forEach(el => el.style.display = 'none');
+    ['overview','deletion-requests','users','listings','broadcast','hostels','delivery-spots'].forEach(tab => document.querySelector(`[data-tab="${tab}"]`)?.style.setProperty('display','none'));
+  }
+})();
+
+function adminLogout() { adminAuth.clear(); window.location.replace('admin-login.html'); }
+
+// ── Tab routing ─────────────────────────────────────────────────────────────
+const isControlUser = () => adminAuth.getUser()?.role === 'control';
+const controlPath = path => isControlUser() ? path.replace(/^\/admin/, '/control') : path;
+const TABS = { overview: 'Overview', commission: 'Commission', controls: 'Controls', 'control-actions': 'Control Actions', 'seller-approvals': 'Seller Approvals', 'deletion-requests': 'Account Deletions', actions: 'Admin Actions', users: 'Users', listings: 'Listings', broadcast: 'Broadcast', hostels: 'Hostels', 'delivery-spots': 'Delivery Spots', messages: 'Conversation Reports', 'user-reports': 'User Reports', flagged: 'AI Flagged' };
+const ACTION_LABELS = {
+  seller_approved: 'Approved seller', seller_rejected: 'Rejected seller',
+  seller_override: 'Overrode seller decision',
+  user_warned: 'Warned user', user_suspended: 'Suspended user', user_unsuspended: 'Restored user',
+  account_deletion_approved: 'Approved account deletion', account_deletion_rejected: 'Rejected account deletion',
+  control_created: 'Created Control account', control_action_reversed: 'Reversed Control action', commission_changed: 'Changed platform commission',
+};
+let currentTab = isControlUser() ? 'seller-approvals' : 'overview';
+
+document.querySelectorAll('.admin-nav-item[data-tab]').forEach(btn => { btn.addEventListener('click', () => switchTab(btn.dataset.tab)); });
+if (isControlUser()) switchTab('seller-approvals');
+
+// ── Mobile sidebar ────────────────────────────────────────────────────────────
+const sidebar  = document.getElementById('admin-sidebar');
+const overlay  = document.getElementById('sidebar-overlay');
+const hamburger = document.getElementById('mob-nav-toggle');
+
+function openSidebar()  { sidebar.classList.add('open');  overlay.classList.add('open'); document.body.style.overflow = 'hidden'; }
+function closeSidebar() { sidebar.classList.remove('open'); overlay.classList.remove('open'); document.body.style.overflow = ''; }
+
+hamburger.addEventListener('click', openSidebar);
+overlay.addEventListener('click', closeSidebar);
+document.querySelectorAll('.admin-nav-item[data-tab]').forEach(btn => {
+  btn.addEventListener('click', () => { if (window.innerWidth <= 960) closeSidebar(); });
+});
+
+// Show hamburger only on mobile (CSS handles display but we also do it in JS for reliability)
+function updateHamburgerVisibility() {
+  hamburger.style.display = window.innerWidth <= 960 ? 'flex' : 'none';
+}
+updateHamburgerVisibility();
+window.addEventListener('resize', updateHamburgerVisibility);
+
+// Sign-out button
+document.getElementById('admin-signout-btn').addEventListener('click', adminLogout);
+
+function switchTab(tab) {
+  currentTab = tab;
+  document.querySelectorAll('.admin-nav-item').forEach(b => b.classList.toggle('active', b.dataset.tab === tab));
+  document.getElementById('topbar-title').textContent = TABS[tab];
+  const content = document.getElementById('admin-content');
+  content.innerHTML = '<div class="admin-empty">Loading…</div>';
+  if (tab === 'overview')  renderOverview();
+  if (tab === 'commission') renderCommission();
+  if (tab === 'controls') renderControls();
+  if (tab === 'control-actions') renderControlActions();
+  if (tab === 'seller-approvals') renderSellerApprovals();
+  if (tab === 'deletion-requests') renderDeletionRequests();
+  if (tab === 'actions') renderAdminActions();
+  if (tab === 'users')     renderUsers();
+  if (tab === 'listings')  renderListings();
+  if (tab === 'broadcast') renderBroadcast();
+  if (tab === 'hostels')   renderHostels();
+  if (tab === 'delivery-spots') renderDeliverySpots();
+  if (tab === 'messages')  renderMessages();
+  if (tab === 'user-reports') renderUserReports();
+  if (tab === 'flagged')   renderFlagged();
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
+// CONTROLS
+// ══════════════════════════════════════════════════════════════════════════════
+async function renderControls() {
+  const c=document.getElementById('admin-content');
+  c.innerHTML='<div style="margin-bottom:18px"><div class="section-kicker">Access management</div><h2 style="font-size:28px">Control accounts</h2><p style="color:var(--ink-3);font-size:13px">Create limited administrators who can approve/reject sellers and read reports.</p></div><div class="card" style="padding:18px;margin-bottom:18px"><h3>Add a new Control</h3><div style="display:grid;grid-template-columns:1fr 1fr;gap:10px"><input id="control-name" class="form-input" placeholder="Full name"><input id="control-email" class="form-input" type="email" placeholder="Email"><input id="control-password" class="form-input" type="password" placeholder="Password (8+ characters)"></div><button id="create-control-btn" class="btn btn-primary" style="margin-top:12px">Create Control</button></div><div id="controls-list">Loading…</div>';
+  document.getElementById('create-control-btn').onclick=async()=>{try{await api.post('/admin/controls',{full_name:document.getElementById('control-name').value.trim(),email:document.getElementById('control-email').value.trim(),password:document.getElementById('control-password').value});toast('Control account created.','success');renderControls();}catch(e){toast(e.message,'error');}};
+  try{const d=await api.get('/admin/controls');const rows=d.controls||[];document.getElementById('controls-list').innerHTML=rows.length?'<div class="admin-table-wrap"><table class="admin-table"><thead><tr><th>Name</th><th>Email</th><th>Status</th></tr></thead><tbody>'+rows.map(u=>`<tr><td><strong>${escHtml(u.full_name)}</strong></td><td>${escHtml(u.email)}</td><td>${escHtml(u.account_status)}</td></tr>`).join('')+'</tbody></table></div>':'<div class="admin-empty">No Control accounts yet.</div>';}catch(e){document.getElementById('controls-list').textContent=e.message;}
+}
+async function renderControlActions(){
+  const c=document.getElementById('admin-content');c.innerHTML='<div style="margin-bottom:18px"><div class="section-kicker">Audit trail</div><h2 style="font-size:28px">Control Actions</h2><p style="color:var(--ink-3);font-size:13px">Every action by a Control is recorded with the Control name. Admins can reverse a decision back to how it was, or override it with a specific new decision.</p></div><div id="control-actions-list">Loading…</div>';
+  try{
+    const d=await api.get('/admin/control-actions?limit=100');
+    const rows=d.actions||[];
+    document.getElementById('control-actions-list').innerHTML=rows.length?'<div class="admin-table-wrap"><table class="admin-table"><thead><tr><th>Date</th><th>Control</th><th>Action</th><th>Target</th><th>Reversed</th><th></th></tr></thead><tbody>'+rows.map(a=>`<tr><td>${fmtTime(a.created_at)}</td><td><strong>${escHtml(a.admin_name)}</strong></td><td>${escHtml(ACTION_LABELS[a.action]||a.action)}</td><td>${escHtml(a.target_user_name||a.target_user_email||'—')}</td><td>${a.reversed_at?fmtTime(a.reversed_at):'No'}</td><td style="white-space:nowrap;">${a.reversible&&!a.reversed_at?`<button class="btn btn-surface btn-sm" onclick="reverseControlAction('${a.id}')">Reverse</button> `:''}${['seller_approved','seller_rejected'].includes(a.action)&&!a.reversed_at&&a.target_user_id?`<button class="btn btn-primary btn-sm" onclick="overrideControlAction('${a.target_user_id}','${a.target_user_name?escHtml(a.target_user_name).replace(/'/g,"\\'"):''}')">Override</button>`:''}</td></tr>`).join('')+'</tbody></table></div>':'<div class="admin-empty">No Control actions recorded.</div>';
+  }catch(e){document.getElementById('control-actions-list').textContent=e.message;}
+}
+window.reverseControlAction=async function(id){if(!confirm('Reverse this Control action? This restores the seller to exactly the state they were in before the Control acted.'))return;try{await api.post(`/admin/control-actions/${id}/reverse`,{});toast('Control action reversed.','success');renderControlActions();}catch(e){toast(e.message,'error');}};
+
+// Lets an admin set a seller's approval decision to a specific new state —
+// approved, rejected, or reopened to pending — regardless of what a Control
+// account (or a prior admin decision) already set it to. Unlike "Reverse",
+// which restores the exact prior state, this lets the admin choose the
+// outcome directly.
+window.overrideControlAction = function(sellerId, sellerName) {
+  const label = sellerName ? ` for ${sellerName}` : '';
+  const modalHtml = `
+    <div style="display:grid;gap:12px;">
+      <p style="font-size:13px;color:var(--ink-3);">Choose the new decision${label}. This overrides whatever the Control account (or a prior admin) decided, and the seller is notified immediately.</p>
+      <div style="display:flex;gap:8px;">
+        <button class="btn btn-primary btn-sm" id="override-approve-btn">Set: Approved</button>
+        <button class="btn btn-danger btn-sm" id="override-reject-btn">Set: Rejected</button>
+        <button class="btn btn-ghost btn-sm" id="override-pending-btn">Reopen: Pending</button>
+      </div>
+    </div>`;
+  showDrawer(`<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:18px;"><div><div class="section-kicker">Admin override</div><h2 style="margin:4px 0 0;font-size:22px;">Override seller decision</h2></div><button class="btn btn-ghost btn-sm" onclick="closeDrawer()">Close</button></div>${modalHtml}`);
+  document.getElementById('override-approve-btn').addEventListener('click', () => submitOverride(sellerId, 'approved'));
+  document.getElementById('override-reject-btn').addEventListener('click', () => {
+    closeDrawer();
+    showModal({ title: 'Override — reject seller', sub: 'A reason is required so the seller understands the decision.', placeholder: 'Explain why this seller is being rejected…', confirmLabel: 'Confirm override', confirmClass: 'btn-danger', onConfirm: reason => submitOverride(sellerId, 'rejected', reason) });
+  });
+  document.getElementById('override-pending-btn').addEventListener('click', () => submitOverride(sellerId, 'pending'));
+};
+
+async function submitOverride(sellerId, status, reason = '') {
+  try {
+    await api.post(`/admin/seller-applications/${sellerId}/override`, { status, reason });
+    closeDrawer();
+    toast('Decision overridden.', 'success');
+    renderControlActions();
+  } catch (e) { toast(e.message, 'error'); }
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
+// SELLER APPROVALS
+// ══════════════════════════════════════════════════════════════════════════════
+async function renderSellerApprovals() {
+  const c = document.getElementById('admin-content');
+  c.innerHTML = '<div class="admin-empty">Loading seller applications…</div>';
+  try {
+    const data = await api.get(controlPath('/admin/seller-applications?status=pending&limit=100'));
+    const sellers = data.sellers || [];
+    c.innerHTML = `
+      <div style="margin-bottom:18px;"><div class="section-kicker" style="margin-bottom:6px;">Seller onboarding</div><h2 style="font-size:28px;letter-spacing:-.5px;">Pending seller applications</h2><p style="color:var(--ink-3);font-size:13px;margin-top:6px;">Review identity documents and profile details before approving access. Sellers are told to allow up to 6 hours.</p></div>
+      ${sellers.length ? `<div class="admin-table-wrap"><table class="admin-table"><thead><tr><th>Seller</th><th>Level / Hostel / Room</th><th>ID</th><th>Submitted</th><th>Action</th></tr></thead><tbody>
+      ${sellers.map(u => `<tr>
+        <td><strong>${escHtml(u.full_name)}</strong><br><span style="font-size:12px;color:var(--ink-3);">${escHtml(u.email)}</span><br><span style="font-size:12px;">${escHtml(u.shop_name || 'No shop name')}</span></td>
+        <td>${escHtml(u.level || '—')}<br>${escHtml(u.hostel_name || '—')} · ${escHtml(u.room_number || '—')}</td>
+        <td>${escHtml(u.id_type === 'school_id' ? 'ACU School ID' : 'NIN')}<br><a href="${escHtml(u.id_front_url || '#')}" target="_blank" rel="noopener">Front</a> · <a href="${escHtml(u.id_back_url || '#')}" target="_blank" rel="noopener">Back</a></td>
+        <td>${fmtTime(u.seller_approval_requested_at)}</td>
+        <td style="white-space:nowrap;"><button class="btn btn-surface btn-sm" data-view-seller="${u.id}">View details</button> <button class="btn btn-primary btn-sm" data-approve-seller="${u.id}">Approve</button> <button class="btn btn-ghost btn-sm" data-reject-seller="${u.id}">Reject</button></td>
+      </tr>`).join('')}</tbody></table></div>` : '<div class="admin-empty">No pending seller applications.</div>'}`;
+    c.querySelectorAll('[data-view-seller]').forEach(btn => btn.addEventListener('click', () => {
+      const u = sellers.find(x => String(x.id) === String(btn.dataset.viewSeller));
+      if (!u) return;
+      const idLabel = u.id_type === 'school_id' ? 'ACU School ID' : 'NIN';
+      showDrawer(`<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:18px;"><div><div class="section-kicker">Seller registration</div><h2 style="margin:4px 0 0;font-size:24px;">${escHtml(u.full_name)}</h2></div><button class="btn btn-ghost btn-sm" onclick="closeDrawer()">Close</button></div>
+        <div style="display:grid;gap:14px;">
+          <div><strong>Email</strong><div>${escHtml(u.email)}</div></div>
+          <div><strong>Level</strong><div>${escHtml(u.level || '—')}</div></div>
+          <div><strong>Seller location</strong><div>${escHtml(u.seller_location_type || '—')}</div></div>
+          ${u.seller_location_type === 'hostel' ? `<div><strong>Hostel / Room</strong><div>${escHtml(u.hostel_name || '—')} · ${escHtml(u.room_number || '—')}</div></div>` : ''}
+          ${u.seller_location_type === 'shop' ? `<div><strong>Shop</strong><div>${escHtml(u.shop_name || '—')} · ${escHtml(u.shop_number || '—')}<br>${escHtml(u.shop_address || '—')}</div></div>` : ''}
+          <div><strong>Delivery information</strong><div>${escHtml(u.delivery_info || '—')}</div></div>
+          <div><strong>ID verification</strong><div>${idLabel}</div><div style="display:flex;gap:10px;margin-top:8px;">${u.id_front_url ? `<a class="btn btn-surface btn-sm" href="${escHtml(u.id_front_url)}" target="_blank" rel="noopener">View front</a>` : ''}${u.id_back_url ? `<a class="btn btn-surface btn-sm" href="${escHtml(u.id_back_url)}" target="_blank" rel="noopener">View back</a>` : ''}</div></div>
+          <div><strong>Registration submitted</strong><div>${fmtTime(u.seller_approval_requested_at)}</div></div>
+        </div>`);
+    }));
+    c.querySelectorAll('[data-approve-seller]').forEach(btn => btn.addEventListener('click', async () => {
+      if (!confirm('Approve this seller? They will be able to use the seller account immediately.')) return;
+      btn.disabled = true;
+      try { await api.post(`${controlPath('/admin/seller-applications')}/${btn.dataset.approveSeller}/approve`, {}); toast('Seller approved.', 'success'); renderSellerApprovals(); }
+      catch(e) { toast(e.message, 'error'); btn.disabled = false; }
+    }));
+    c.querySelectorAll('[data-reject-seller]').forEach(btn => btn.addEventListener('click', () => {
+      showModal({ title:'Reject seller application', sub:'A rejection reason is compulsory and will be shown to the seller.', placeholder:'Explain why this seller application is being rejected…', confirmLabel:'Reject application', confirmClass:'btn-danger', onConfirm: async reason => {
+        try { await api.post(`${controlPath('/admin/seller-applications')}/${btn.dataset.rejectSeller}/reject`, { reason }); toast('Seller rejected and notified.', 'success'); renderSellerApprovals(); }
+        catch(e) { toast(e.message, 'error'); }
+      }});
+    }));
+  } catch(e) { c.innerHTML = `<div class="admin-empty">Failed to load seller applications: ${escHtml(e.message)}</div>`; }
+}
+
+async function renderDeletionRequests() {
+  const c = document.getElementById('admin-content');
+  c.innerHTML = '<div class="admin-empty">Loading deletion requests…</div>';
+  try {
+    const data = await api.get('/admin/deletion-requests?status=pending');
+    const users = data.users || [];
+    c.innerHTML = `<div style="margin-bottom:18px;"><div class="section-kicker">Account management</div><h2 style="font-size:28px;margin-top:6px;">Account deletion requests</h2><p style="color:var(--ink-3);font-size:13px;">Review the user's reason, ratings, warnings and history before approving deletion. Approved accounts are disabled while their data is retained for one year.</p></div>
+      ${users.length ? `<div class="admin-table-wrap"><table class="admin-table"><thead><tr><th>User</th><th>Reason</th><th>Rating</th><th>Warnings</th><th>Requested</th><th>Action</th></tr></thead><tbody>${users.map(u => `<tr><td><strong>${escHtml(u.full_name)}</strong><br><span style="font-size:12px;color:var(--ink-3);">${escHtml(u.email)}</span></td><td style="max-width:280px;white-space:normal;">${escHtml(u.deletion_reason)}</td><td>${Number(u.rating || 0).toFixed(1)} (${u.rating_count || 0})</td><td>${u.warned_at ? escHtml(u.warn_reason || 'Warned') : 'None'}</td><td>${fmtTime(u.deletion_requested_at)}</td><td style="white-space:nowrap;"><button class="btn btn-primary btn-sm" data-approve-delete="${u.id}">Approve</button> <button class="btn btn-ghost btn-sm" data-reject-delete="${u.id}">Reject</button> <button class="btn btn-surface btn-sm" data-view-delete-user="${u.id}">View</button></td></tr>`).join('')}</tbody></table></div>` : '<div class="admin-empty">No pending account deletion requests.</div>'}`;
+    c.querySelectorAll('[data-approve-delete]').forEach(btn => btn.addEventListener('click', async () => {
+      if (!confirm('Approve this account deletion? The account will be disabled and its data retained for one year.')) return;
+      btn.disabled = true;
+      try { await api.post(`/admin/deletion-requests/${btn.dataset.approveDelete}/approve`, {}); toast('Account deletion approved.', 'success'); renderDeletionRequests(); } catch(e) { toast(e.message,'error'); btn.disabled=false; }
+    }));
+    c.querySelectorAll('[data-reject-delete]').forEach(btn => btn.addEventListener('click', () => showModal({ title:'Reject deletion request', sub:'Give the user a reason why their deletion request was rejected.', placeholder:'Reason for rejecting this request…', confirmLabel:'Reject request', confirmClass:'btn-primary', onConfirm: async reason => { try { await api.post(`/admin/deletion-requests/${btn.dataset.rejectDelete}/reject`, { reason }); toast('Deletion request rejected.','success'); renderDeletionRequests(); } catch(e) { toast(e.message,'error'); } } })));
+    c.querySelectorAll('[data-view-delete-user]').forEach(btn => btn.addEventListener('click', async () => { try { const u = await api.get(`/admin/users/${btn.dataset.viewDeleteUser}`); showDrawer(`<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:18px;"><div><div class="section-kicker">User history</div><h2 style="margin:4px 0 0;font-size:24px;">${escHtml(u.full_name)}</h2></div><button class="btn btn-ghost btn-sm" onclick="closeDrawer()">Close</button></div><div style="display:grid;gap:16px;"><div><strong>Deletion reason</strong><p>${escHtml(u.deletion_reason || '—')}</p></div><div><strong>Rating</strong><p>${Number(u.rating||0).toFixed(1)} from ${u.rating_count||0} rating(s)</p></div><div><strong>Warnings / status</strong><p>${escHtml(u.warn_reason || 'No warning')} · ${escHtml(u.account_status)}</p></div><div><strong>Admin actions</strong><div style="display:grid;gap:8px;">${(u.admin_actions||[]).map(a => `<div style="padding:10px;border:1px solid var(--border);border-radius:10px;"><strong>${escHtml(a.action)}</strong> · ${fmtTime(a.created_at)}<br><span style="font-size:12px;color:var(--ink-3);">${escHtml(a.reason||'')}</span></div>`).join('') || 'None'}</div></div><div><strong>User activity</strong><div style="display:grid;gap:8px;max-height:300px;overflow:auto;">${(u.user_activities||[]).map(a => `<div style="padding:8px 10px;border-bottom:1px solid var(--border);font-size:12px;"><strong>${escHtml(a.action)}</strong><br><span style="color:var(--ink-3);">${fmtTime(a.created_at)} · ${a.status_code || ''}</span></div>`).join('') || 'None'}</div></div><div><strong>Ratings received</strong><div>${(u.ratings_received||[]).map(r => `<div style="padding:8px 0;border-bottom:1px solid var(--border);">${r.buyer_rating}/5 — ${escHtml(r.buyer_review||'No written review')}</div>`).join('') || 'None'}</div></div></div>`); } catch(e) { toast(e.message,'error'); } }));
+  } catch(e) { c.innerHTML = `<div class="admin-empty">Failed to load deletion requests: ${escHtml(e.message)}</div>`; }
+}
+
+async function renderAdminActions() {
+  const c = document.getElementById('admin-content');
+  c.innerHTML = '<div class="admin-empty">Loading admin actions…</div>';
+  try {
+    const data = await api.get('/admin/actions?limit=100');
+    const actions = data.actions || [];
+    c.innerHTML = `<div style="margin-bottom:18px;"><div class="section-kicker" style="margin-bottom:6px;">Audit trail</div><h2 style="font-size:28px;letter-spacing:-.5px;">Admin Actions</h2><p style="color:var(--ink-3);font-size:13px;margin-top:6px;">Every important admin action is recorded here so other administrators can see who did what and when.</p></div>
+      ${actions.length ? `<div class="admin-table-wrap"><table class="admin-table"><thead><tr><th>Date</th><th>Admin</th><th>Action</th><th>Target</th><th>Reason</th></tr></thead><tbody>${actions.map(a => `<tr><td>${fmtTime(a.created_at)}</td><td><strong>${escHtml(a.admin_name)}</strong></td><td>${escHtml(ACTION_LABELS[a.action] || a.action)}</td><td>${escHtml(a.target_user_name || a.target_user_email || '—')}</td><td>${escHtml(a.reason || '—')}</td></tr>`).join('')}</tbody></table></div>` : '<div class="admin-empty">No admin actions recorded yet.</div>'}`;
+  } catch(e) { c.innerHTML = `<div class="admin-empty">Failed to load admin actions: ${escHtml(e.message)}</div>`; }
+}
+
+// ── Helpers ──────────────────────────────────────────────────────────────────
+const fmt = d => d ? new Date(d).toLocaleDateString('en-NG', { day: 'numeric', month: 'short', year: 'numeric' }) : '—';
+const fmtTime = d => d ? new Date(d).toLocaleString('en-NG', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }) : '—';
+
+function escHtml(str) {
+  return String(str || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+}
+
+function statusBadge(s) {
+  const map = { active: 'badge-active', warned: 'badge-warned', suspended: 'badge-suspended' };
+  return `<span class="badge ${map[s] || 'badge-listing'}">${s || 'active'}</span>`;
+}
+function roleBadge(r) {
+  const map = { buyer: 'badge-buyer', seller: 'badge-seller' };
+  return `<span class="badge ${map[r] || ''}">${r}</span>`;
+}
+function listingStatusBadge(s) {
+  const map = { active: 'badge-active-l', pending: 'badge-pending', sold: 'badge-sold', deleted: 'badge-deleted' };
+  return `<span class="badge ${map[s] || 'badge-listing'}">${s}</span>`;
+}
+function skeletonRows(cols, n = 5) {
+  return Array(n).fill(0).map(() =>
+    `<tr class="tbl-skeleton">${Array(cols).fill(0).map(() =>
+      `<td><div class="skeleton" style="height:14px;border-radius:4px;width:${60+Math.random()*30}%"></div></td>`).join('')}</tr>`).join('');
+}
+
+// paginationHTML no longer uses onclick= strings — buttons get data-page attributes
+// and a delegated listener is attached after injection.
+function paginationHTML(page, pages, total) {
+  if (pages <= 1) return '';
+  let html = `<div class="admin-pagination">`;
+  html += `<button class="pg-btn" data-page="${page-1}" ${page===1?'disabled':''}>←</button>`;
+  for (let i = 1; i <= pages; i++) {
+    if (pages > 7 && Math.abs(i-page) > 2 && i !== 1 && i !== pages) {
+      if (i === 2 || i === pages-1) html += `<span style="padding:0 4px;color:var(--ink-3)">…</span>`;
+      continue;
+    }
+    html += `<button class="pg-btn ${i===page?'active':''}" data-page="${i}">${i}</button>`;
+  }
+  html += `<button class="pg-btn" data-page="${page+1}" ${page===pages?'disabled':''}>→</button>`;
+  html += `<span class="pg-info">${total} total</span></div>`;
+  return html;
+}
+
+// Wire a pagination container after it has been injected into the DOM.
+// fetchFn is called with the page number when a button is clicked.
+function bindPagination(containerId, fetchFn) {
+  const el = document.getElementById(containerId);
+  if (!el) return;
+  el.addEventListener('click', e => {
+    const btn = e.target.closest('.pg-btn');
+    if (!btn || btn.disabled) return;
+    const p = parseInt(btn.dataset.page, 10);
+    if (!isNaN(p)) fetchFn(p);
+  });
+}
+
+// ── Static Modal — event listeners wired ONCE ────────────────────────────────
+let _modalCb       = null;
+let _modalNoReason = false;
+
+function showModal({ title, sub, placeholder, confirmLabel, confirmClass = 'btn-primary', onConfirm, noReason }) {
+  _modalCb       = onConfirm;
+  _modalNoReason = !!noReason;
+
+  document.getElementById('admin-modal-title').textContent  = title;
+  document.getElementById('admin-modal-sub').textContent    = sub || '';
+  document.getElementById('admin-modal-confirm').textContent = confirmLabel;
+  document.getElementById('admin-modal-confirm').className  = `btn ${confirmClass}`;
+  document.getElementById('admin-modal-reason').placeholder = placeholder || 'Enter reason…';
+  document.getElementById('admin-modal-reason').value       = '';
+  document.getElementById('admin-modal-reason').style.borderColor = '';
+  document.getElementById('admin-modal-reason-wrap').style.display = noReason ? 'none' : 'block';
+  document.getElementById('admin-modal').style.display = 'flex';
+  if (!noReason) document.getElementById('admin-modal-reason').focus();
+}
+
+function closeModal() {
+  document.getElementById('admin-modal').style.display = 'none';
+  _modalCb = null;
+}
+
+// Wire confirm / back ONCE — never re-attached
+document.getElementById('admin-modal-confirm').addEventListener('click', () => {
+  const reason = _modalNoReason ? null : document.getElementById('admin-modal-reason').value.trim();
+  if (!_modalNoReason && !reason) {
+    document.getElementById('admin-modal-reason').style.borderColor = 'var(--red,#e53e3e)';
+    return;
+  }
+  const cb = _modalCb;
+  closeModal();
+  if (cb) cb(reason);
+});
+
+document.getElementById('admin-modal-back').addEventListener('click', closeModal);
+document.getElementById('admin-modal').addEventListener('click', e => {
+  if (e.target === document.getElementById('admin-modal')) closeModal();
+});
+function closeDrawer() {
+  document.getElementById('drawer-root').innerHTML = '';
+}
+
+function showDrawer(html) {
+  const root = document.getElementById('drawer-root');
+  root.innerHTML = `
+    <div class="drawer-overlay" id="drawer-overlay"></div>
+    <div class="drawer">${html}</div>`;
+  history.pushState({ bixOverlay: 'drawer' }, '');
+  root.querySelector('.drawer-overlay').addEventListener('click', closeDrawer);
+}
+
+// Hardware back button: close any open overlay
+window.addEventListener('popstate', () => {
+  if (document.getElementById('admin-modal').style.display !== 'none') { closeModal(); return; }
+  if (document.getElementById('drawer-root').innerHTML) { closeDrawer(); }
+});
+
+// ══════════════════════════════════════════════════════════════════════════════
+// COMMISSION GOVERNANCE
+// ══════════════════════════════════════════════════════════════════════════════
+async function renderCommission() {
+  const c = document.getElementById('admin-content');
+  c.innerHTML = '<div class="admin-empty">Loading commission settings…</div>';
+  try {
+    const d = await api.get('/admin/commission');
+    const p = d.pending;
+    const userId = adminAuth.getUser()?.id;
+    const isProposer = p && String(p.proposed_by?._id || p.proposed_by?.id || p.proposed_by) === String(userId);
+    c.innerHTML = `
+      <div style="margin-bottom:18px"><div class="section-kicker">Platform fee</div><h2 style="font-size:28px">Commission</h2><p style="color:var(--ink-3);font-size:13px">Bixcart uses one platform-wide commission rate. It is currently <strong>${Number(d.commission_percent).toFixed(1)}%</strong>. Any change requires an Agree/Disagree vote from a second admin.</p></div>
+      <div class="card" style="padding:20px;margin-bottom:18px">
+        <div style="display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap">
+          <div><div style="font-size:12px;color:var(--ink-3)">Current rate</div><div style="font-size:34px;font-weight:800">${Number(d.commission_percent).toFixed(1)}%</div></div>
+          <div style="font-size:13px;color:var(--ink-3);max-width:560px">No game, tier, sales-based discount, or variable commission applies. Every seller is charged the same rate.</div>
+        </div>
+      </div>
+      ${p ? `<div class="card" style="padding:20px;margin-bottom:18px;border:1.5px solid var(--border)">
+        <div style="font-weight:800;font-size:17px;margin-bottom:6px">Pending change: ${Number(p.proposed_percent).toFixed(1)}%</div>
+        <div style="font-size:13px;color:var(--ink-3);margin-bottom:14px">Proposed by ${escHtml(p.proposed_by?.full_name || p.proposed_by?.email || 'Admin')}${p.reason ? ` · ${escHtml(p.reason)}` : ''}</div>
+        ${isProposer ? `<div class="notice notice-info">You proposed this change. A different admin must vote Agree or Disagree before the rate can change.</div>` : `<div style="display:flex;gap:10px;flex-wrap:wrap"><button class="btn btn-primary" onclick="voteCommission('${p.id}','agree')">✓ Agree</button><button class="btn btn-danger" onclick="voteCommission('${p.id}','disagree')">✕ Disagree</button></div>`}
+      </div>` : `<div class="card" style="padding:20px;margin-bottom:18px"><h3 style="margin-bottom:12px">Propose a new rate</h3><div style="display:grid;grid-template-columns:180px 1fr;gap:10px"><input id="commission-rate" class="form-input" type="number" min="0" max="100" step="0.1" value="${Number(d.commission_percent).toFixed(1)}"><input id="commission-reason" class="form-input" placeholder="Reason for the change (optional)"></div><button class="btn btn-primary" style="margin-top:12px" onclick="proposeCommission()">Create vote</button></div>`}
+      <div><h3 style="font-size:17px;margin-bottom:10px">Recent decisions</h3>${(d.history||[]).length ? `<div class="admin-table-wrap"><table class="admin-table"><thead><tr><th>Date</th><th>Proposed by</th><th>Rate</th><th>Decision</th></tr></thead><tbody>${d.history.map(x=>`<tr><td>${fmtTime(x.decided_at || x.created_at)}</td><td>${escHtml(x.proposed_by?.full_name || 'Admin')}</td><td>${Number(x.proposed_percent).toFixed(1)}%</td><td>${escHtml(x.status)}</td></tr>`).join('')}</tbody></table></div>` : '<div class="admin-empty">No commission changes yet.</div>'}</div>`;
+  } catch(e) { c.innerHTML = `<div class="admin-empty">Failed to load commission settings: ${escHtml(e.message)}</div>`; }
+}
+window.proposeCommission = async function() {
+  const rate = Number(document.getElementById('commission-rate')?.value);
+  const reason = document.getElementById('commission-reason')?.value?.trim() || '';
+  if (!Number.isFinite(rate) || rate < 0 || rate > 100) return toast('Enter a valid commission between 0% and 100%.', 'error');
+  try { await api.post('/admin/commission/proposals', { proposed_percent: rate, reason }); toast('Commission change proposed. Another admin must vote.', 'success'); renderCommission(); } catch(e) { toast(e.message, 'error'); }
+};
+window.voteCommission = async function(id, vote) {
+  const word = vote === 'agree' ? 'Agree' : 'Disagree';
+  if (!confirm(`${word} to this commission change?`)) return;
+  try { const r = await api.post(`/admin/commission/proposals/${id}/vote`, { vote }); toast(r.status === 'approved' ? `Commission changed to ${Number(r.commission_percent).toFixed(1)}%.` : 'Proposal rejected.', r.status === 'approved' ? 'success' : 'warning'); renderCommission(); } catch(e) { toast(e.message, 'error'); }
+};
+
+// ══════════════════════════════════════════════════════════════════════════════
+// OVERVIEW
+// ══════════════════════════════════════════════════════════════════════════════
+async function renderOverview() {
+  const c = document.getElementById('admin-content');
+  c.innerHTML = `<div class="stat-grid">${skeletonRows(1, 8).replace(/tbl-skeleton/g,'').replace(/<tr>/g,'<div class="stat-card">').replace(/<\/tr>/g,'</div>').replace(/<td>/g,'').replace(/<\/td>/g,'')}</div>`;
+
+  try {
+    const s = await api.get('/admin/stats');
+    c.innerHTML = `
+      <div class="stat-grid">
+        <div class="stat-card"><div class="stat-card-label">Total Users</div><div class="stat-card-value">${s.totalUsers}</div><div class="stat-card-sub">${s.buyers} buyers · ${s.sellers} sellers</div></div>
+        <div class="stat-card"><div class="stat-card-label">Active Listings</div><div class="stat-card-value">${s.activeListings}</div><div class="stat-card-sub">${s.totalListings} total</div></div>
+        <div class="stat-card"><div class="stat-card-label">Conversations</div><div class="stat-card-value">${s.totalConversations}</div><div class="stat-card-sub">${s.totalMessages} messages</div></div>
+        <div class="stat-card"><div class="stat-card-label">Orders</div><div class="stat-card-value">${s.totalOrders}</div></div>
+        <div class="stat-card ${s.pendingReports > 0 ? 'warn' : ''}"><div class="stat-card-label">Pending Reports</div><div class="stat-card-value">${s.pendingReports || 0}</div><div class="stat-card-sub">conversations reported</div></div>
+        <div class="stat-card danger"><div class="stat-card-label">Suspended</div><div class="stat-card-value">${s.suspendedUsers}</div><div class="stat-card-sub">accounts suspended</div></div>
+      </div>
+      <div style="display:flex;gap:12px;flex-wrap:wrap;">
+        <button class="btn btn-surface" data-goto="users">Manage Users →</button>
+        <button class="btn btn-surface" data-goto="listings">Manage Listings →</button>
+        <button class="btn btn-surface" data-goto="messages">View Reports →</button>
+        <button class="btn btn-surface" data-goto="flagged">AI Flagged →</button>
+      </div>`;
+
+    // Update flagged badge in nav
+    if (s.pendingReports > 0) {
+      const badge = document.getElementById('nav-flagged-badge');
+      if (badge) { badge.textContent = s.pendingReports; badge.style.display = ''; }
+    }
+    c.querySelectorAll('.btn[data-goto]').forEach(btn => {
+      btn.addEventListener('click', () => switchTab(btn.dataset.goto));
+    });
+  } catch(e) { c.innerHTML = `<div class="admin-empty">Failed to load stats: ${e.message}</div>`; }
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
+// HOSTELS
+// ══════════════════════════════════════════════════════════════════════════════
+async function renderHostels() {
+  const c = document.getElementById('admin-content');
+  c.innerHTML = `
+    <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:18px;flex-wrap:wrap;">
+      <div>
+        <div class="section-kicker" style="margin-bottom:6px;">Campus settings</div>
+        <h2 style="font-size:28px;letter-spacing:-.5px;">Hostels</h2>
+      </div>
+      <button class="btn btn-primary" id="add-hostel-btn">+ Add hostel</button>
+    </div>
+    <div class="admin-table-wrap">
+      <table class="admin-table">
+        <thead>
+          <tr><th>Name</th><th>Campus</th><th>Status</th><th>Actions</th></tr>
+        </thead>
+        <tbody id="hostels-tbody"><tr><td colspan="4" style="padding:24px;text-align:center;color:var(--ink-3);">Loading hostels…</td></tr></tbody>
+      </table>
+    </div>`;
+
+  const addBtn = document.getElementById('add-hostel-btn');
+  addBtn.addEventListener('click', () => addHostel());
+
+  try {
+    const data = await api.get('/admin/hostels');
+    const rows = data.hostels || [];
+    const tbody = document.getElementById('hostels-tbody');
+    if (!rows.length) {
+      tbody.innerHTML = '<tr><td colspan="4" style="padding:24px;text-align:center;color:var(--ink-3);">No hostels yet. Add the first hostel.</td></tr>';
+      return;
+    }
+
+    tbody.innerHTML = rows.map(h => `
+      <tr>
+        <td>${escHtml(h.name)}</td>
+        <td>${escHtml(h.campus || 'Ajayi Crowther University')}</td>
+        <td><span class="badge ${h.is_active === false ? 'badge-surface' : 'badge-green'}">${h.is_active === false ? 'Hidden' : 'Active'}</span></td>
+        <td>
+          <div class="action-btns">
+            <button class="action-btn view" data-hostel-action="edit" data-id="${h.id}">Edit</button>
+            <button class="action-btn kick" data-hostel-action="delete" data-id="${h.id}">Delete</button>
+          </div>
+        </td>
+      </tr>
+    `).join('');
+
+    c.querySelectorAll('[data-hostel-action]').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        const id = btn.dataset.id;
+        const action = btn.dataset.hostelAction;
+        if (action === 'edit') return editHostel(id);
+        if (action === 'delete') return deleteHostel(id);
+      });
+    });
+  } catch (e) {
+    c.innerHTML = `<div class="admin-empty">Failed to load hostels: ${e.message}</div>`;
+  }
+}
+
+async function addHostel() {
+  const name = window.prompt('Hostel name:', '');
+  if (!name || !name.trim()) return;
+  try {
+    await api.post('/admin/hostels', { name: name.trim(), campus: 'Ajayi Crowther University', is_active: true });
+    toast('Hostel added', 'success');
+    renderHostels();
+  } catch (e) { toast(e.message, 'error'); }
+}
+
+async function editHostel(id) {
+  const current = await api.get('/admin/hostels');
+  const hostel = (current.hostels || []).find(h => String(h.id) === String(id));
+  if (!hostel) return;
+  const nextName = window.prompt('Edit hostel name:', hostel.name || '');
+  if (!nextName || !nextName.trim()) return;
+  try {
+    await api.patch(`/admin/hostels/${id}`, { name: nextName.trim() });
+    toast('Hostel updated', 'success');
+    renderHostels();
+  } catch (e) { toast(e.message, 'error'); }
+}
+
+async function deleteHostel(id) {
+  const ok = window.confirm('Delete this hostel from the approved list?');
+  if (!ok) return;
+  try {
+    await api.delete(`/admin/hostels/${id}`);
+    toast('Hostel removed', 'success');
+    renderHostels();
+  } catch (e) { toast(e.message, 'error'); }
+}
+
+async function renderDeliverySpots() {
+  const c = document.getElementById('admin-content');
+  c.innerHTML = `
+    <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:18px;flex-wrap:wrap;">
+      <div>
+        <div class="section-kicker" style="margin-bottom:6px;">Campus settings</div>
+        <h2 style="font-size:28px;letter-spacing:-.5px;">Delivery Spots</h2>
+        <p style="color:var(--ink-3);font-size:13px;margin-top:6px;">Popular on-campus meetup points buyers pick from when paying for an accepted order.</p>
+      </div>
+      <button class="btn btn-primary" id="add-spot-btn">+ Add spot</button>
+    </div>
+    <div class="admin-table-wrap">
+      <table class="admin-table">
+        <thead>
+          <tr><th>Name</th><th>Campus</th><th>Status</th><th>Actions</th></tr>
+        </thead>
+        <tbody id="spots-tbody"><tr><td colspan="4" style="padding:24px;text-align:center;color:var(--ink-3);">Loading delivery spots…</td></tr></tbody>
+      </table>
+    </div>`;
+
+  document.getElementById('add-spot-btn').addEventListener('click', () => addDeliverySpot());
+
+  try {
+    const data = await api.get('/admin/delivery-spots');
+    const rows = data.spots || [];
+    const tbody = document.getElementById('spots-tbody');
+    if (!rows.length) {
+      tbody.innerHTML = '<tr><td colspan="4" style="padding:24px;text-align:center;color:var(--ink-3);">No delivery spots yet. Add the first one — e.g. "Main Gate", "Faculty of Science", "Female Hostel B".</td></tr>';
+      return;
+    }
+
+    tbody.innerHTML = rows.map(s => `
+      <tr>
+        <td>${escHtml(s.name)}</td>
+        <td>${escHtml(s.campus || 'Ajayi Crowther University')}</td>
+        <td><span class="badge ${s.is_active === false ? 'badge-surface' : 'badge-green'}">${s.is_active === false ? 'Hidden' : 'Active'}</span></td>
+        <td>
+          <div class="action-btns">
+            <button class="action-btn view" data-spot-action="edit" data-id="${s.id}">Edit</button>
+            <button class="action-btn kick" data-spot-action="delete" data-id="${s.id}">Delete</button>
+          </div>
+        </td>
+      </tr>
+    `).join('');
+
+    c.querySelectorAll('[data-spot-action]').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        const id = btn.dataset.id;
+        const action = btn.dataset.spotAction;
+        if (action === 'edit') return editDeliverySpot(id);
+        if (action === 'delete') return deleteDeliverySpot(id);
+      });
+    });
+  } catch (e) {
+    c.innerHTML = `<div class="admin-empty">Failed to load delivery spots: ${e.message}</div>`;
+  }
+}
+
+async function addDeliverySpot() {
+  const name = window.prompt('Spot name (e.g. "Main Gate", "Female Hostel B"):', '');
+  if (!name || !name.trim()) return;
+  try {
+    await api.post('/admin/delivery-spots', { name: name.trim(), campus: 'Ajayi Crowther University', is_active: true });
+    toast('Delivery spot added', 'success');
+    renderDeliverySpots();
+  } catch (e) { toast(e.message, 'error'); }
+}
+
+async function editDeliverySpot(id) {
+  const current = await api.get('/admin/delivery-spots');
+  const spot = (current.spots || []).find(s => String(s.id) === String(id));
+  if (!spot) return;
+  const nextName = window.prompt('Edit spot name:', spot.name || '');
+  if (!nextName || !nextName.trim()) return;
+  try {
+    await api.patch(`/admin/delivery-spots/${id}`, { name: nextName.trim() });
+    toast('Delivery spot updated', 'success');
+    renderDeliverySpots();
+  } catch (e) { toast(e.message, 'error'); }
+}
+
+async function deleteDeliverySpot(id) {
+  const ok = window.confirm('Delete this delivery spot from the list?');
+  if (!ok) return;
+  try {
+    await api.delete(`/admin/delivery-spots/${id}`);
+    toast('Delivery spot removed', 'success');
+    renderDeliverySpots();
+  } catch (e) { toast(e.message, 'error'); }
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
+// USERS
+// ══════════════════════════════════════════════════════════════════════════════
+let usersState = { q: '', role: 'all', status: 'all', page: 1 };
+
+async function renderUsers(resetPage) {
+  if (resetPage) usersState.page = 1;
+  const c = document.getElementById('admin-content');
+  c.innerHTML = `
+    <div class="admin-toolbar">
+      <input class="admin-search" id="user-search" placeholder="Search name or email…" value="${escHtml(usersState.q)}">
+      <select class="filter-select" id="user-role-filter">
+        <option value="all" ${usersState.role==='all'?'selected':''}>All roles</option>
+        <option value="buyer" ${usersState.role==='buyer'?'selected':''}>Buyers</option>
+        <option value="seller" ${usersState.role==='seller'?'selected':''}>Sellers</option>
+      </select>
+      <select class="filter-select" id="user-status-filter">
+        <option value="all" ${usersState.status==='all'?'selected':''}>All statuses</option>
+        <option value="active" ${usersState.status==='active'?'selected':''}>Active</option>
+        <option value="warned" ${usersState.status==='warned'?'selected':''}>Warned</option>
+        <option value="suspended" ${usersState.status==='suspended'?'selected':''}>Suspended</option>
+      </select>
+    </div>
+    <div class="admin-table-wrap" id="users-table-wrap">
+      <table class="admin-table">
+        <thead><tr>
+          <th>Name</th><th>Email</th><th>Role</th><th>Status</th>
+          <th>Listings</th><th>Joined</th><th>Actions</th>
+        </tr></thead>
+        <tbody id="users-tbody">${skeletonRows(7)}</tbody>
+      </table>
+      <div id="users-pagination"></div>
+    </div>`;
+
+  let searchTimer;
+  document.getElementById('user-search').addEventListener('input', e => {
+    usersState.q = e.target.value;
+    clearTimeout(searchTimer);
+    searchTimer = setTimeout(() => fetchUsers(1), 350);
+  });
+  document.getElementById('user-role-filter').addEventListener('change', e => { usersState.role = e.target.value; fetchUsers(1); });
+  document.getElementById('user-status-filter').addEventListener('change', e => { usersState.status = e.target.value; fetchUsers(1); });
+
+  // Delegated listener on the stable wrapper — attached ONCE here, not inside fetchUsers.
+  // Survives tbody innerHTML replacements on pagination/filter changes.
+  document.getElementById('users-table-wrap').addEventListener('click', e => {
+    const btn = e.target.closest('.action-btn[data-action]');
+    if (!btn) return;
+    const { action, id, name } = btn.dataset;
+    if (action === 'view')    openUserDrawer(id);
+    if (action === 'warn')    warnUser(id, name);
+    if (action === 'suspend') suspendUser(id, name);
+    if (action === 'restore') unsuspendUser(id, name);
+    if (action === 'delete')  kickUser(id, name);
+  });
+
+  fetchUsers(usersState.page);
+}
+
+async function fetchUsers(page) {
+  usersState.page = page;
+  const tbody = document.getElementById('users-tbody');
+  const pgDiv = document.getElementById('users-pagination');
+  if (!tbody) return;
+  tbody.innerHTML = skeletonRows(7);
+  try {
+    const { q, role, status } = usersState;
+    const params = new URLSearchParams({ page, limit: 20 });
+    if (q) params.set('q', q);
+    if (role !== 'all') params.set('role', role);
+    if (status !== 'all') params.set('status', status);
+    const data = await api.get(`/admin/users?${params}`);
+    if (!data.users.length) {
+      tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;color:var(--ink-3);padding:32px">No users found</td></tr>`;
+      pgDiv.innerHTML = ''; return;
+    }
+
+    tbody.innerHTML = data.users.map(u => `
+      <tr>
+        <td class="name-cell">${escHtml(u.full_name)}</td>
+        <td class="mono">${escHtml(u.email)}</td>
+        <td>${roleBadge(u.role)}</td>
+        <td>${statusBadge(u.account_status)}</td>
+        <td>${u.listing_count || 0}</td>
+        <td>${fmt(u.created_at)}</td>
+        <td>
+          <div class="action-btns">
+            <button class="action-btn view"    data-action="view"    data-id="${u._id}">View</button>
+            ${u.account_status !== 'warned' && u.account_status !== 'suspended'
+              ? `<button class="action-btn warn"    data-action="warn"    data-id="${u._id}" data-name="${escHtml(u.full_name)}">Warn</button>` : ''}
+            ${u.account_status !== 'suspended'
+              ? `<button class="action-btn suspend" data-action="suspend" data-id="${u._id}" data-name="${escHtml(u.full_name)}">Suspend</button>`
+              : `<button class="action-btn restore" data-action="restore" data-id="${u._id}" data-name="${escHtml(u.full_name)}">Restore</button>`}
+            <button class="action-btn kick"    data-action="delete"  data-id="${u._id}" data-name="${escHtml(u.full_name)}">Delete</button>
+          </div>
+        </td>
+      </tr>`).join('');
+
+    pgDiv.innerHTML = paginationHTML(data.page, data.pages, data.total);
+    bindPagination('users-pagination', fetchUsers);
+  } catch(e) {
+    if (tbody) tbody.innerHTML = `<tr><td colspan="7" style="color:var(--red,#e53e3e);padding:20px">${e.message}</td></tr>`;
+  }
+}
+window.fetchUsers = fetchUsers;
+
+// ── User drawer ──────────────────────────────────────────────────────────────
+async function openUserDrawer(id) {
+  showDrawer(`
+    <div class="drawer-header">
+      <h3>User Details</h3>
+      <button class="drawer-close" id="drawer-close-btn">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+    <div class="drawer-body"><div class="skeleton" style="height:200px;border-radius:8px"></div></div>`);
+
+  document.getElementById('drawer-close-btn').addEventListener('click', closeDrawer);
+
+  try {
+    const u = await api.get(`/admin/users/${id}`);
+    const drawerEl = document.querySelector('.drawer');
+    if (!drawerEl) return;
+
+    const body = drawerEl.querySelector('.drawer-body');
+    body.innerHTML = `
+      <div class="drawer-section">
+        <div class="drawer-section-title">Account</div>
+        <div class="drawer-field"><span class="drawer-field-label">Name</span><span class="drawer-field-value">${escHtml(u.full_name)}</span></div>
+        <div class="drawer-field"><span class="drawer-field-label">Email</span><span class="drawer-field-value">${escHtml(u.email)}</span></div>
+        <div class="drawer-field"><span class="drawer-field-label">Role</span><span class="drawer-field-value">${roleBadge(u.role)}</span></div>
+        <div class="drawer-field"><span class="drawer-field-label">Status</span><span class="drawer-field-value">${statusBadge(u.account_status)}</span></div>
+        <div class="drawer-field"><span class="drawer-field-label">Verified</span><span class="drawer-field-value">${u.is_verified ? '✅ Yes' : '—'}</span></div>
+        <div class="drawer-field"><span class="drawer-field-label">University</span><span class="drawer-field-value">${escHtml(u.university || '—')}</span></div>
+        <div class="drawer-field"><span class="drawer-field-label">Joined</span><span class="drawer-field-value">${fmtTime(u.created_at)}</span></div>
+        ${u.business_name ? `<div class="drawer-field"><span class="drawer-field-label">Business</span><span class="drawer-field-value">${escHtml(u.business_name)}</span></div>` : ''}
+        <div class="drawer-field"><span class="drawer-field-label">Credits</span><span class="drawer-field-value">${u.listing_credits}</span></div>
+        <div class="drawer-field"><span class="drawer-field-label">Conversations</span><span class="drawer-field-value">${u.conv_count}</span></div>
+      </div>
+      ${u.account_status !== 'active' ? `
+      <div class="drawer-section">
+        <div class="drawer-section-title">Moderation</div>
+        ${u.warn_reason    ? `<div class="drawer-field"><span class="drawer-field-label">Warning</span><span class="drawer-field-value">${escHtml(u.warn_reason)}</span></div>` : ''}
+        ${u.suspend_reason ? `<div class="drawer-field"><span class="drawer-field-label">Suspension</span><span class="drawer-field-value">${escHtml(u.suspend_reason)}</span></div>` : ''}
+        ${u.warned_at    ? `<div class="drawer-field"><span class="drawer-field-label">Warned at</span><span class="drawer-field-value">${fmtTime(u.warned_at)}</span></div>` : ''}
+        ${u.suspended_at ? `<div class="drawer-field"><span class="drawer-field-label">Suspended at</span><span class="drawer-field-value">${fmtTime(u.suspended_at)}</span></div>` : ''}
+      </div>` : ''}
+      ${u.id_front_url ? `
+      <div class="drawer-section">
+        <div class="drawer-section-title">ID Verification</div>
+        <div class="drawer-field"><span class="drawer-field-label">ID Type</span><span class="drawer-field-value">${escHtml(u.id_type || '—')}</span></div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px">
+          <a href="${u.id_front_url}" target="_blank"><img src="${u.id_front_url}" style="width:100%;border-radius:8px;border:1.5px solid var(--border)" alt="Front"></a>
+          ${u.id_back_url ? `<a href="${u.id_back_url}" target="_blank"><img src="${u.id_back_url}" style="width:100%;border-radius:8px;border:1.5px solid var(--border)" alt="Back"></a>` : ''}
+        </div>
+      </div>` : ''}
+      ${u.listings?.length ? `
+      <div class="drawer-section">
+        <div class="drawer-section-title">Listings (${u.listings.length})</div>
+        ${u.listings.map(l => `
+          <div class="drawer-listing-row">
+            <div>
+              <div style="font-weight:600;font-size:13px">${escHtml(l.title)}</div>
+              <div style="font-size:11px;color:var(--ink-3)">${formatPrice(l.price)} · ${escHtml(l.category)}</div>
+            </div>
+            ${listingStatusBadge(l.status)}
+          </div>`).join('')}
+      </div>` : ''}
+      <div class="drawer-section" id="drawer-actions" style="display:flex;flex-direction:column;gap:8px;">
+        <div class="drawer-section-title">Actions</div>
+        <button class="btn btn-sm" data-drawer-action="message" data-id="${u._id}" data-name="${escHtml(u.full_name)}" style="background:#ebf8ff;border:1.5px solid #63b3ed;color:#2b6cb0">💬 Send message</button>
+        ${u.account_status !== 'suspended'
+          ? `<button class="btn btn-sm" data-drawer-action="warn"    data-id="${u._id}" data-name="${escHtml(u.full_name)}" style="background:#fffff0;border:1.5px solid #d69e2e;color:#744210">⚠️ Warn user</button>
+             <button class="btn btn-sm" data-drawer-action="suspend" data-id="${u._id}" data-name="${escHtml(u.full_name)}" style="background:#fff5f5;border:1.5px solid #e53e3e;color:#9b2c2c">🔒 Suspend account</button>`
+          : `<button class="btn btn-sm" data-drawer-action="restore" data-id="${u._id}" data-name="${escHtml(u.full_name)}" style="background:#f0fff4;border:1.5px solid #38a169;color:#276749">✅ Restore account</button>`}
+        <button class="btn btn-sm" data-drawer-action="delete" data-id="${u._id}" data-name="${escHtml(u.full_name)}" style="background:#fff5f5;border:1.5px solid #e53e3e;color:#9b2c2c">🗑️ Delete account</button>
+      </div>`;
+
+    // Attach listeners to drawer action buttons
+    body.querySelector('#drawer-actions').addEventListener('click', e => {
+      const btn = e.target.closest('[data-drawer-action]');
+      if (!btn) return;
+      const { drawerAction, id: uid, name } = btn.dataset;
+      closeDrawer();
+      if (drawerAction === 'message') sendAdminMessage(uid, name);
+      if (drawerAction === 'warn')    warnUser(uid, name);
+      if (drawerAction === 'suspend') suspendUser(uid, name);
+      if (drawerAction === 'restore') unsuspendUser(uid, name);
+      if (drawerAction === 'delete')  kickUser(uid, name);
+    });
+
+  } catch(e) {
+    const db = document.querySelector('.drawer-body');
+    if (db) db.innerHTML = `<div style="color:var(--red,#e53e3e);padding:20px">${e.message}</div>`;
+  }
+}
+
+// ── User actions ─────────────────────────────────────────────────────────────
+function warnUser(id, name) {
+  showModal({
+    title: `Warn ${name}`,
+    sub: 'A warning will be recorded on this account.',
+    placeholder: 'e.g. Inappropriate listing content',
+    confirmLabel: 'Send Warning',
+    confirmClass: 'btn-accent',
+    onConfirm: async (reason) => {
+      try {
+        await api.post(`/admin/users/${id}/warn`, { reason });
+        toast(`${name} has been warned.`, 'success');
+        if (currentTab === 'users') fetchUsers(usersState.page);
+      } catch(e) { toast(e.message, 'error'); }
+    }
+  });
+}
+
+function suspendUser(id, name) {
+  showModal({
+    title: `Suspend ${name}`,
+    sub: 'This user will be prevented from using the platform.',
+    placeholder: 'e.g. Repeated policy violations',
+    confirmLabel: 'Suspend Account',
+    confirmClass: 'btn-primary',
+    onConfirm: async (reason) => {
+      try {
+        await api.post(`/admin/users/${id}/suspend`, { reason });
+        toast(`${name} has been suspended.`, 'success');
+        if (currentTab === 'users') fetchUsers(usersState.page);
+      } catch(e) { toast(e.message, 'error'); }
+    }
+  });
+}
+
+function unsuspendUser(id, name) {
+  showModal({
+    title: `Restore ${name}`,
+    sub: 'This will lift the suspension and restore full access.',
+    confirmLabel: 'Restore Account',
+    confirmClass: 'btn-primary',
+    noReason: true,
+    onConfirm: async () => {
+      try {
+        await api.post(`/admin/users/${id}/unsuspend`, {});
+        toast(`${name}'s account has been restored.`, 'success');
+        if (currentTab === 'users') fetchUsers(usersState.page);
+      } catch(e) { toast(e.message, 'error'); }
+    }
+  });
+}
+
+function kickUser(id, name) {
+  showModal({
+    title: `Delete ${name}'s account?`,
+    sub: 'This permanently deletes the account, all their listings, and conversations. This cannot be undone.',
+    noReason: true,
+    confirmLabel: 'Yes, Delete Account',
+    confirmClass: 'btn-primary',
+    onConfirm: async () => {
+      try {
+        await api.delete(`/admin/users/${id}`);
+        toast(`${name}'s account has been deleted.`, 'success');
+        if (currentTab === 'users') fetchUsers(usersState.page);
+      } catch(e) { toast(e.message, 'error'); }
+    }
+  });
+}
+
+function sendAdminMessage(id, name) {
+  showModal({
+    title: `Message ${name}`,
+    sub: 'This will send a push notification and inbox message to the user.',
+    placeholder: 'e.g. Your listing was reviewed and restored.',
+    confirmLabel: 'Send Message',
+    confirmClass: 'btn-primary',
+    onConfirm: async (message) => {
+      try {
+        await api.post(`/admin/users/${id}/message`, { message });
+        toast(`Message sent to ${name}.`, 'success');
+      } catch(e) { toast(e.message, 'error'); }
+    },
+  });
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
+// BROADCAST — send a message to a selected set of users
+// ══════════════════════════════════════════════════════════════════════════════
+let broadcastState = { q: '', role: 'all', status: 'all', verified: 'all', university: 'all', page: 1 };
+let broadcastSelected = new Set();   // explicitly-checked user ids (persists across pages)
+let broadcastSelectAllMatching = false; // true once admin picks "select all N matching filters"
+let broadcastMatchingCount = 0;
+
+async function renderBroadcast() {
+  broadcastSelected = new Set();
+  broadcastSelectAllMatching = false;
+  const c = document.getElementById('admin-content');
+  c.innerHTML = `
+    <div class="bcast-layout">
+      <div class="bcast-main">
+        <div class="admin-toolbar">
+          <input class="admin-search" id="bcast-search" placeholder="Search name or email…" value="${escHtml(broadcastState.q)}">
+          <select class="filter-select" id="bcast-role-filter">
+            <option value="all">All roles</option>
+            <option value="buyer">Buyers</option>
+            <option value="seller">Sellers</option>
+          </select>
+          <select class="filter-select" id="bcast-status-filter">
+            <option value="all">All statuses</option>
+            <option value="active">Active</option>
+            <option value="warned">Warned</option>
+            <option value="suspended">Suspended</option>
+          </select>
+          <select class="filter-select" id="bcast-verified-filter">
+            <option value="all">Verified: all</option>
+            <option value="yes">Verified only</option>
+            <option value="no">Unverified only</option>
+          </select>
+          <select class="filter-select" id="bcast-university-filter">
+            <option value="all">All universities</option>
+          </select>
+        </div>
+
+        <div class="bcast-select-bar">
+          <label class="bcast-check-label">
+            <input type="checkbox" id="bcast-select-page"> Select all on this page
+          </label>
+          <button class="link-btn" id="bcast-select-all-matching">Select all <span id="bcast-matching-count">…</span> matching filters</button>
+          <span class="bcast-selected-count" id="bcast-selected-count">0 selected</span>
+        </div>
+
+        <div class="admin-table-wrap" id="bcast-table-wrap">
+          <table class="admin-table">
+            <thead><tr>
+              <th style="width:36px"></th><th>Name</th><th>Email</th><th>Role</th><th>Status</th><th>Verified</th>
+            </tr></thead>
+            <tbody id="bcast-tbody">${skeletonRows(6)}</tbody>
+          </table>
+          <div id="bcast-pagination"></div>
+        </div>
+      </div>
+
+      <div class="bcast-compose">
+        <div class="bcast-compose-title">Compose message</div>
+        <label class="bcast-field-label">Title <span style="font-weight:400;color:var(--ink-3)">(optional)</span></label>
+        <input class="bcast-input" id="bcast-title" placeholder="e.g. Scheduled maintenance" maxlength="120">
+        <label class="bcast-field-label">Message</label>
+        <textarea class="bcast-textarea" id="bcast-message" rows="6" placeholder="Write the message users will see as a popup…" maxlength="2000"></textarea>
+        <button class="btn btn-primary bcast-send-btn" id="bcast-send-btn">Send message</button>
+        <div class="bcast-hint">Recipients will see this as a popup the next time they open or refresh the app, with a button to confirm they've read it.</div>
+
+        <div class="bcast-history">
+          <div class="bcast-compose-title" style="margin-top:4px;">Recent broadcasts</div>
+          <div id="bcast-history-list"><div class="admin-empty" style="padding:16px 0;">Loading…</div></div>
+        </div>
+      </div>
+    </div>`;
+
+  // Filters
+  let searchTimer;
+  document.getElementById('bcast-search').addEventListener('input', e => {
+    broadcastState.q = e.target.value;
+    clearTimeout(searchTimer);
+    searchTimer = setTimeout(() => fetchBroadcastRecipients(1), 350);
+  });
+  document.getElementById('bcast-role-filter').addEventListener('change', e => { broadcastState.role = e.target.value; fetchBroadcastRecipients(1); });
+  document.getElementById('bcast-status-filter').addEventListener('change', e => { broadcastState.status = e.target.value; fetchBroadcastRecipients(1); });
+  document.getElementById('bcast-verified-filter').addEventListener('change', e => { broadcastState.verified = e.target.value; fetchBroadcastRecipients(1); });
+  document.getElementById('bcast-university-filter').addEventListener('change', e => { broadcastState.university = e.target.value; fetchBroadcastRecipients(1); });
+
+  // Select-all-on-page checkbox
+  document.getElementById('bcast-select-page').addEventListener('change', e => {
+    broadcastSelectAllMatching = false;
+    document.querySelectorAll('#bcast-tbody .bcast-row-check').forEach(cb => {
+      cb.checked = e.target.checked;
+      cb.disabled = false;
+      if (e.target.checked) broadcastSelected.add(cb.dataset.id);
+      else broadcastSelected.delete(cb.dataset.id);
+    });
+    updateBroadcastSelectedCount();
+  });
+
+  // Select-all-matching-filters
+  document.getElementById('bcast-select-all-matching').addEventListener('click', () => {
+    broadcastSelectAllMatching = !broadcastSelectAllMatching;
+    broadcastSelected = new Set();
+    document.querySelectorAll('#bcast-tbody .bcast-row-check').forEach(cb => {
+      cb.checked = broadcastSelectAllMatching;
+      cb.disabled = broadcastSelectAllMatching;
+    });
+    document.getElementById('bcast-select-page').checked = broadcastSelectAllMatching;
+    document.getElementById('bcast-select-page').disabled = broadcastSelectAllMatching;
+    document.getElementById('bcast-select-all-matching').classList.toggle('active', broadcastSelectAllMatching);
+    updateBroadcastSelectedCount();
+  });
+
+  // Row checkboxes (delegated — survives tbody re-render on pagination)
+  document.getElementById('bcast-table-wrap').addEventListener('change', e => {
+    const cb = e.target.closest('.bcast-row-check');
+    if (!cb) return;
+    if (cb.checked) broadcastSelected.add(cb.dataset.id);
+    else broadcastSelected.delete(cb.dataset.id);
+    updateBroadcastSelectedCount();
+  });
+
+  document.getElementById('bcast-send-btn').addEventListener('click', sendBroadcast);
+
+  loadBroadcastUniversities();
+  fetchBroadcastRecipients(1);
+  fetchBroadcastHistory();
+}
+
+async function loadBroadcastUniversities() {
+  try {
+    const { universities } = await api.get('/admin/broadcast/universities');
+    const sel = document.getElementById('bcast-university-filter');
+    if (!sel) return;
+    universities.forEach(u => {
+      const opt = document.createElement('option');
+      opt.value = u; opt.textContent = u;
+      sel.appendChild(opt);
+    });
+  } catch {}
+}
+
+function broadcastFilterParams() {
+  const { q, role, status, verified, university } = broadcastState;
+  const params = new URLSearchParams();
+  if (q) params.set('q', q);
+  if (role !== 'all') params.set('role', role);
+  if (status !== 'all') params.set('status', status);
+  if (verified !== 'all') params.set('verified', verified);
+  if (university !== 'all') params.set('university', university);
+  return params;
+}
+
+async function fetchBroadcastRecipients(page) {
+  broadcastState.page = page;
+  const tbody = document.getElementById('bcast-tbody');
+  const pgDiv = document.getElementById('bcast-pagination');
+  if (!tbody) return;
+  tbody.innerHTML = skeletonRows(6);
+  try {
+    const params = broadcastFilterParams();
+    params.set('page', page); params.set('limit', 20);
+    const data = await api.get(`/admin/broadcast/recipients?${params}`);
+
+    // Refresh the "select all matching" count whenever filters change
+    fetchBroadcastMatchingCount();
+
+    if (!data.users.length) {
+      tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;color:var(--ink-3);padding:32px">No users found</td></tr>`;
+      pgDiv.innerHTML = ''; return;
+    }
+
+    tbody.innerHTML = data.users.map(u => `
+      <tr>
+        <td><input type="checkbox" class="bcast-row-check" data-id="${u.id}"
+          ${broadcastSelectAllMatching || broadcastSelected.has(String(u.id)) ? 'checked' : ''}
+          ${broadcastSelectAllMatching ? 'disabled' : ''}></td>
+        <td class="name-cell">${escHtml(u.full_name)}</td>
+        <td class="mono">${escHtml(u.email)}</td>
+        <td>${roleBadge(u.role)}</td>
+        <td>${statusBadge(u.account_status)}</td>
+        <td>${u.is_verified ? '✅' : '—'}</td>
+      </tr>`).join('');
+
+    pgDiv.innerHTML = paginationHTML(data.page, data.pages, data.total);
+    bindPagination('bcast-pagination', fetchBroadcastRecipients);
+
+    // Reflect "select all on page" checkbox state for the freshly-rendered page
+    const pageCb = document.getElementById('bcast-select-page');
+    if (pageCb) {
+      const rows = [...document.querySelectorAll('#bcast-tbody .bcast-row-check')];
+      pageCb.checked = broadcastSelectAllMatching || (rows.length > 0 && rows.every(cb => broadcastSelected.has(cb.dataset.id)));
+      pageCb.disabled = broadcastSelectAllMatching;
+    }
+    updateBroadcastSelectedCount();
+  } catch(e) {
+    if (tbody) tbody.innerHTML = `<tr><td colspan="6" style="color:var(--red,#e53e3e);padding:20px">${e.message}</td></tr>`;
+  }
+}
+window.fetchBroadcastRecipients = fetchBroadcastRecipients;
+
+async function fetchBroadcastMatchingCount() {
+  try {
+    const params = broadcastFilterParams();
+    const data = await api.get(`/admin/broadcast/recipients/ids?${params}`);
+    broadcastMatchingCount = data.count;
+    const el = document.getElementById('bcast-matching-count');
+    if (el) el.textContent = data.count;
+  } catch {}
+}
+
+function updateBroadcastSelectedCount() {
+  const el = document.getElementById('bcast-selected-count');
+  if (!el) return;
+  const n = broadcastSelectAllMatching ? broadcastMatchingCount : broadcastSelected.size;
+  el.textContent = `${n} selected`;
+}
+
+async function sendBroadcast() {
+  const title = document.getElementById('bcast-title').value.trim();
+  const message = document.getElementById('bcast-message').value.trim();
+  if (!message) { toast('Write a message first', 'error'); return; }
+
+  let recipientCount = broadcastSelectAllMatching ? broadcastMatchingCount : broadcastSelected.size;
+  if (!recipientCount) { toast('Select at least one recipient', 'error'); return; }
+
+  showModal({
+    title: 'Send broadcast message?',
+    sub: `This will be sent to ${recipientCount} user${recipientCount === 1 ? '' : 's'} and shown as a popup they must acknowledge.`,
+    confirmLabel: 'Send message',
+    confirmClass: 'btn-primary',
+    noReason: true,
+    onConfirm: async () => {
+      const btn = document.getElementById('bcast-send-btn');
+      if (btn) { btn.disabled = true; btn.textContent = 'Sending…'; }
+      try {
+        let user_ids;
+        if (broadcastSelectAllMatching) {
+          const params = broadcastFilterParams();
+          const data = await api.get(`/admin/broadcast/recipients/ids?${params}`);
+          user_ids = data.ids;
+        } else {
+          user_ids = [...broadcastSelected];
+        }
+        const res = await api.post('/admin/broadcast', {
+          user_ids, title, message,
+          filters: broadcastSelectAllMatching ? { ...broadcastState } : undefined,
+        });
+        toast(`Message sent to ${res.recipient_count} user${res.recipient_count === 1 ? '' : 's'}.`, 'success');
+        document.getElementById('bcast-title').value = '';
+        document.getElementById('bcast-message').value = '';
+        broadcastSelected = new Set();
+        broadcastSelectAllMatching = false;
+        fetchBroadcastRecipients(broadcastState.page);
+        fetchBroadcastHistory();
+      } catch(e) { toast(e.message, 'error'); }
+      finally { if (btn) { btn.disabled = false; btn.textContent = 'Send message'; } }
+    },
+  });
+}
+
+async function fetchBroadcastHistory() {
+  const el = document.getElementById('bcast-history-list');
+  if (!el) return;
+  try {
+    const data = await api.get('/admin/broadcasts?limit=8');
+    if (!data.broadcasts.length) {
+      el.innerHTML = `<div class="admin-empty" style="padding:16px 0;">No broadcasts sent yet</div>`;
+      return;
+    }
+    el.innerHTML = data.broadcasts.map(b => `
+      <div class="bcast-history-item">
+        <div class="bcast-history-top">
+          <span class="bcast-history-title">${escHtml(b.title || 'Untitled message')}</span>
+          <span class="bcast-history-date">${fmtTime(b.created_at)}</span>
+        </div>
+        <div class="bcast-history-body">${escHtml((b.content || '').slice(0, 140))}${(b.content || '').length > 140 ? '…' : ''}</div>
+        <div class="bcast-history-meta">${b.recipient_count} recipient${b.recipient_count === 1 ? '' : 's'} · ${b.acknowledged_count} read it · sent by ${escHtml(b.sent_by?.full_name || 'admin')}</div>
+      </div>`).join('');
+  } catch(e) {
+    el.innerHTML = `<div class="admin-empty" style="padding:16px 0;color:var(--red,#e53e3e)">${e.message}</div>`;
+  }
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
+// LISTINGS
+// ══════════════════════════════════════════════════════════════════════════════
+let listingsState = { q: '', status: 'all', page: 1 };
+
+async function renderListings(resetPage) {
+  if (resetPage) listingsState.page = 1;
+  const c = document.getElementById('admin-content');
+  c.innerHTML = `
+    <div class="admin-toolbar">
+      <input class="admin-search" id="listing-search" placeholder="Search listings…" value="${escHtml(listingsState.q)}">
+      <select class="filter-select" id="listing-status-filter">
+        <option value="all" ${listingsState.status==='all'?'selected':''}>All statuses</option>
+        <option value="active" ${listingsState.status==='active'?'selected':''}>Active</option>
+        <option value="pending" ${listingsState.status==='pending'?'selected':''}>Pending</option>
+        <option value="sold" ${listingsState.status==='sold'?'selected':''}>Sold</option>
+        <option value="deleted" ${listingsState.status==='deleted'?'selected':''}>Deleted</option>
+      </select>
+    </div>
+    <div class="admin-table-wrap" id="listings-table-wrap">
+      <table class="admin-table">
+        <thead><tr>
+          <th>Title</th><th>Seller</th><th>Category</th><th>Price</th>
+          <th>Status</th><th>Views</th><th>Created</th><th>Actions</th>
+        </tr></thead>
+        <tbody id="listings-tbody">${skeletonRows(8)}</tbody>
+      </table>
+      <div id="listings-pagination"></div>
+    </div>`;
+
+  let searchTimer;
+  document.getElementById('listing-search').addEventListener('input', e => {
+    listingsState.q = e.target.value;
+    clearTimeout(searchTimer);
+    searchTimer = setTimeout(() => fetchListings(1), 350);
+  });
+  document.getElementById('listing-status-filter').addEventListener('change', e => {
+    listingsState.status = e.target.value; fetchListings(1);
+  });
+
+  // Delegated listener on stable wrapper — attached ONCE, survives tbody replacements
+  document.getElementById('listings-table-wrap').addEventListener('click', e => {
+    const btn = e.target.closest('.action-btn[data-action]');
+    if (!btn) return;
+    const { action, id, title } = btn.dataset;
+    if (action === 'activate') setListingStatus(id, 'active');
+    if (action === 'pending')  setListingStatus(id, 'pending');
+    if (action === 'remove')   removeListingConfirm(id, title);
+  });
+
+  fetchListings(listingsState.page);
+}
+
+async function fetchListings(page) {
+  listingsState.page = page;
+  const tbody = document.getElementById('listings-tbody');
+  const pgDiv = document.getElementById('listings-pagination');
+  if (!tbody) return;
+  tbody.innerHTML = skeletonRows(8);
+  try {
+    const params = new URLSearchParams({ page, limit: 20 });
+    if (listingsState.q) params.set('q', listingsState.q);
+    if (listingsState.status !== 'all') params.set('status', listingsState.status);
+    const data = await api.get(`/admin/listings?${params}`);
+    if (!data.listings.length) {
+      tbody.innerHTML = `<tr><td colspan="8" style="text-align:center;color:var(--ink-3);padding:32px">No listings found</td></tr>`;
+      pgDiv.innerHTML = ''; return;
+    }
+
+    tbody.innerHTML = data.listings.map(l => `
+      <tr>
+        <td class="name-cell" style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${escHtml(l.title)}">${escHtml(l.title)}</td>
+        <td>
+          <div style="font-size:13px">${escHtml(l.seller_name || '—')}</div>
+          <div class="mono">${escHtml(l.seller_email || '')}</div>
+        </td>
+        <td>${escHtml(l.category)}</td>
+        <td style="font-weight:600">${formatPrice(l.price)}</td>
+        <td>${listingStatusBadge(l.status)}</td>
+        <td>${l.views || 0}</td>
+        <td>${fmt(l.created_at)}</td>
+        <td>
+          <div class="action-btns">
+            ${l.status !== 'active'  ? `<button class="action-btn restore" data-action="activate" data-id="${l._id}">Activate</button>` : ''}
+            ${l.status !== 'pending' ? `<button class="action-btn warn"    data-action="pending"  data-id="${l._id}">Pending</button>` : ''}
+            ${l.status !== 'deleted' ? `<button class="action-btn kick"    data-action="remove"   data-id="${l._id}" data-title="${escHtml(l.title)}">Remove</button>` : ''}
+          </div>
+        </td>
+      </tr>`).join('');
+
+    pgDiv.innerHTML = paginationHTML(data.page, data.pages, data.total);
+    bindPagination('listings-pagination', fetchListings);
+  } catch(e) {
+    if (tbody) tbody.innerHTML = `<tr><td colspan="8" style="color:var(--red,#e53e3e);padding:20px">${e.message}</td></tr>`;
+  }
+}
+window.fetchListings = fetchListings;
+
+async function setListingStatus(id, status) {
+  try {
+    await api.patch(`/admin/listings/${id}/status`, { status });
+    toast(`Listing marked as ${status}`, 'success');
+    fetchListings(listingsState.page);
+  } catch(e) { toast(e.message, 'error'); }
+}
+
+function removeListingConfirm(id, title) {
+  showModal({
+    title: 'Remove listing?',
+    sub: `"${title}" will be removed from the marketplace.`,
+    confirmLabel: 'Remove Listing',
+    confirmClass: 'btn-primary',
+    noReason: true,
+    onConfirm: async () => {
+      try {
+        await api.delete(`/admin/listings/${id}`);
+        toast('Listing removed.', 'success');
+        fetchListings(listingsState.page);
+      } catch(e) { toast(e.message, 'error'); }
+    }
+  });
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
+// USER PROFILE REPORTS
+// ══════════════════════════════════════════════════════════════════════════════
+async function renderUserReports() {
+  const c = document.getElementById('admin-content');
+  c.innerHTML = `<div style="margin-bottom:18px;"><div class="section-kicker">Safety</div><h2 style="font-size:28px;">User profile reports</h2><p style="color:var(--ink-3);font-size:13px;margin-top:6px;">Review reports submitted from buyer and seller profiles. Upholding a seller report lowers their marketplace discoverability; you can also warn or suspend the account.</p></div><div id="user-report-list"></div>`;
+  await fetchUserReports('pending');
+}
+
+async function fetchUserReports(status = 'pending') {
+  const c = document.getElementById('user-report-list');
+  if (!c) return;
+  try {
+    const data = await api.get(`${controlPath('/admin/user-reports')}?status=${status}`);
+    const reports = data.reports || [];
+    c.innerHTML = `<div style="display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap;">
+      ${['pending','resolved','dismissed','all'].map(s => `<button class="btn btn-${s===status?'primary':'surface'} btn-sm" data-ur-status="${s}">${s[0].toUpperCase()+s.slice(1)}</button>`).join('')}
+    </div>` + (reports.length ? reports.map(r => {
+      const u = r.reported_user_id || {};
+      const reporter = r.reporter_id || {};
+      return `<div class="card" style="padding:16px;margin-bottom:10px;">
+        <div style="display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;">
+          <div><strong>${escHtml(u.full_name || 'Unknown user')}</strong> <span class="badge badge-surface">${escHtml(u.role || '')}</span><div style="font-size:12px;color:var(--ink-3);margin-top:3px;">Reported by ${escHtml(reporter.full_name || 'Unknown')} · ${fmtTime(r.created_at)}</div></div>
+          <span class="report-badge ${r.status}">${r.status}</span>
+        </div>
+        <div style="margin-top:12px;padding:11px;background:var(--bg);border-radius:9px;font-size:13px;">${escHtml(r.reason)}</div>
+        <div style="display:flex;gap:14px;flex-wrap:wrap;margin-top:10px;font-size:12px;color:var(--ink-3);">
+          <span>Reports upheld: ${u.report_count || 0}</span><span>Discoverability: ${u.discoverability_score ?? 100}/100</span><span>Rating: ${u.rating ? Number(u.rating).toFixed(1) : '—'}</span>
+        </div>
+        ${r.status === 'pending' && !isControlUser() ? `<div style="display:flex;gap:8px;align-items:center;margin-top:12px;flex-wrap:wrap;">
+          <select class="form-input" data-ur-action="${r.id}" style="max-width:150px;"><option value="none">No account action</option><option value="warn">Warn user</option><option value="suspend">Suspend user</option></select>
+          <input class="form-input" data-ur-note="${r.id}" placeholder="Admin note / reason" style="flex:1;min-width:220px;">
+          <button class="btn btn-primary btn-sm" data-ur-uphold="${r.id}">Uphold report</button>
+          <button class="btn btn-surface btn-sm" data-ur-dismiss="${r.id}">Dismiss</button>
+        </div>` : `<div style="margin-top:10px;font-size:12px;color:var(--ink-3);">${r.fault_confirmed ? 'Report upheld.' : 'Report dismissed.'}${r.admin_note ? ' ' + escHtml(r.admin_note) : ''}</div>`}
+      </div>`;
+    }).join('') : `<div class="admin-empty">No ${status === 'all' ? '' : status + ' '}user reports.</div>`);
+
+    c.querySelectorAll('[data-ur-status]').forEach(b => b.onclick = () => fetchUserReports(b.dataset.urStatus));
+    c.querySelectorAll('[data-ur-uphold]').forEach(b => b.onclick = () => resolveUserReport(b.dataset.urUphold, true));
+    c.querySelectorAll('[data-ur-dismiss]').forEach(b => b.onclick = () => resolveUserReport(b.dataset.urDismiss, false));
+  } catch (e) { c.innerHTML = `<div class="admin-empty">${escHtml(e.message)}</div>`; }
+}
+
+async function resolveUserReport(id, upheld) {
+  if (isControlUser()) return toast('Control accounts can only read user reports.', 'warning');
+  const action = document.querySelector(`[data-ur-action="${id}"]`)?.value || 'none';
+  const note = document.querySelector(`[data-ur-note="${id}"]`)?.value?.trim() || '';
+  if (upheld && !note) { toast('Add an admin note/reason before upholding a report.', 'error'); return; }
+  try {
+    await api.post(`/admin/user-reports/${id}/resolve`, { fault_confirmed: upheld, admin_note: note, action });
+    toast(upheld ? 'Report upheld and user record updated.' : 'Report dismissed.', 'success');
+    await fetchUserReports('pending');
+  } catch (e) { toast(e.message, 'error'); }
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
+// MESSAGES
+// ══════════════════════════════════════════════════════════════════════════════
+let msgsState = { page: 1, selectedConvId: null };
+
+async function renderMessages() {
+  const c = document.getElementById('admin-content');
+  c.innerHTML = `
+    <div class="admin-table-wrap" style="overflow:hidden">
+      <div class="msg-layout">
+        <div class="msg-list" id="msg-conv-list">
+          <div style="padding:12px 16px;border-bottom:1.5px solid var(--border);">
+            <div style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--ink-3);margin-bottom:10px;">Reported Conversations</div>
+            <div class="report-filter-tabs" id="report-filter-tabs">
+              <div class="report-filter-tab active" data-status="pending">Pending</div>
+              <div class="report-filter-tab" data-status="resolved">Resolved</div>
+              <div class="report-filter-tab" data-status="all">All</div>
+            </div>
+          </div>
+          <div id="conv-list-inner"></div>
+          <div id="conv-list-pg"></div>
+        </div>
+        <div class="msg-panel" id="msg-thread-panel">
+          <div class="msg-panel-empty">Select a report to review the conversation</div>
+        </div>
+      </div>
+    </div>`;
+
+  // Filter tab switching
+  document.getElementById('report-filter-tabs').addEventListener('click', e => {
+    const tab = e.target.closest('.report-filter-tab');
+    if (!tab) return;
+    document.querySelectorAll('.report-filter-tab').forEach(t => t.classList.remove('active'));
+    tab.classList.add('active');
+    msgsState.selectedConvId = null;
+    document.getElementById('msg-thread-panel').innerHTML = '<div class="msg-panel-empty">Select a report to review the conversation</div>';
+    fetchConversations(1, tab.dataset.status);
+  });
+
+  fetchConversations(1, 'pending');
+}
+
+async function fetchConversations(page, statusFilter = 'pending') {
+  msgsState.page = page;
+  const inner = document.getElementById('conv-list-inner');
+  const pgDiv = document.getElementById('conv-list-pg');
+  if (!inner) return;
+  try {
+    const data = await api.get(`${controlPath('/admin/conversations')}?page=${page}&limit=30&status=${statusFilter}`);
+    if (!data.conversations.length) {
+      inner.innerHTML = `<div style="padding:24px;text-align:center;color:var(--ink-3);font-size:13px">No ${statusFilter === 'all' ? '' : statusFilter + ' '}reports</div>`;
+      pgDiv.innerHTML = ''; return;
+    }
+
+    inner.innerHTML = data.conversations.map(r => {
+      const cv  = r.conversation || {};
+      const buyer  = cv.buyer_id?.full_name  || '?';
+      const seller = cv.seller_id?.full_name || '?';
+      return `
+        <div class="conv-list-item ${msgsState.selectedConvId === String(r._id) ? 'active' : ''}"
+             data-conv-id="${r._id}">
+          <div style="display:flex;align-items:center;justify-content:space-between;gap:6px;margin-bottom:3px;">
+            <div class="conv-participants">${escHtml(buyer)} ↔ ${escHtml(seller)}</div>
+            <span class="report-badge ${r.status}">${r.status}</span>
+          </div>
+          <div class="conv-snippet" style="color:var(--ink);font-style:italic;">"${escHtml(r.reason)}"</div>
+          <div class="conv-meta">Reported by ${escHtml(r.reporter_id?.full_name || 'Unknown')} · ${fmtTime(r.created_at)}</div>
+        </div>`;
+    }).join('');
+
+    inner.addEventListener('click', e => {
+      const item = e.target.closest('.conv-list-item[data-conv-id]');
+      if (!item) return;
+      openConversation(item.dataset.convId);
+    });
+
+    pgDiv.innerHTML = data.pages > 1
+      ? `<div style="display:flex;gap:6px;padding:10px 12px;border-top:1.5px solid var(--border)">
+          <button class="pg-btn" data-page="${page-1}" ${page===1?'disabled':''}>←</button>
+          <span style="font-size:12px;color:var(--ink-3);margin:auto">${page}/${data.pages}</span>
+          <button class="pg-btn" data-page="${page+1}" ${page===data.pages?'disabled':''}>→</button>
+         </div>`
+      : '';
+    if (data.pages > 1) {
+      pgDiv.addEventListener('click', e => {
+        const btn = e.target.closest('.pg-btn');
+        if (!btn || btn.disabled) return;
+        const p = parseInt(btn.dataset.page, 10);
+        const activeTab = document.querySelector('.report-filter-tab.active')?.dataset.status || 'pending';
+        if (!isNaN(p)) fetchConversations(p, activeTab);
+      });
+    }
+  } catch(e) {
+    if (inner) inner.innerHTML = `<div style="padding:16px;color:var(--red,#e53e3e);font-size:13px">${e.message}</div>`;
+  }
+}
+window.fetchConversations = fetchConversations;
+
+async function openConversation(reportId) {
+  msgsState.selectedConvId = reportId;
+  document.querySelectorAll('.conv-list-item').forEach(el => {
+    el.classList.toggle('active', el.dataset.convId === String(reportId));
+  });
+  const panel = document.getElementById('msg-thread-panel');
+  if (!panel) return;
+  panel.innerHTML = '<div class="msg-panel-empty">Loading…</div>';
+  try {
+    const data = await api.get(`${controlPath('/admin/conversations')}/${reportId}`);
+    const { conversation: cv, report, messages } = data;
+    const buyerName  = cv.buyer_id?.full_name  || 'Buyer';
+    const sellerName = cv.seller_id?.full_name || 'Seller';
+    const buyerId    = String(cv.buyer_id?._id  || cv.buyer_id);
+    const sellerId   = String(cv.seller_id?._id || cv.seller_id);
+    const isResolved = report?.status === 'resolved';
+
+    const buyerStatus  = cv.buyer_id?.account_status  || 'active';
+    const sellerStatus = cv.seller_id?.account_status || 'active';
+
+    // Render admin notification messages differently
+    const threadHTML = messages.length ? messages.map(m => {
+      if (m.is_admin_notification) {
+        return `<div style="display:flex;justify-content:center;padding:6px 0;">
+          <div style="background:linear-gradient(135deg,#667eea18,#764ba218);border:1.5px solid #a78bfa55;border-radius:10px;padding:9px 14px;max-width:82%;text-align:center;">
+            <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:#7c3aed;margin-bottom:4px;">📣 Admin Notice</div>
+            <div style="font-size:13px;color:var(--ink);line-height:1.5">${escHtml(m.content)}</div>
+            <div style="font-size:10px;color:var(--ink-3);margin-top:4px">${fmtTime(m.created_at)}</div>
+          </div></div>`;
+      }
+      const isbuyer = String(m.sender_id?._id || m.sender_id) === buyerId || m.sender_role === 'buyer';
+      return `<div class="msg-bubble-wrap ${isbuyer ? 'left' : 'right'}">
+        <div class="msg-sender-label">${escHtml(m.sender_name || 'Unknown')} <span style="opacity:.7">(${escHtml(m.sender_role || '?')})</span></div>
+        <div class="msg-bubble">${escHtml(m.content)}</div>
+        <div class="msg-time">${fmtTime(m.created_at)}</div>
+      </div>`;
+    }).join('') : '<div style="text-align:center;color:var(--ink-3);font-size:13px;padding:24px">No messages yet</div>';
+
+    panel.innerHTML = `
+      <div class="msg-panel-header">
+        <h4>${escHtml(buyerName)} ↔ ${escHtml(sellerName)}</h4>
+        <p>${cv.listing_id?.title ? `Re: "${escHtml(cv.listing_id.title)}" · ` : ''}${messages.length} messages${isResolved ? ' · <span style="color:#0f5132;font-weight:600">✓ Resolved</span>' : ' · <span style="color:#d69e2e;font-weight:600">Pending</span>'}</p>
+      </div>
+
+      ${report ? `<div class="report-detail-card">
+        <div class="rdc-title">Report</div>
+        <div class="rdc-row"><span class="rdc-label">Reported by </span><strong>${escHtml(report.reporter_id?.full_name || 'Unknown')}</strong> · ${fmtTime(report.created_at)}</div>
+        <div class="rdc-row" style="margin-top:5px;padding:9px 11px;background:var(--bg);border-radius:8px;font-style:italic;color:var(--ink);font-size:13px">"${escHtml(report.reason)}"</div>
+        ${isResolved ? `<div class="rdc-row" style="margin-top:8px;padding-top:8px;border-top:1px solid var(--border)">
+          <span class="rdc-label">Decided fault: </span><strong>${escHtml(report.fault_user_id?.full_name || 'None')}</strong>
+          ${report.admin_note ? ` · <span style="color:var(--ink-3)">${escHtml(report.admin_note)}</span>` : ''}
+        </div>` : ''}
+      </div>` : ''}
+
+      <div class="msg-thread" id="msg-thread">${threadHTML}</div>
+
+      ${report && !isResolved ? `
+      <div class="fault-section" id="fault-section">
+        <div class="fs-title">⚖️ Decide &amp; Resolve</div>
+        <label style="font-size:12px;color:var(--ink-3);display:block;margin-bottom:4px">Who is at fault?</label>
+        <select class="fault-select" id="fault-select">
+          <option value="">No one — dismiss report</option>
+          <option value="${buyerId}">${escHtml(buyerName)} (Buyer)</option>
+          <option value="${sellerId}">${escHtml(sellerName)} (Seller)</option>
+        </select>
+        <label style="font-size:12px;color:var(--ink-3);display:block;margin-bottom:4px">Admin note (optional)</label>
+        <textarea class="fault-note-ta" id="fault-note" placeholder="e.g. Buyer initiated scam attempt…"></textarea>
+        <div style="display:flex;gap:8px;justify-content:flex-end">
+          <button class="btn btn-primary btn-sm" id="resolve-btn" style="background:#059669;border-color:#059669">✓ Resolve Report</button>
+        </div>
+      </div>
+
+      <div style="padding:4px 18px 8px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--ink-3)">Notify Users Separately</div>
+      <div class="notify-grid">
+        <div class="notify-card" id="notify-buyer-card">
+          <div class="nc-title">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+            Buyer
+          </div>
+          <div class="nc-name">${escHtml(buyerName)}</div>
+          <textarea class="notify-ta" id="notify-ta-buyer" placeholder="e.g. Your report has been reviewed. Action will be taken against the seller."></textarea>
+          <div class="notify-actions">
+            <button class="nc-send-btn" id="notify-send-buyer">Send Notice</button>
+            ${buyerStatus !== 'suspended'
+              ? `<button class="nc-warn-btn"  data-uid="${buyerId}" data-uname="${escHtml(buyerName)}" data-action="warn">⚠ Warn</button>
+                 <button class="nc-susp-btn"  data-uid="${buyerId}" data-uname="${escHtml(buyerName)}" data-action="suspend">🔒 Suspend</button>`
+              : `<button class="nc-rest-btn"  data-uid="${buyerId}" data-uname="${escHtml(buyerName)}" data-action="restore">✅ Restore</button>`}
+          </div>
+        </div>
+        <div class="notify-card" id="notify-seller-card">
+          <div class="nc-title">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+            Seller
+          </div>
+          <div class="nc-name">${escHtml(sellerName)}</div>
+          <textarea class="notify-ta" id="notify-ta-seller" placeholder="e.g. You have been reported. Your account is under review."></textarea>
+          <div class="notify-actions">
+            <button class="nc-send-btn" id="notify-send-seller">Send Notice</button>
+            ${sellerStatus !== 'suspended'
+              ? `<button class="nc-warn-btn"  data-uid="${sellerId}" data-uname="${escHtml(sellerName)}" data-action="warn">⚠ Warn</button>
+                 <button class="nc-susp-btn"  data-uid="${sellerId}" data-uname="${escHtml(sellerName)}" data-action="suspend">🔒 Suspend</button>`
+              : `<button class="nc-rest-btn"  data-uid="${sellerId}" data-uname="${escHtml(sellerName)}" data-action="restore">✅ Restore</button>`}
+          </div>
+        </div>
+      </div>` : `
+      <div style="padding:4px 18px 8px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--ink-3)">Notify Users</div>
+      <div class="notify-grid">
+        <div class="notify-card">
+          <div class="nc-title">Buyer</div>
+          <div class="nc-name">${escHtml(buyerName)}</div>
+          <textarea class="notify-ta" id="notify-ta-buyer" placeholder="Send an update to the buyer…"></textarea>
+          <div class="notify-actions">
+            <button class="nc-send-btn" id="notify-send-buyer">Send Notice</button>
+            ${buyerStatus !== 'suspended'
+              ? `<button class="nc-warn-btn"  data-uid="${buyerId}" data-uname="${escHtml(buyerName)}" data-action="warn">⚠ Warn</button>
+                 <button class="nc-susp-btn"  data-uid="${buyerId}" data-uname="${escHtml(buyerName)}" data-action="suspend">🔒 Suspend</button>`
+              : `<button class="nc-rest-btn"  data-uid="${buyerId}" data-uname="${escHtml(buyerName)}" data-action="restore">✅ Restore</button>`}
+          </div>
+        </div>
+        <div class="notify-card">
+          <div class="nc-title">Seller</div>
+          <div class="nc-name">${escHtml(sellerName)}</div>
+          <textarea class="notify-ta" id="notify-ta-seller" placeholder="Send an update to the seller…"></textarea>
+          <div class="notify-actions">
+            <button class="nc-send-btn" id="notify-send-seller">Send Notice</button>
+            ${sellerStatus !== 'suspended'
+              ? `<button class="nc-warn-btn"  data-uid="${sellerId}" data-uname="${escHtml(sellerName)}" data-action="warn">⚠ Warn</button>
+                 <button class="nc-susp-btn"  data-uid="${sellerId}" data-uname="${escHtml(sellerName)}" data-action="suspend">🔒 Suspend</button>`
+              : `<button class="nc-rest-btn"  data-uid="${sellerId}" data-uname="${escHtml(sellerName)}" data-action="restore">✅ Restore</button>`}
+          </div>
+        </div>
+      </div>`}`;
+
+    // Scroll thread to bottom
+    const thread = document.getElementById('msg-thread');
+    if (thread) thread.scrollTop = thread.scrollHeight;
+
+    // ── Resolve button ───────────────────────────────────────────────────────
+    const resolveBtn = document.getElementById('resolve-btn');
+    if (resolveBtn) {
+      resolveBtn.addEventListener('click', async () => {
+        const fault = document.getElementById('fault-select')?.value || null;
+        const note  = document.getElementById('fault-note')?.value?.trim() || '';
+        resolveBtn.disabled = true; resolveBtn.textContent = 'Resolving…';
+        try {
+          await api.post(`/admin/conversations/${reportId}/resolve`, { fault_user_id: fault || null, admin_note: note });
+          toast('Report resolved.', 'success');
+          const activeStatus = document.querySelector('.report-filter-tab.active')?.dataset.status || 'pending';
+          fetchConversations(msgsState.page || 1, activeStatus);
+          openConversation(reportId);
+        } catch(e) {
+          toast(e.message, 'error');
+          resolveBtn.disabled = false; resolveBtn.textContent = '✓ Resolve Report';
+        }
+      });
+    }
+
+    // ── Notify send buttons ──────────────────────────────────────────────────
+    async function handleNotify(userId, taId, btnId) {
+      const ta  = document.getElementById(taId);
+      const btn = document.getElementById(btnId);
+      if (!ta || !btn) return;
+      const msg = ta.value.trim();
+      if (!msg) { ta.focus(); ta.style.borderColor = 'var(--red,#e53e3e)'; return; }
+      ta.style.borderColor = '';
+      btn.disabled = true; btn.textContent = 'Sending…';
+      try {
+        await api.post(`/admin/conversations/${reportId}/notify`, { user_id: userId, message: msg });
+        ta.value = '';
+        toast('Notice sent — it will appear in their conversation.', 'success');
+        openConversation(reportId); // refresh to show the new message
+      } catch(e) {
+        toast(e.message, 'error');
+        btn.disabled = false; btn.textContent = 'Send Notice';
+      }
+    }
+
+    document.getElementById('notify-send-buyer')?.addEventListener('click',  () => handleNotify(buyerId,  'notify-ta-buyer',  'notify-send-buyer'));
+    document.getElementById('notify-send-seller')?.addEventListener('click', () => handleNotify(sellerId, 'notify-ta-seller', 'notify-send-seller'));
+
+    // ── Inline user action buttons (warn/suspend/restore) ───────────────────
+    panel.addEventListener('click', e => {
+      const btn = e.target.closest('[data-action][data-uid]');
+      if (!btn) return;
+      const { uid, uname, action } = btn.dataset;
+      if (action === 'warn')    warnUser(uid, uname);
+      if (action === 'suspend') suspendUser(uid, uname);
+      if (action === 'restore') unsuspendUser(uid, uname);
+    });
+
+  } catch(e) {
+    if (panel) panel.innerHTML = `<div class="msg-panel-empty" style="color:var(--red,#e53e3e)">${e.message}</div>`;
+  }
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
+// AI FLAGGED CONTENT
+// ══════════════════════════════════════════════════════════════════════════════
+async function renderFlagged() {
+  const c = document.getElementById('admin-content');
+  c.innerHTML = `
+    <div style="margin-bottom:16px;">
+      <div class="report-filter-tabs" id="flag-filter-tabs">
+        <div class="report-filter-tab active" data-type="all">All</div>
+        <div class="report-filter-tab" data-type="conversations">Conversations</div>
+        <div class="report-filter-tab" data-type="listings">Listings</div>
+      </div>
+    </div>
+    <div id="flagged-content"><div style="padding:24px;color:var(--ink-3)">Loading…</div></div>`;
+
+  document.getElementById('flag-filter-tabs').addEventListener('click', e => {
+    const tab = e.target.closest('.report-filter-tab');
+    if (!tab) return;
+    document.querySelectorAll('#flag-filter-tabs .report-filter-tab').forEach(t => t.classList.remove('active'));
+    tab.classList.add('active');
+    loadFlagged(tab.dataset.type);
+  });
+  loadFlagged('all');
+}
+
+async function loadFlagged(type = 'all') {
+  const el = document.getElementById('flagged-content');
+  if (!el) return;
+  el.innerHTML = '<div style="padding:24px;color:var(--ink-3)">Loading…</div>';
+  try {
+    const data = await api.get(`${controlPath('/admin/flagged')}?type=${type}`);
+    let html = '';
+
+    // ── Flagged Conversations ──────────────────────────────────────────────
+    if (data.conversations?.length) {
+      html += `<div style="margin-bottom:28px;">
+        <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--ink-3);margin-bottom:12px;">
+          Flagged Conversations (${data.conversations.length})
+        </div>`;
+      data.conversations.forEach(conv => {
+        const buyer  = escHtml(conv.buyer_id?.full_name  || '?');
+        const seller = escHtml(conv.seller_id?.full_name || '?');
+        const bId    = conv.buyer_id?._id  || conv.buyer_id;
+        const sId    = conv.seller_id?._id || conv.seller_id;
+        const bName  = escHtml(conv.buyer_id?.full_name  || 'Buyer');
+        const sName  = escHtml(conv.seller_id?.full_name || 'Seller');
+        html += `
+          <div style="background:var(--surface);border:1.5px solid #fc8181;border-radius:var(--radius-lg);padding:16px;margin-bottom:12px;">
+            <div class="flagged-card-inner" style="display:flex;align-items:flex-start;gap:12px;flex-wrap:wrap;">
+              <div style="flex:1;min-width:160px;">
+                <div style="font-size:13px;font-weight:700;margin-bottom:4px;">${buyer} ↔ ${seller}</div>
+                ${conv.listing_id?.title ? `<div style="font-size:12px;color:var(--ink-3);margin-bottom:6px;">Re: ${escHtml(conv.listing_id.title)}</div>` : ''}
+                <div style="background:#fff5f5;border:1px solid #fc8181;border-radius:8px;padding:8px 10px;margin-bottom:8px;">
+                  <div style="font-size:10px;font-weight:700;color:#c53030;text-transform:uppercase;letter-spacing:.06em;margin-bottom:3px;">⚠ AI Flag Reason</div>
+                  <div style="font-size:12px;color:#9b2c2c;">${escHtml(conv.ai_flag_reason || 'No reason recorded')}</div>
+                  ${conv.ai_flag_category ? `<div style="font-size:10px;color:#c53030;margin-top:3px;font-weight:600;text-transform:uppercase">${escHtml(conv.ai_flag_category)}</div>` : ''}
+                </div>
+                <div style="font-size:11px;color:var(--ink-3);">Flagged ${fmtTime(conv.ai_flagged_at)}</div>
+              </div>
+              <div class="flagged-card-actions" style="display:flex;flex-direction:column;gap:6px;flex-shrink:0;min-width:130px;">
+                <button class="action-btn view"    onclick="viewFlaggedConv('${conv._id}')">👁 View thread</button>
+                <button class="action-btn warn"    onclick="warnUser('${bId}','${bName}')">⚠ Warn buyer</button>
+                <button class="action-btn warn"    onclick="warnUser('${sId}','${sName}')">⚠ Warn seller</button>
+                <button class="action-btn"         onclick="sendAdminMessage('${bId}','${bName}')" style="background:#ebf8ff;border-color:#63b3ed;color:#2b6cb0">💬 Msg buyer</button>
+                <button class="action-btn"         onclick="sendAdminMessage('${sId}','${sName}')" style="background:#ebf8ff;border-color:#63b3ed;color:#2b6cb0">💬 Msg seller</button>
+                <button class="action-btn kick"    onclick="kickUser('${bId}','${bName}')">🗑 Del buyer</button>
+                <button class="action-btn kick"    onclick="kickUser('${sId}','${sName}')">🗑 Del seller</button>
+              </div>
+            </div>
+          </div>`;
+      });
+      html += '</div>';
+    }
+
+    // ── Flagged Listings ───────────────────────────────────────────────────
+    if (data.listings?.length) {
+      html += `<div>
+        <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--ink-3);margin-bottom:12px;">
+          Flagged Listings (${data.listings.length})
+        </div>`;
+      data.listings.forEach(l => {
+        const sId   = l.seller_id?._id  || l.seller_id;
+        const sName = escHtml(l.seller_id?.full_name || 'Seller');
+        html += `
+          <div style="background:var(--surface);border:1.5px solid #fbbf24;border-radius:var(--radius-lg);padding:16px;margin-bottom:12px;">
+            <div class="flagged-card-inner" style="display:flex;align-items:flex-start;gap:12px;flex-wrap:wrap;">
+              <div style="width:56px;height:56px;border-radius:8px;overflow:hidden;background:var(--surface-2);flex-shrink:0;display:flex;align-items:center;justify-content:center;">
+                ${l.images?.[0] ? `<img src="${l.images[0]}" style="width:100%;height:100%;object-fit:cover;">` : icons.package}
+              </div>
+              <div style="flex:1;min-width:160px;">
+                <div style="font-size:13px;font-weight:700;margin-bottom:2px;">${escHtml(l.title)}</div>
+                <div style="font-size:12px;color:var(--ink-3);margin-bottom:6px;">by ${sName} · ${formatPrice(l.price)}</div>
+                <div style="background:#fffbeb;border:1px solid #fbbf24;border-radius:8px;padding:8px 10px;margin-bottom:6px;">
+                  <div style="font-size:10px;font-weight:700;color:#92400e;text-transform:uppercase;letter-spacing:.06em;margin-bottom:3px;">⚠ AI Flag Reason</div>
+                  <div style="font-size:12px;color:#78350f;">${escHtml(l.ai_flag_reason || 'No reason recorded')}</div>
+                </div>
+                <div style="font-size:11px;color:var(--ink-3);">Flagged ${fmtTime(l.ai_flagged_at)}</div>
+              </div>
+              <div class="flagged-card-actions" style="display:flex;flex-direction:column;gap:6px;flex-shrink:0;min-width:130px;">
+                <button class="action-btn kick"    onclick="unflagListing('${l._id}','remove')">✕ Remove</button>
+                <a href="/pages/listing.html?id=${l._id}" target="_blank" class="action-btn view" style="text-decoration:none;text-align:center;">👁 View</a>
+                <button class="action-btn warn"    onclick="warnUser('${sId}','${sName}')">⚠ Warn seller</button>
+                <button class="action-btn"         onclick="sendAdminMessage('${sId}','${sName}')" style="background:#ebf8ff;border-color:#63b3ed;color:#2b6cb0">💬 Msg seller</button>
+                <button class="action-btn kick"    onclick="suspendUser('${sId}','${sName}')">🔒 Suspend</button>
+                <button class="action-btn kick"    onclick="kickUser('${sId}','${sName}')">🗑 Del account</button>
+              </div>
+            </div>
+          </div>`;
+      });
+      html += '</div>';
+    }
+
+    if (!html) {
+      html = `<div style="padding:56px;text-align:center;color:var(--ink-3);">
+        <div style="font-size:40px;margin-bottom:12px;">✅</div>
+        <div style="font-size:15px;font-weight:700;margin-bottom:6px;">All clear</div>
+        <div style="font-size:13px;">No AI-flagged ${type === 'all' ? 'content' : type} right now.</div>
+      </div>`;
+    }
+    el.innerHTML = html;
+  } catch(e) {
+    el.innerHTML = `<div style="padding:16px;color:var(--red,#e53e3e)">${e.message}</div>`;
+  }
+}
+
+window.viewFlaggedConv = (id) => { switchTab('messages'); setTimeout(() => openConversation(id), 100); };
+
+window.unflagConv = (id) => {
+  showModal({
+    title: 'Clear AI Flag',
+    sub: 'Removes the flag and allows both users to continue messaging.',
+    placeholder: 'Optional note (e.g. false positive)',
+    confirmLabel: 'Clear Flag',
+    confirmClass: 'btn-primary',
+    onConfirm: async (note) => {
+      try {
+        await api.post(`/admin/flagged/conversations/${id}/unflag`, { note: note || '' });
+        toast('Conversation cleared.', 'success');
+        loadFlagged(document.querySelector('#flag-filter-tabs .report-filter-tab.active')?.dataset.type || 'all');
+      } catch(e) { toast(e.message, 'error'); }
+    },
+  });
+};
+
+window.unflagListing = (id, action) => {
+  showModal({
+    title: action === 'remove' ? 'Remove Listing' : 'Restore Listing',
+    sub: action === 'remove'
+      ? 'Permanently removes this listing and notifies the seller.'
+      : 'Restores this listing to public view and notifies the seller.',
+    confirmLabel: action === 'remove' ? 'Remove' : 'Restore',
+    confirmClass: action === 'remove' ? 'btn-primary' : 'btn-primary',
+    noReason: true,
+    onConfirm: async () => {
+      try {
+        await api.post(`/admin/flagged/listings/${id}/unflag`, { action });
+        toast(action === 'remove' ? 'Listing removed.' : 'Listing restored.', 'success');
+        loadFlagged(document.querySelector('#flag-filter-tabs .report-filter-tab.active')?.dataset.type || 'all');
+      } catch(e) { toast(e.message, 'error'); }
+    },
+  });
+};
+
+// ── Boot ─────────────────────────────────────────────────────────────────────
+renderOverview();
+</script>
+</body>
+</html>

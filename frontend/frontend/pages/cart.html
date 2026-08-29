@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="Your cart on Bixcart.">
+<meta name="robots" content="noindex, nofollow">
+<link rel="canonical" href="https://bixcart.onrender.com/pages/cart.html">
+<title>Your Cart — Bixcart</title>
+<link rel="stylesheet" href="../css/main.css">
+<style>
+  .cart-layout {
+    display: grid; grid-template-columns: 1fr 340px; gap: 28px; align-items: start;
+  }
+  .cart-line {
+    display: flex; gap: 14px; align-items: center;
+    padding: 16px 0; border-bottom: 1px solid var(--border);
+  }
+  .cart-line:last-child { border-bottom: none; }
+  .cart-line-img {
+    width: 72px; height: 72px; border-radius: var(--radius-md); overflow: hidden;
+    background: var(--surface-2); display: flex; align-items: center; justify-content: center;
+    color: var(--ink-3); flex-shrink: 0;
+  }
+  .cart-line-img img { width: 100%; height: 100%; object-fit: cover; }
+  .cart-line-info { flex: 1; min-width: 0; }
+  .cart-line-title {
+    font-size: 15px; font-weight: 700; margin-bottom: 4px;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .cart-line-meta { font-size: 12px; color: var(--ink-3); display: flex; align-items: center; gap: 6px; margin-bottom: 3px; }
+  .cart-line-seller { font-size: 12px; color: var(--ink-3); }
+  .cart-line-unavailable { font-size: 12px; color: var(--red); font-weight: 600; margin-top: 4px; }
+  .cart-line-price { font-size: 16px; font-weight: 700; white-space: nowrap; }
+  .cart-qty { display:flex; align-items:center; border:1.5px solid var(--border); border-radius:var(--radius-md); overflow:hidden; margin-top:8px; width:max-content; }
+  .cart-qty button { width:30px; height:30px; border:0; background:var(--surface-2); cursor:pointer; }
+  .cart-qty input { width:42px; height:30px; border:0; border-left:1px solid var(--border); border-right:1px solid var(--border); text-align:center; background:var(--surface); color:var(--ink); font-weight:700; }
+  .cart-line-remove {
+    width: 32px; height: 32px; border-radius: 50%; border: none; background: none;
+    color: var(--ink-3); display: flex; align-items: center; justify-content: center;
+    cursor: pointer; transition: all .15s; flex-shrink: 0;
+  }
+  .cart-line-remove:hover { background: var(--red-bg); color: var(--red); }
+
+  .cart-summary { position: sticky; top: 84px; }
+  .cart-summary-row { display: flex; justify-content: space-between; font-size: 14px; color: var(--ink-2); padding: 8px 0; }
+  .cart-summary-row.total { font-size: 17px; font-weight: 700; color: var(--ink); border-top: 1.5px solid var(--border); margin-top: 8px; padding-top: 14px; }
+
+  @media (max-width: 860px) {
+    .cart-layout { grid-template-columns: 1fr; }
+    .cart-summary { position: static; }
+  }
+</style>
+</head>
+<body>
+
+<nav class="nav"></nav>
+
+<div class="page">
+  <div class="container">
+    <div class="page-header">
+      <h1 class="display" style="font-size:28px;">Your Cart</h1>
+      <p style="color:var(--ink-3);font-size:14px;margin-top:4px;" id="cart-subtitle">Loading…</p>
+    </div>
+
+    <div id="cart-content">
+      <div style="padding:60px 0;text-align:center;color:var(--ink-3);">Loading your cart…</div>
+    </div>
+  </div>
+</div>
+
+<footer class="footer"></footer>
+<script src="../js/app.js"></script>
+<script>
+  renderNav();
+  renderFooter();
+  if (!auth.requireAuth()) throw new Error('redirect');
+
+  let items = [];
+
+  async function loadCart() {
+    try {
+      items = await cart.list();
+      render();
+    } catch (e) {
+      document.getElementById('cart-content').innerHTML = `
+        <div class="empty-state">
+          <div class="empty-state-icon">${icons.alertCircle}</div>
+          <h3>Couldn't load your cart</h3>
+          <p>${e.message}</p>
+        </div>`;
+    }
+  }
+
+  function render() {
+    const sub = document.getElementById('cart-subtitle');
+    const el  = document.getElementById('cart-content');
+
+    if (!items.length) {
+      sub.textContent = 'Your cart is empty';
+      el.innerHTML = `
+        <div class="empty-state">
+          <div class="empty-state-icon">${icons.shoppingBag}</div>
+          <h3>Your cart is empty</h3>
+          <p>Browse the marketplace and add items you want to buy.</p>
+          <a href="marketplace.html" class="btn btn-accent">Browse marketplace</a>
+        </div>`;
+      return;
+    }
+
+    sub.textContent = `${items.length} ${items.length === 1 ? 'item' : 'items'} in your cart`;
+    const available = items.filter(i => i.status === 'active' && Number(i.stock_quantity || 0) >= Number(i.quantity || 1));
+    const subtotal  = available.reduce((s, i) => s + (Number(i.price || 0) * Number(i.quantity || 1)), 0);
+    const hasBlocked = available.length !== items.length;
+
+    el.innerHTML = `
+      <div class="cart-layout">
+        <div class="card" style="padding:4px 20px;">
+          ${items.map(lineHTML).join('')}
+        </div>
+        <div class="card cart-summary" style="padding:20px;">
+          <div style="font-weight:700;font-size:15px;margin-bottom:4px;">Order summary</div>
+          <div class="cart-summary-row"><span>Subtotal (${available.length})</span><span>${formatPrice(subtotal)}</span></div>
+          <div class="cart-summary-row"><span>Delivery</span><span>Free</span></div>
+          <div class="cart-summary-row total"><span>Total</span><span>${formatPrice(subtotal)}</span></div>
+          ${hasBlocked ? `<p style="font-size:12px;color:var(--red);margin:10px 0 0;">Fix unavailable items or quantities before requesting to buy.</p>` : ''}
+          <button class="btn btn-accent w-full" style="margin-top:16px;" id="checkout-btn" ${hasBlocked || !available.length ? 'disabled' : ''} onclick="requestToBuy()">
+            Request to buy ${icons.chevronRight}
+          </button>
+          <p style="font-size:12px;color:var(--ink-3);margin-top:10px;text-align:center;">You won't be charged yet — each seller has 2 hours to accept before you pay.</p>
+          <a href="marketplace.html" style="display:block;text-align:center;font-size:13px;color:var(--ink-3);margin-top:12px;">Continue shopping</a>
+        </div>
+      </div>`;
+  }
+
+  function lineHTML(i) {
+    const img = i.images?.length
+      ? `<img src="${i.images[0]}" alt="${i.title}">`
+      : icons.package;
+    return `
+      <div class="cart-line" data-id="${i.id}">
+        <a href="listing.html?id=${i.id}" class="cart-line-img">${img}</a>
+        <div class="cart-line-info">
+          <a href="listing.html?id=${i.id}" style="color:inherit;"><div class="cart-line-title">${i.title}</div></a>
+          <div class="cart-line-meta">${conditionDot(i.condition)} ${i.condition} · ${i.category}</div>
+          <div class="cart-line-seller">by ${i.seller_name || 'ACU Student'}</div>
+          ${i.status === 'active' ? `<div class="cart-qty"><button type="button" onclick="changeCartQty('${i.id}', -1)">−</button><input type="number" min="1" max="${Math.max(1, Number(i.stock_quantity || 1))}" value="${Number(i.quantity || 1)}" onchange="setCartQty('${i.id}', this.value)"></div>` : ''}
+          ${i.status !== 'active' ? `<div class="cart-line-unavailable">${icons.alertCircle} No longer available</div>` : Number(i.quantity || 1) > Number(i.stock_quantity || 0) ? `<div class="cart-line-unavailable">${icons.alertCircle} Only ${Number(i.stock_quantity || 0)} available — reduce quantity</div>` : ''}
+        </div>
+        <div class="cart-line-price">${formatPrice(Number(i.price || 0) * Number(i.quantity || 1))}<div style="font-size:11px;color:var(--ink-3);font-weight:500;">${formatPrice(i.price)} each</div></div>
+        <button class="cart-line-remove" title="Remove" onclick="removeLine('${i.id}')">${icons.x}</button>
+      </div>`;
+  }
+
+  async function setCartQty(id, raw) {
+    const item = items.find(i => String(i.id) === String(id));
+    if (!item) return;
+    const qty = Math.max(1, Math.min(Number(item.stock_quantity || 1), parseInt(raw, 10) || 1));
+    try {
+      await cart.updateQuantity(id, qty);
+      item.quantity = qty;
+      render();
+    } catch (e) { toast(e.message, 'error'); render(); }
+  }
+
+  function changeCartQty(id, delta) {
+    const item = items.find(i => String(i.id) === String(id));
+    if (!item) return;
+    setCartQty(id, Number(item.quantity || 1) + delta);
+  }
+
+  window.setCartQty = setCartQty;
+  window.changeCartQty = changeCartQty;
+
+  async function removeLine(id) {
+    try {
+      await cart.remove(id);
+      items = items.filter(i => i.id !== id);
+      render();
+    } catch (e) { toast(e.message, 'error'); }
+  }
+
+  let requesting = false;
+  async function requestToBuy() {
+    if (requesting) return;
+    const btn = document.getElementById('checkout-btn');
+    requesting = true;
+    if (btn) { btn.disabled = true; btn.innerHTML = icons.loader + ' Sending request…'; }
+    try {
+      const result = await buyRequests.createFromCart();
+      showRequestConfirmation(result);
+    } catch (e) {
+      toast(e.message || 'Could not send buy request', 'error');
+      requesting = false;
+      if (btn) { btn.disabled = false; btn.innerHTML = 'Request to buy ' + icons.chevronRight; }
+    }
+  }
+
+  function showRequestConfirmation(result) {
+    document.getElementById('cart-content').innerHTML = `
+      <div class="empty-state">
+        <div class="empty-state-icon" style="background:var(--green-bg);color:var(--green);">${icons.check}</div>
+        <h3>Request${result.count === 1 ? '' : 's'} sent!</h3>
+        <p>${result.count} ${result.count === 1 ? 'seller has' : 'sellers have'} 2 hours to accept. You'll be notified the moment they respond, and you can pay right after.</p>
+        <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap;">
+          <a href="buyer-dashboard.html?tab=orders" class="btn btn-accent">Track my requests</a>
+          <a href="marketplace.html" class="btn btn-surface">Continue shopping</a>
+        </div>
+      </div>`;
+    document.getElementById('cart-subtitle').textContent = 'Your cart is empty';
+  }
+
+  loadCart();
+</script>
+</body>
+</html>

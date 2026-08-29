@@ -1,0 +1,664 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<!-- ── SEO ── -->
+<meta name="description" content="Sign up with your ACU student email to start buying and selling on Bixcart.">
+<meta name="robots" content="noindex, nofollow">
+<link rel="canonical" href="https://bixcart.onrender.com/pages/register.html">
+
+<!-- Open Graph -->
+<meta property="og:type" content="website">
+<meta property="og:title" content="Create Account — Join Bixcart">
+<meta property="og:description" content="Sign up with your ACU student email to start buying and selling on Bixcart.">
+<meta property="og:url" content="https://bixcart.onrender.com/pages/register.html">
+<meta property="og:site_name" content="Bixcart">
+<meta property="og:image" content="https://bixcart.onrender.com/og-image.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="Bixcart — ACU Student Marketplace">
+
+<!-- Twitter / X -->
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:site" content="@bixcart">
+<meta name="twitter:title" content="Create Account — Join Bixcart">
+<meta name="twitter:description" content="Sign up with your ACU student email to start buying and selling on Bixcart.">
+<meta name="twitter:image" content="https://bixcart.onrender.com/og-image.png">
+<title>Create Account — Join Bixcart</title>
+<link rel="stylesheet" href="../css/main.css">
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@700&display=swap" rel="stylesheet">
+<style>
+  body { background: var(--bg); }
+  .reg-page {
+    min-height: 100vh; display: flex; flex-direction: column;
+    align-items: center; justify-content: flex-start;
+    padding: 48px 20px 80px;
+  }
+  .reg-header { text-align: center; margin-bottom: 40px; }
+  .reg-logo { font-family: 'Fredoka', var(--font-logo); font-size: 32px; font-weight: 700; margin-bottom: 24px; letter-spacing: .5px; }
+  .reg-logo span { color: var(--accent); }
+  .reg-steps {
+    display: flex; align-items: center; gap: 0; margin-bottom: 8px; justify-content: center;
+  }
+  .reg-step {
+    display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 600;
+    color: var(--ink-3);
+  }
+  .reg-step.active { color: var(--ink); }
+  .reg-step.done { color: var(--accent); }
+  .reg-step-num {
+    width: 28px; height: 28px; border-radius: 50%;
+    border: 2px solid currentColor; display: flex; align-items: center; justify-content: center;
+    font-size: 12px; flex-shrink: 0;
+  }
+  .reg-step-done-icon { display: none; }
+  .reg-step.done .reg-step-num { background: var(--accent); border-color: var(--accent); color: white; }
+  .reg-step-line { width: 40px; height: 2px; background: var(--border); margin: 0 8px; }
+  .reg-step-line.done { background: var(--accent); }
+
+  .reg-card {
+    width: 100%; max-width: 560px;
+    background: var(--surface); border: 1.5px solid var(--border);
+    border-radius: var(--radius-xl); padding: 36px;
+  }
+  .reg-card-title {
+    font-family: var(--font-display); font-size: 26px; letter-spacing: -0.5px;
+    margin-bottom: 6px;
+  }
+  .reg-card-sub { font-size: 14px; color: var(--ink-3); margin-bottom: 28px; line-height: 1.5; }
+
+  .id-type-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 4px; }
+  .id-type-card {
+    border: 2px solid var(--border); border-radius: var(--radius-lg);
+    padding: 14px 12px; cursor: pointer; transition: all .15s;
+    background: var(--bg); display: flex; align-items: center; gap: 10px;
+  }
+  .id-type-card:hover { border-color: var(--ink-3); }
+  .id-type-card.selected { border-color: var(--accent); background: rgba(200,82,42,.05); }
+  .id-type-card svg { flex-shrink: 0; color: var(--ink-3); }
+  .id-type-card.selected svg { color: var(--accent); }
+  .id-type-label { font-size: 13px; font-weight: 600; line-height: 1.3; }
+  .id-type-sub { font-size: 11px; color: var(--ink-3); margin-top: 2px; }
+
+  .upload-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 16px; }
+  .upload-box {
+    border: 2px dashed var(--border); border-radius: var(--radius-lg);
+    padding: 20px 12px; text-align: center; cursor: pointer; transition: all .15s;
+    position: relative; overflow: hidden; background: var(--bg);
+    min-height: 140px; display: flex; flex-direction: column; align-items: center; justify-content: center;
+  }
+  .upload-box:hover { border-color: var(--ink-3); background: var(--surface); }
+  .upload-box:hover .upload-change { opacity: 1; }
+  .upload-box.has-img { border-style: solid; border-color: var(--accent); }
+  .upload-box.has-img .upload-preview { display: block !important; }
+  .upload-box.has-img .upload-content { display: none !important; }
+  .upload-box input[type=file] { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
+  .upload-preview { position: relative; }
+  .upload-content { display: flex; flex-direction: column; align-items: center; justify-content: center; }
+  .upload-icon { color: var(--ink-3); margin-bottom: 8px; display: flex; justify-content: center; }
+  .upload-label { font-size: 13px; font-weight: 600; color: var(--ink-2); margin-bottom: 3px; }
+  .upload-sub { font-size: 11px; color: var(--ink-3); }
+  .upload-change {
+    position: absolute; bottom: 0; left: 0; right: 0;
+    background: rgba(24,21,15,.7); color: white; font-size: 12px; padding: 6px;
+    opacity: 0; transition: opacity .2s;
+  }
+
+  .info-box {
+    background: var(--bg); border: 1.5px solid var(--border);
+    border-radius: var(--radius-md); padding: 12px 14px;
+    font-size: 13px; color: var(--ink-2); line-height: 1.6;
+    display: flex; gap: 10px; margin-top: 16px;
+  }
+  .info-box svg { flex-shrink: 0; color: var(--ink-3); margin-top: 1px; }
+
+  .reg-actions { display: flex; gap: 12px; margin-top: 28px; }
+
+  @media (max-width: 600px) {
+    .reg-card { padding: 24px 18px; }
+    .upload-row { grid-template-columns: 1fr; }
+    .id-type-grid { grid-template-columns: 1fr 1fr; }
+    .reg-page { padding: 24px 16px 60px; }
+  }
+
+  /* ── Email verification wall ── */
+  .email-wall {
+    min-height: 100vh; display: flex; align-items: center; justify-content: center;
+    padding: 32px 20px; background: var(--bg);
+  }
+  .email-wall-card {
+    max-width: 440px; width: 100%; text-align: center;
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: var(--radius-xl); padding: 48px 40px;
+  }
+  .email-wall-icon {
+    width: 72px; height: 72px; border-radius: 50%;
+    background: rgba(200,82,42,.1); display: flex; align-items: center;
+    justify-content: center; margin: 0 auto 24px; color: var(--accent);
+  }
+  .email-wall-title { font-family: var(--font-display); font-size: 28px; margin-bottom: 10px; letter-spacing: -0.5px; }
+  .email-wall-sub { font-size: 15px; color: var(--ink-3); line-height: 1.65; margin-bottom: 28px; }
+  .email-wall-sub strong { color: var(--ink); }
+  .email-wall-actions { display: flex; flex-direction: column; gap: 10px; }
+  .email-wall-note { font-size: 13px; color: var(--ink-3); margin-top: 20px; line-height: 1.5; }
+</style>
+</head>
+<body>
+
+<!-- ── EMAIL VERIFICATION WALL (shown when email_verified is false) ── -->
+<div id="email-wall" style="display:none;">
+  <div class="email-wall">
+    <div class="email-wall-card">
+      <div class="email-wall-icon">
+        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
+          <polyline points="22,6 12,13 2,6"/>
+        </svg>
+      </div>
+      <div class="email-wall-title">Check your inbox</div>
+      <div class="email-wall-sub" id="wall-sub-text">
+        We sent a verification link to <strong id="wall-email"></strong>.<br>
+        Click it to continue setting up your account.
+      </div>
+      <div class="email-wall-actions">
+        <button class="btn btn-primary btn-lg" id="wall-resend-btn" onclick="resendVerification()">
+          Resend verification email
+        </button>
+        <button class="btn btn-ghost btn-lg" onclick="wallCheckStatus()">
+          I've verified — continue
+        </button>
+      </div>
+      <div class="email-wall-note">
+        Check your spam folder if you don't see it within a minute.<br>
+        Wrong email? <a href="auth.html" style="color:var(--accent);">Sign up again</a>.
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="reg-page" id="reg-page">
+  <div class="reg-header">
+    <div class="reg-logo">Bix<span>cart</span></div>
+    <div class="reg-steps" id="steps-display">
+      <div class="reg-step done" id="step1-el">
+        <div class="reg-step-num">
+          <span id="step1-icon"></span>
+        </div>
+        <span>Account</span>
+      </div>
+      <div class="reg-step-line done" id="line1"></div>
+      <div class="reg-step active" id="step2-el">
+        <div class="reg-step-num">2</div>
+        <span>Profile</span>
+      </div>
+      <div class="reg-step-line" id="line2"></div>
+      <div class="reg-step" id="step3-el">
+        <div class="reg-step-num">3</div>
+        <span>ID</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- STEP 2: Profile info -->
+  <div class="reg-card" id="step-profile">
+    <div class="reg-card-title" id="profile-title">Tell us about yourself</div>
+    <div class="reg-card-sub" id="profile-sub">This is how other students will know you on Bixcart.</div>
+
+    <div style="display:flex;flex-direction:column;gap:16px;">
+      <div class="form-group">
+        <label class="form-label">Full name <span style="color:var(--red);">*</span></label>
+        <input class="form-input" type="text" id="reg-fullname" placeholder="e.g. Chidi Okafor">
+      </div>
+      <div class="form-group" id="business-name-group" style="display:none;">
+        <label class="form-label">Business / store name <span style="color:var(--ink-3);font-weight:400;">(optional)</span></label>
+        <input class="form-input" type="text" id="reg-business" placeholder="e.g. Chidi's Tech Corner">
+        <div style="font-size:12px;color:var(--ink-3);margin-top:5px;">Displayed on your listings instead of your full name, if set.</div>
+      </div>
+      <div class="settings-grid-2" style="grid-template-columns:1fr 1fr; gap:16px;">
+        <div class="form-group">
+          <label class="form-label">Level <span style="color:var(--red);">*</span></label>
+          <select class="form-select" id="reg-level" required><option value="">Select level</option><option value="100 Level">100 Level</option><option value="200 Level">200 Level</option><option value="300 Level">300 Level</option><option value="400 Level">400 Level</option><option value="500 Level">500 Level</option></select>
+        </div>
+      </div>
+
+      <div id="seller-location-choice" class="form-group" style="display:none;margin-top:16px;">
+        <label class="form-label">Seller location <span style="color:var(--red);">*</span></label>
+        <select class="form-select" id="reg-location-type">
+          <option value="">Choose where customers can find you</option>
+          <option value="hostel">Hostel</option>
+          <option value="shop">Shop</option>
+        </select>
+        <div style="font-size:12px;color:var(--ink-3);margin-top:5px;">Choose one. Sellers cannot use both a hostel and a shop location.</div>
+      </div>
+
+      <div id="seller-hostel-fields" class="settings-grid-2" style="grid-template-columns:1fr 1fr; gap:16px; margin-top:16px;">
+        <div class="form-group">
+          <label class="form-label">Hostel <span style="color:var(--red);">*</span></label>
+          <select class="form-select" id="reg-hostel">
+            <option value="">Select hostel</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Room number <span style="color:var(--red);">*</span></label>
+          <input class="form-input" type="text" id="reg-room" placeholder="e.g. B204">
+        </div>
+      </div>
+      <div id="seller-shop-fields" class="settings-grid-2" style="grid-template-columns:1fr 1fr; gap:16px; margin-top:16px; display:none;">
+        <div class="form-group">
+          <label class="form-label">Shop name <span style="color:var(--ink-3);font-weight:400;">(optional)</span></label>
+          <input class="form-input" type="text" id="reg-shop" placeholder="e.g. Chidi's Tech Corner">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Shop number <span style="color:var(--ink-3);font-weight:400;">(optional)</span></label>
+          <input class="form-input" type="text" id="reg-shop-number" placeholder="e.g. Shop 12">
+        </div>
+        <div class="form-group" style="grid-column:1/-1;">
+          <label class="form-label">Shop address <span style="color:var(--ink-3);font-weight:400;">(optional)</span></label>
+          <input class="form-input" type="text" id="reg-shop-address" placeholder="e.g. Block B, ACU Mall">
+        </div>
+      </div>
+      <div class="form-group" style="margin-top:16px;">
+        <label class="form-label">Delivery info</label>
+        <textarea class="form-textarea" id="reg-delivery-info" placeholder="e.g. I can hand off in Hall 1, or meet at the school gate after 5pm." style="min-height:90px;"></textarea>
+      </div>
+    </div>
+
+    <div class="reg-actions">
+      <button class="btn btn-primary btn-lg w-full" onclick="goToStep3()">Continue</button>
+    </div>
+  </div>
+
+  <!-- STEP 3: ID upload -->
+  <div class="reg-card" id="step-id" style="display:none;">
+    <div class="reg-card-title">Verify your identity</div>
+    <div class="reg-card-sub">Upload a photo of your ID. This helps keep Bixcart safe for everyone at ACU. Your ID is only seen by Bixcart admins.</div>
+
+    <div class="form-group">
+      <label class="form-label">ID type <span style="color:var(--red);">*</span></label>
+      <div class="id-type-grid" id="id-type-grid">
+        <div class="id-type-card" data-type="school_id" onclick="selectIdType('school_id', this)">
+          <span id="icon-school"></span>
+          <div><div class="id-type-label">ACU School ID</div><div class="id-type-sub">Current student ID card</div></div>
+        </div>
+        <div class="id-type-card" data-type="nin" onclick="selectIdType('nin', this)">
+          <span id="icon-nin"></span>
+          <div><div class="id-type-label">NIN</div><div class="id-type-sub">NIN slip/card</div></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="upload-row">
+      <div>
+        <div style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--ink-3);margin-bottom:8px;">Front</div>
+        <div class="upload-box" id="front-box">
+          <input type="file" id="front-input" accept="image/*" onchange="handleUpload('front', this)" style="position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%;">
+          <div class="upload-preview" id="front-preview" style="display:none;width:100%;height:140px;">
+            <img id="front-preview-img" src="" alt="ID front" style="width:100%;height:100%;object-fit:cover;border-radius:calc(var(--radius-lg) - 2px);display:block;">
+            <div class="upload-change">Change photo</div>
+          </div>
+          <div id="front-content" class="upload-content">
+            <div class="upload-icon" id="front-icon"></div>
+            <div class="upload-label">Tap to upload</div>
+            <div class="upload-sub">Clear, in good light</div>
+          </div>
+        </div>
+      </div>
+      <div>
+        <div style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--ink-3);margin-bottom:8px;">Back</div>
+        <div class="upload-box" id="back-box">
+          <input type="file" id="back-input" accept="image/*" onchange="handleUpload('back', this)" style="position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%;">
+          <div class="upload-preview" id="back-preview" style="display:none;width:100%;height:140px;">
+            <img id="back-preview-img" src="" alt="ID back" style="width:100%;height:100%;object-fit:cover;border-radius:calc(var(--radius-lg) - 2px);display:block;">
+            <div class="upload-change">Change photo</div>
+          </div>
+          <div id="back-content" class="upload-content">
+            <div class="upload-icon" id="back-icon"></div>
+            <div class="upload-label">Tap to upload</div>
+            <div class="upload-sub">Clear, in good light</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="info-box" id="info-box">
+      <span id="info-icon"></span>
+      <span>Make sure the photo is clear and all text is readable. Blurry or cropped photos will be rejected and your account suspended.</span>
+    </div>
+
+    <div class="reg-actions">
+      <button class="btn btn-surface btn-lg" onclick="goToStep2()">Back</button>
+      <button class="btn btn-primary btn-lg" style="flex:1" id="submit-btn" onclick="submitRegistration()">Complete registration</button>
+    </div>
+  </div>
+
+  <!-- DONE state -->
+  <div class="reg-card" id="step-done" style="display:none; text-align:center;">
+    <div style="margin-bottom:20px;" id="done-check-icon"></div>
+    <div class="reg-card-title" style="margin-bottom:8px;">You're all set!</div>
+    <div class="reg-card-sub" style="margin-bottom:20px;">Your registration is complete. Welcome to Bixcart.</div>
+
+    <!-- Notification prompt -->
+    <div id="notif-prompt" style="background:linear-gradient(135deg,#fef3c7,#fffbeb);border:1.5px solid #fbbf24;border-radius:14px;padding:16px;margin-bottom:20px;text-align:left;display:none;">
+      <div style="font-size:24px;margin-bottom:8px;">🔔</div>
+      <div style="font-size:14px;font-weight:700;margin-bottom:5px;color:#92400e;">Stay in the loop</div>
+      <div style="font-size:13px;color:#78350f;line-height:1.6;margin-bottom:12px;">Turn on notifications so you never miss a message from buyers or sellers. It takes one tap.</div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;">
+        <button class="btn btn-sm" id="enable-notif-btn" style="background:#f59e0b;border-color:#f59e0b;color:white;font-weight:600;">Enable notifications</button>
+        <button class="btn btn-ghost btn-sm" id="skip-notif-btn" style="color:#92400e;">Maybe later</button>
+      </div>
+      <div id="notif-prompt-result" style="font-size:12px;margin-top:8px;color:#059669;display:none;font-weight:600;">✓ Notifications enabled!</div>
+    </div>
+
+    <a id="dashboard-link" class="btn btn-primary btn-lg w-full">Go to my dashboard</a>
+  </div>
+</div>
+
+<script src="../js/app.js"></script>
+<script>
+  // Auth guard
+  if (!auth.isLoggedIn()) { window.location.replace('auth.html?mode=register'); }
+  const user = auth.getUser();
+  if (user?.registration_complete) {
+    window.location.replace(user.role === 'seller' ? 'seller-dashboard.html' : 'buyer-dashboard.html');
+  }
+
+  // ── Email verification wall ────────────────────────────────────────────────
+  function showEmailWall() {
+    document.getElementById('email-wall').style.display = 'block';
+    document.getElementById('reg-page').style.display  = 'none';
+    const emailEl = document.getElementById('wall-email');
+    if (emailEl && user?.email) emailEl.textContent = user.email;
+  }
+
+  async function wallCheckStatus() {
+    try {
+      const fresh = await api.get('/auth/me');
+      auth.save(auth.getToken(), fresh);
+      if (fresh.email_verified) {
+        document.getElementById('email-wall').style.display = 'none';
+        document.getElementById('reg-page').style.display  = 'block';
+        toast('Email verified! Continue below.', 'success');
+      } else {
+        toast('Not verified yet — check your inbox.', 'error');
+      }
+    } catch (e) {
+      toast('Could not check status. Try again.', 'error');
+    }
+  }
+
+  async function resendVerification() {
+    const btn = document.getElementById('wall-resend-btn');
+    btn.disabled = true; btn.textContent = 'Sending…';
+    try {
+      await api.post('/auth/resend-verification', { email: user?.email }, false);
+      toast('Verification email sent! Check your inbox.', 'success');
+      btn.textContent = 'Resend verification email';
+      setTimeout(() => { btn.disabled = false; }, 30000); // 30s cooldown
+    } catch (e) {
+      toast(e.message || 'Failed to resend. Try again.', 'error');
+      btn.disabled = false; btn.textContent = 'Resend verification email';
+    }
+  }
+
+  // Show wall if email not yet verified
+  if (!user?.email_verified) {
+    showEmailWall();
+  }
+
+  // Init icons
+  document.getElementById('step1-icon').innerHTML = icons.check;
+  document.getElementById('front-icon').innerHTML = icons.image;
+  document.getElementById('back-icon').innerHTML  = icons.image;
+  document.getElementById('icon-school').innerHTML  = icons.shield;
+  document.getElementById('icon-nin').innerHTML     = icons.user;
+  document.getElementById('info-icon').innerHTML    = icons.info;
+  document.getElementById('done-check-icon').innerHTML = `<div style="width:64px;height:64px;border-radius:50%;background:rgba(34,197,94,.1);display:flex;align-items:center;justify-content:center;margin:0 auto;">${icons.check.replace('width="18" height="18"','width="28" height="28"')}</div>`;
+  document.getElementById('dashboard-link').href = user?.role === 'seller' ? 'seller-dashboard.html' : 'buyer-dashboard.html';
+
+  // Adjust for role
+  if (user?.role === 'seller') {
+    document.getElementById('business-name-group').style.display = 'block';
+    document.getElementById('seller-location-choice').style.display = 'block';
+    document.getElementById('seller-hostel-fields').style.display = 'none';
+    document.getElementById('seller-shop-fields').style.display = 'none';
+  }
+
+  const locationTypeEl = document.getElementById('reg-location-type');
+  if (locationTypeEl) {
+    locationTypeEl.addEventListener('change', () => {
+      const type = locationTypeEl.value;
+      document.getElementById('seller-hostel-fields').style.display = type === 'hostel' ? 'grid' : 'none';
+      document.getElementById('seller-shop-fields').style.display = type === 'shop' ? 'grid' : 'none';
+    });
+  }
+
+  // Pre-fill name
+  document.getElementById('reg-fullname').value = user?.full_name || '';
+  loadHostelOptions();
+
+  let selectedIdType = '';
+  let frontUrl = '', backUrl = '';
+
+  function selectIdType(type, el) {
+    selectedIdType = type;
+    document.querySelectorAll('.id-type-card').forEach(c => c.classList.toggle('selected', c === el));
+  }
+
+  function goToStep2() {
+    document.getElementById('step-id').style.display = 'none';
+    document.getElementById('step-profile').style.display = 'block';
+    document.getElementById('step2-el').classList.add('active');
+    document.getElementById('step3-el').classList.remove('active','done');
+    document.getElementById('line2').classList.remove('done');
+  }
+
+  function goToStep3() {
+    const name = document.getElementById('reg-fullname').value.trim();
+    if (!name) { toast('Please enter your full name', 'error'); return; }
+    document.getElementById('step-profile').style.display = 'none';
+    document.getElementById('step-id').style.display = 'block';
+    document.getElementById('step2-el').classList.remove('active');
+    document.getElementById('step2-el').classList.add('done');
+    document.getElementById('step3-el').classList.add('active');
+    document.getElementById('line2').classList.add('done');
+  }
+
+  async function handleUpload(side, input) {
+    const file = input.files[0];
+    if (!file) return;
+    
+    const box = document.getElementById(side + '-box');
+    const previewImg = document.getElementById(side + '-preview-img');
+    const previewEl = document.getElementById(side + '-preview');
+    const contentEl = document.getElementById(side + '-content');
+    const iconEl = document.getElementById(side + '-icon');
+
+    // Validate file immediately
+    // Note: iOS Safari sometimes reports an empty or non-standard MIME type
+    // for HEIC/HEIF photos, so fall back to checking the file extension.
+    const looksLikeImageByType = file.type && file.type.startsWith('image/');
+    const looksLikeImageByExt = /\.(jpe?g|png|gif|webp|heic|heif|bmp)$/i.test(file.name || '');
+    if (!looksLikeImageByType && !looksLikeImageByExt) {
+      toast('Please select an image file', 'error');
+      input.value = '';
+      return;
+    }
+
+    if (file.size > 8 * 1024 * 1024) {
+      toast('Image must be less than 8MB', 'error');
+      input.value = '';
+      return;
+    }
+
+    // Show loading state FIRST
+    if (iconEl) iconEl.innerHTML = icons.loader;
+    if (contentEl) contentEl.style.opacity = '0.5';
+
+    // iOS Safari sometimes gives an empty/unrecognized file.type for HEIC
+    // photos. If that happens, derive a real image MIME type from the file
+    // extension so the upload isn't sent (and rejected) as
+    // application/octet-stream.
+    function guessImageMime(name) {
+      const ext = (name || '').split('.').pop().toLowerCase();
+      const map = {
+        jpg: 'image/jpeg', jpeg: 'image/jpeg', png: 'image/png',
+        gif: 'image/gif', webp: 'image/webp', bmp: 'image/bmp',
+        heic: 'image/heic', heif: 'image/heif',
+      };
+      return map[ext] || 'image/jpeg';
+    }
+    const uploadMime = looksLikeImageByType ? file.type : guessImageMime(file.name);
+
+    // On iOS, read the file immediately to ensure it's valid
+    let fileBlob = file;
+    try {
+      const arrayBuffer = await file.arrayBuffer();
+      fileBlob = new Blob([arrayBuffer], { type: uploadMime });
+    } catch (err) {
+      toast('Cannot read file. Try again.', 'error');
+      if (iconEl) iconEl.innerHTML = icons.image;
+      if (contentEl) contentEl.style.opacity = '1';
+      input.value = '';
+      return;
+    }
+
+    // Now upload
+    const formData = new FormData();
+    formData.append('image', fileBlob, file.name);
+    
+    try {
+      const token = localStorage.getItem('cm_token');
+      const res = await fetch('/api/uploads/image', {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${token}` },
+        body: formData,
+      });
+      
+      const data = await res.json();
+      
+      if (!res.ok) { 
+        toast(data.error || 'Upload failed', 'error'); 
+        if (iconEl) iconEl.innerHTML = icons.image; 
+        if (contentEl) contentEl.style.opacity = '1'; 
+        input.value = '';
+        return; 
+      }
+
+      // Store URL
+      if (side === 'front') frontUrl = data.url;
+      else backUrl = data.url;
+
+      // Update preview
+      previewImg.src = data.url;
+      previewEl.style.display = 'block';
+      contentEl.style.display = 'none';
+      box.classList.add('has-img');
+      
+      // Reset input value to allow re-selection
+      input.value = '';
+      
+      toast(`${side === 'front' ? 'Front' : 'Back'} uploaded`, 'success');
+    } catch(err) {
+      console.error('Upload error:', err);
+      toast('Upload failed: ' + (err.message || 'Network error'), 'error');
+      if (iconEl) iconEl.innerHTML = icons.image;
+      if (contentEl) contentEl.style.opacity = '1';
+      input.value = '';
+    }
+  }
+
+  async function loadHostelOptions() {
+    try {
+      const data = await api.get('/auth/hostels');
+      const select = document.getElementById('reg-hostel');
+      if (!select) return;
+      select.innerHTML = '<option value="">Select hostel</option>' + (data.hostels || []).map(h => `<option value="${h.name}">${h.name}</option>`).join('');
+    } catch (e) {
+      console.warn('Failed to load hostels:', e.message);
+      const select = document.getElementById('reg-hostel');
+      if (select) select.innerHTML = '<option value="">Unable to load hostels — try again</option>';
+    }
+  }
+
+  async function submitRegistration() {
+    const name = document.getElementById('reg-fullname').value.trim();
+    const business = document.getElementById('reg-business')?.value.trim() || '';
+    const level = document.getElementById('reg-level')?.value.trim() || '';
+    const locationType = user?.role === 'seller' ? (document.getElementById('reg-location-type')?.value.trim() || '') : 'hostel';
+    const hostel = document.getElementById('reg-hostel')?.value.trim() || '';
+    const room = document.getElementById('reg-room')?.value.trim() || '';
+    const shop = document.getElementById('reg-shop')?.value.trim() || '';
+    const shopNumber = document.getElementById('reg-shop-number')?.value.trim() || '';
+    const shopAddress = document.getElementById('reg-shop-address')?.value.trim() || '';
+    const deliveryInfo = document.getElementById('reg-delivery-info')?.value.trim() || '';
+
+    if (!name) { toast('Please enter your full name', 'error'); return; }
+    if (!level) { toast('Level is required', 'error'); return; }
+    if (user?.role === 'seller') {
+      if (!['hostel','shop'].includes(locationType)) { toast('Choose either a hostel or a shop', 'error'); return; }
+      if (locationType === 'hostel' && (!hostel || !room)) { toast('Hostel and room number are required', 'error'); return; }
+      if (locationType === 'shop' && (!shop || !shopNumber || !shopAddress)) { toast('Shop name, shop number and shop address are required', 'error'); return; }
+    } else if (!hostel || !room) {
+      toast('Hostel and room number are required', 'error'); return;
+    }
+    if (!selectedIdType) { toast('Please select your ID type', 'error'); return; }
+    if (!frontUrl) { toast('Please upload the front of your ID', 'error'); return; }
+    if (!backUrl) { toast('Please upload the back of your ID', 'error'); return; }
+
+    const btn = document.getElementById('submit-btn');
+    btn.disabled = true; btn.textContent = 'Saving...';
+
+    try {
+      const updated = await api.put('/auth/complete-registration', {
+        full_name: name,
+        business_name: business,
+        seller_location_type: locationType,
+        hostel_name: locationType === 'hostel' ? hostel : '',
+        level,
+        room_number: locationType === 'hostel' ? room : '',
+        shop_name: user?.role === 'seller' ? shop : '',
+        shop_number: user?.role === 'seller' ? shopNumber : '',
+        shop_address: user?.role === 'seller' ? shopAddress : '',
+        delivery_info: deliveryInfo,
+        id_type: selectedIdType,
+        id_front_url: frontUrl,
+        id_back_url: backUrl,
+      });
+      auth.save(auth.getToken(), updated);
+
+      // Show done screen
+      document.getElementById('step-id').style.display = 'none';
+      document.getElementById('step-done').style.display = 'block';
+      if (user?.role === 'seller') {
+        document.querySelector('#step-done .reg-card-title').textContent = 'Application submitted';
+        document.querySelector('#step-done .reg-card-sub').innerHTML = 'Your seller application has been submitted for admin review. <strong>Please wait up to 6 hours.</strong> We will notify you by email and push notification when a decision is made.';
+        document.getElementById('dashboard-link').textContent = 'Return to sign in';
+        document.getElementById('dashboard-link').href = 'auth.html';
+      }
+      document.getElementById('step3-el').classList.remove('active');
+      document.getElementById('step3-el').classList.add('done');
+
+      // Show notification prompt if not already granted
+      if (pushManager.canPush() && !pushManager.alreadyGranted()) {
+        document.getElementById('notif-prompt').style.display = 'block';
+      }
+      document.getElementById('enable-notif-btn').addEventListener('click', async () => {
+        const ok = await requestPushPermission();
+        if (ok) {
+          document.getElementById('notif-prompt-result').style.display = 'block';
+          document.getElementById('enable-notif-btn').style.display = 'none';
+          document.getElementById('skip-notif-btn').style.display = 'none';
+        }
+      });
+      document.getElementById('skip-notif-btn').addEventListener('click', () => {
+        document.getElementById('notif-prompt').style.display = 'none';
+      });
+    } catch(err) {
+      toast(err.message, 'error');
+      btn.disabled = false; btn.textContent = 'Complete registration';
+    }
+  }
+</script>
+</body>
+</html>

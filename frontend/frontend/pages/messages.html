@@ -1,0 +1,1001 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<!-- ── SEO ── -->
+<meta name="description" content="Chat with buyers and sellers on Bixcart.">
+<meta name="robots" content="noindex, nofollow">
+<link rel="canonical" href="https://bixcart.onrender.com/pages/messages.html">
+
+<!-- Open Graph -->
+<meta property="og:type" content="website">
+<meta property="og:title" content="Messages — Bixcart">
+<meta property="og:description" content="Chat with buyers and sellers on Bixcart.">
+<meta property="og:url" content="https://bixcart.onrender.com/pages/messages.html">
+<meta property="og:site_name" content="Bixcart">
+<meta property="og:image" content="https://bixcart.onrender.com/og-image.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="Bixcart — ACU Student Marketplace">
+
+<!-- Twitter / X -->
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:site" content="@bixcart">
+<meta name="twitter:title" content="Messages — Bixcart">
+<meta name="twitter:description" content="Chat with buyers and sellers on Bixcart.">
+<meta name="twitter:image" content="https://bixcart.onrender.com/og-image.png">
+<title>Messages — Bixcart</title>
+<link rel="stylesheet" href="../css/main.css">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Coming+Soon&display=swap" rel="stylesheet">
+<style>
+  /* Messages page uses Coming Soon for chat bubbles */
+  .msg-bubble, .compose-ta, .thread-messages {
+    font-family: 'Coming Soon', cursive !important;
+  }
+  .msg-bubble { font-size: 14px !important; line-height: 1.6 !important; }
+  .compose-ta { font-size: 14px !important; }
+  /* ── BASE ── */
+  html, body { height: 100%; overflow: hidden; }
+  .nav { flex-shrink: 0; }
+
+  /* ── PAGE WRAPPER ── */
+  .messages-root {
+    position: fixed;
+    top: var(--nav-h, 60px); left: 0; right: 0; bottom: 0;
+    display: flex;
+  }
+
+  /* ── LEFT PANEL: Conversation list ── */
+  .conv-panel {
+    width: 320px; flex-shrink: 0;
+    display: flex; flex-direction: column;
+    border-right: 1.5px solid var(--border);
+    background: var(--surface);
+    overflow: hidden;
+  }
+  .conv-panel-header {
+    padding: 16px; border-bottom: 1.5px solid var(--border);
+    display: flex; align-items: center; justify-content: space-between; flex-shrink: 0;
+  }
+  .conv-search {
+    padding: 10px 12px; border-bottom: 1.5px solid var(--border); flex-shrink: 0;
+  }
+  .conv-search-wrap { position: relative; }
+  .conv-search-icon {
+    position: absolute; left: 10px; top: 50%; transform: translateY(-50%);
+    color: var(--ink-3); display: flex; pointer-events: none;
+  }
+  .conv-search-input {
+    width: 100%; padding: 8px 10px 8px 34px;
+    border: 1.5px solid var(--border); border-radius: var(--radius-md);
+    font-family: var(--font-body); font-size: 13px;
+    background: var(--bg); outline: none; transition: border-color .15s; color: var(--ink);
+  }
+  .conv-search-input:focus { border-color: var(--ink); }
+  .conv-list { flex: 1; overflow-y: auto; }
+
+  .conv-item {
+    display: flex; gap: 10px; padding: 13px 14px;
+    cursor: pointer; transition: background .12s; border-bottom: 1px solid var(--border);
+  }
+  .conv-item:hover { background: var(--bg); }
+  .conv-item.active { background: var(--surface-2); }
+  .conv-item-body { flex: 1; min-width: 0; }
+  .conv-item-row1 { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 3px; }
+  .conv-item-name { font-size: 13px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 160px; }
+  .conv-item-time { font-size: 10px; color: var(--ink-3); flex-shrink: 0; }
+  .conv-item-preview { font-size: 12px; color: var(--ink-3); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .conv-item-preview.unread { color: var(--ink); font-weight: 600; }
+  .conv-listing-chip {
+    display: inline-flex; align-items: center; gap: 3px;
+    background: var(--bg); border: 1px solid var(--border); border-radius: 4px;
+    padding: 1px 6px; font-size: 10px; color: var(--ink-3);
+    margin-top: 3px; max-width: 180px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  }
+  .unread-badge {
+    width: 7px; height: 7px; border-radius: 50%;
+    background: var(--accent); flex-shrink: 0; margin-top: 4px;
+  }
+
+  /* ── RIGHT PANEL: Thread ── */
+  .thread-panel {
+    flex: 1; min-width: 0;
+    display: flex; flex-direction: column;
+    background: var(--surface);
+    overflow: hidden;
+  }
+  .thread-empty {
+    flex: 1; display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    gap: 14px; color: var(--ink-3); padding: 40px;
+  }
+  .thread-empty-icon {
+    width: 60px; height: 60px; border-radius: var(--radius-xl);
+    background: var(--surface-2); display: flex; align-items: center; justify-content: center;
+  }
+  .thread-header {
+    padding: 10px 14px; border-bottom: 1.5px solid var(--border);
+    display: flex; align-items: center; gap: 10px; flex-shrink: 0;
+    min-width: 0; overflow: hidden;
+  }
+  .thread-header-name { font-size: 14px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .thread-header-sub  { font-size: 11px; color: var(--ink-3); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .thread-header-actions { display: flex; gap: 6px; flex-shrink: 0; margin-left: auto; align-items: center; }
+  .t-report-btn {
+    display: flex; align-items: center; gap: 4px; padding: 5px 10px;
+    border-radius: var(--radius-md); border: 1.5px solid #fca5a5;
+    background: #fff5f5; color: #9b2c2c; font-size: 12px; font-weight: 600;
+    cursor: pointer; transition: background .12s; flex-shrink: 0;
+  }
+  .t-report-btn:hover { background: #fed7d7; }
+  .t-report-label { display: inline; }
+  @media (max-width: 500px) { .t-report-label { display: none; } }
+
+  /* Admin notification message */
+  .admin-notif-wrap {
+    display: flex; justify-content: center; padding: 2px 0;
+  }
+  .admin-notif-bubble {
+    background: linear-gradient(135deg, #667eea15, #764ba215);
+    border: 1.5px solid #a78bfa55;
+    border-radius: 12px; padding: 10px 14px; max-width: 85%;
+    text-align: center;
+  }
+  .admin-notif-label {
+    font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .08em;
+    color: #7c3aed; margin-bottom: 5px; display: flex; align-items: center; justify-content: center; gap: 5px;
+  }
+  .admin-notif-text  { font-size: 13px; color: var(--ink); line-height: 1.5; }
+  .admin-notif-time  { font-size: 10px; color: var(--ink-3); margin-top: 5px; }
+
+  /* ── AI Flag banner ── */
+  .ai-flag-banner {
+    flex-shrink: 0;
+    background: #fff5f5; border-bottom: 2px solid #fc8181;
+    padding: 12px 16px;
+    display: flex; align-items: flex-start; gap: 10px;
+  }
+  .ai-flag-icon { font-size: 18px; flex-shrink: 0; margin-top: 1px; }
+  .ai-flag-title { font-size: 13px; font-weight: 700; color: #9b2c2c; margin-bottom: 2px; }
+  .ai-flag-body  { font-size: 12px; color: #c53030; line-height: 1.5; }
+  .compose-disabled {
+    background: var(--surface-2) !important;
+    pointer-events: none; opacity: .55;
+  }
+  .compose-disabled .compose-ta { background: var(--surface-2) !important; color: var(--ink-3); }
+
+  /* ── Transaction bar ── */
+  .txn-bar {
+    flex-shrink: 0;
+    background: var(--surface);
+    border-bottom: 1.5px solid var(--border);
+    padding: 10px 16px;
+    display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
+  }
+  .txn-bar-left { flex: 1; min-width: 0; }
+  .txn-bar-label {
+    font-size: 10px; font-weight: 700; text-transform: uppercase;
+    letter-spacing: .07em; color: var(--ink-3); margin-bottom: 3px;
+  }
+  .txn-bar-status { font-size: 13px; font-weight: 600; display: flex; align-items: center; gap: 6px; }
+  .txn-bar-sub { font-size: 11px; color: var(--ink-3); margin-top: 2px; }
+  .txn-bar-actions { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+
+  .txn-mark-btn {
+    display: flex; align-items: center; gap: 5px;
+    padding: 7px 14px; border-radius: var(--radius-md);
+    font-size: 13px; font-weight: 700; cursor: pointer;
+    border: none; background: #059669; color: white;
+    transition: background .14s; white-space: nowrap;
+  }
+  .txn-mark-btn:hover   { background: #047857; }
+  .txn-mark-btn:disabled{ opacity: .55; cursor: not-allowed; }
+  .txn-mark-btn.waiting {
+    background: var(--surface-2); color: var(--ink-3);
+    border: 1.5px solid var(--border); cursor: default;
+  }
+  .txn-rate-btn {
+    display: flex; align-items: center; gap: 5px;
+    padding: 7px 14px; border-radius: var(--radius-md);
+    font-size: 13px; font-weight: 700; cursor: pointer;
+    border: none; background: #f59e0b; color: white;
+    transition: background .14s; white-space: nowrap;
+  }
+  .txn-rate-btn:hover { background: #d97706; }
+  .txn-already-rated {
+    font-size: 12px; color: #f59e0b; font-weight: 700;
+    display: flex; align-items: center; gap: 4px;
+  }
+
+  @media (max-width: 480px) {
+    .txn-bar { padding: 9px 12px; gap: 8px; }
+    .txn-mark-btn, .txn-rate-btn { font-size: 12px; padding: 6px 12px; }
+  }
+
+  /* ── Transaction Bubble ── */
+  .txn-bubble-btn {
+    width: 34px; height: 34px; border-radius: 50%;
+    border: 2px solid var(--border); background: var(--surface);
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer; transition: border-color .15s, background .15s;
+    flex-shrink: 0; position: relative;
+  }
+  .txn-bubble-btn:hover { border-color: var(--accent); background: var(--bg); }
+  .txn-bubble-btn.status-completed { border-color: #059669; background: #d1fae5; }
+  .txn-bubble-btn.status-cancelled { border-color: #dc2626; background: #fee2e2; }
+  .txn-bubble-btn.status-pending   { border-color: #f59e0b; background: #fef3c7; }
+  .txn-bubble-btn.status-confirmed { border-color: #2563eb; background: #dbeafe; }
+
+  /* ── Outcome Modal ── */
+  .outcome-modal-backdrop {
+    position: fixed; inset: 0; background: rgba(0,0,0,.5);
+    display: flex; align-items: flex-end; justify-content: center;
+    z-index: 9998; padding: 0;
+  }
+  .outcome-modal {
+    background: var(--surface); border-radius: 20px 20px 0 0;
+    padding: 24px 20px 36px; width: 100%; max-width: 480px;
+    box-shadow: 0 -8px 40px rgba(0,0,0,.18);
+    animation: slideUp .22s ease;
+  }
+  .outcome-modal-title { font-size: 17px; font-weight: 800; margin-bottom: 4px; }
+  .outcome-modal-sub { font-size: 13px; color: var(--ink-3); margin-bottom: 20px; line-height: 1.6; }
+  .outcome-btn {
+    width: 100%; padding: 14px 16px; border-radius: var(--radius-md);
+    border: 2px solid var(--border); background: var(--surface);
+    display: flex; align-items: center; gap: 12px;
+    cursor: pointer; margin-bottom: 10px; text-align: left;
+    transition: border-color .12s, background .12s;
+  }
+  .outcome-btn:hover { border-color: var(--accent); background: var(--bg); }
+  .outcome-btn-icon { font-size: 24px; flex-shrink: 0; }
+  .outcome-btn-label { font-size: 15px; font-weight: 700; }
+  .outcome-btn-sub   { font-size: 12px; color: var(--ink-3); margin-top: 2px; }
+  .outcome-btn.completed { border-color: #059669; }
+  .outcome-btn.completed:hover { background: #d1fae5; }
+  .outcome-btn.cancelled { border-color: #dc2626; }
+  .outcome-btn.cancelled:hover { background: #fee2e2; }
+  .mobile-back-btn {
+    display: none; background: none; border: none;
+    cursor: pointer; color: var(--ink); padding: 4px; margin-right: 2px; flex-shrink: 0;
+  }
+  .thread-listing-bar {
+    padding: 8px 18px; background: var(--bg); border-bottom: 1.5px solid var(--border);
+    display: flex; align-items: center; gap: 10px;
+    cursor: pointer; transition: background .12s; flex-shrink: 0;
+  }
+  .thread-listing-bar:hover { background: var(--surface-2); }
+  .thread-listing-thumb {
+    width: 36px; height: 36px; border-radius: var(--radius-sm);
+    background: var(--surface-2); flex-shrink: 0; overflow: hidden;
+    display: flex; align-items: center; justify-content: center; color: var(--ink-3);
+  }
+  .thread-listing-thumb img { width: 100%; height: 100%; object-fit: cover; }
+  .thread-messages {
+    flex: 1; overflow-y: auto; padding: 18px;
+    display: flex; flex-direction: column; gap: 10px; min-height: 0;
+  }
+  .msg-wrap { display: flex; gap: 7px; max-width: 72%; }
+  .msg-wrap.mine { margin-left: auto; flex-direction: row-reverse; }
+  .msg-bubble { padding: 9px 13px; border-radius: 16px; font-size: 13.5px; line-height: 1.55; word-break: break-word; }
+  .msg-bubble.theirs { background: var(--surface-2); border: 1.5px solid var(--border); border-bottom-left-radius: 4px; color: var(--ink); }
+  .msg-bubble.mine { background: var(--ink); color: white; border-bottom-right-radius: 4px; }
+  .msg-meta { font-size: 10px; color: var(--ink-3); margin-top: 3px; }
+  .msg-meta.mine { text-align: right; }
+  .date-sep {
+    text-align: center; font-size: 10px; font-weight: 700;
+    text-transform: uppercase; letter-spacing: .06em; color: var(--ink-3);
+    display: flex; align-items: center; gap: 8px; margin: 6px 0;
+  }
+  .date-sep::before, .date-sep::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+  .thread-compose {
+    padding: 12px 14px; border-top: 1.5px solid var(--border);
+    display: flex; gap: 8px; align-items: flex-end; flex-shrink: 0;
+    background: var(--surface);
+  }
+  .compose-ta {
+    flex: 1; padding: 9px 13px; border: 1.5px solid var(--border);
+    border-radius: var(--radius-lg); font-family: var(--font-body);
+    font-size: 13.5px; color: var(--ink); background: var(--bg);
+    resize: none; outline: none; max-height: 110px; min-height: 40px;
+    transition: border-color .15s; line-height: 1.5;
+  }
+  .compose-ta:focus { border-color: var(--ink); background: var(--surface); }
+  .compose-ta::placeholder { color: var(--ink-3); }
+
+  /* ── MOBILE ── */
+  @media (max-width: 768px) {
+    .conv-panel { width: 100%; border-right: none; }
+    /* Hide conv panel when thread is open, show thread */
+    .messages-root.thread-open .conv-panel { display: none; }
+    .messages-root:not(.thread-open) .thread-panel { display: none; }
+    .mobile-back-btn { display: flex !important; }
+    .msg-wrap { max-width: 88%; }
+    .thread-messages { padding: 12px 14px; }
+    .thread-compose { padding: 8px 12px; }
+  }
+
+  /* ── REPORT MODAL ── */
+  .report-modal-backdrop {
+    position: fixed; inset: 0; background: rgba(0,0,0,.45);
+    display: flex; align-items: center; justify-content: center;
+    z-index: 1000; padding: 20px;
+  }
+  .report-modal {
+    background: var(--surface); border-radius: var(--radius-xl);
+    padding: 28px 24px; width: 100%; max-width: 420px;
+    box-shadow: 0 20px 60px rgba(0,0,0,.18);
+  }
+  .report-modal h3 { font-size: 17px; font-weight: 700; margin-bottom: 6px; }
+  .report-modal p  { font-size: 13px; color: var(--ink-3); margin-bottom: 18px; line-height: 1.6; }
+  .report-reason-ta {
+    width: 100%; padding: 10px 13px; border: 1.5px solid var(--border);
+    border-radius: var(--radius-md); font-family: var(--font-body);
+    font-size: 13.5px; color: var(--ink); background: var(--bg);
+    resize: vertical; outline: none; min-height: 90px; max-height: 200px;
+    transition: border-color .15s; box-sizing: border-box;
+  }
+  .report-reason-ta:focus { border-color: var(--ink); }
+  .report-modal-actions { display: flex; gap: 10px; margin-top: 16px; justify-content: flex-end; }
+</style>
+</head>
+<body>
+<nav class="nav"></nav>
+
+<div class="messages-root" id="messages-root">
+
+  <!-- LEFT: Conversation list -->
+  <div class="conv-panel" id="conv-panel">
+    <div class="conv-panel-header">
+      <span style="font-size:16px;font-weight:700;">Messages</span>
+      <a href="marketplace.html" class="btn btn-accent btn-sm" id="browse-btn"></a>
+    </div>
+    <div class="conv-search">
+      <div class="conv-search-wrap">
+        <span class="conv-search-icon" id="search-ic"></span>
+        <input class="conv-search-input" id="conv-search" type="text" placeholder="Search conversations…">
+      </div>
+    </div>
+    <div class="conv-list" id="conv-list"></div>
+  </div>
+
+  <!-- RIGHT: Thread panel -->
+  <div class="thread-panel" id="thread-panel">
+    <div class="thread-empty" id="thread-empty">
+      <div class="thread-empty-icon" id="empty-ic"></div>
+      <div style="font-size:15px;font-weight:700;color:var(--ink);">Select a conversation</div>
+      <p style="font-size:13px;text-align:center;max-width:200px;line-height:1.6;">
+        Choose from the list or contact a seller from any listing page.
+      </p>
+      <a href="marketplace.html" class="btn btn-primary btn-sm">Browse listings</a>
+    </div>
+    <div id="thread-content" style="display:none;flex-direction:column;flex:1;overflow:hidden;min-height:0;"></div>
+  </div>
+
+</div>
+
+<script src="../js/app.js"></script>
+<script>
+if (!auth.requireAuth()) throw new Error('redirect');
+renderNav();
+
+document.getElementById('browse-btn').innerHTML = icons.plus + ' New';
+document.getElementById('search-ic').innerHTML  = icons.search;
+document.getElementById('empty-ic').innerHTML   = icons.messageCircle;
+
+const me = auth.getUser();
+let allConvs = [], activeId = null, activeConv = null, pollTimer = null, convListTimer = null;
+
+/* ═══════════ CONV LIST POLL ═══════════ */
+async function refreshConvList() {
+  try {
+    const fresh = await api.get('/messages/conversations');
+    allConvs = fresh;
+    const q = document.getElementById('conv-search')?.value?.trim() || '';
+    if (!q) renderConvList(allConvs);
+  } catch {}
+}
+
+function startConvListPoll() {
+  if (convListTimer) return;
+  refreshConvList();
+  convListTimer = setInterval(refreshConvList, 5000);
+}
+
+function stopConvListPoll() {
+  clearInterval(convListTimer);
+  convListTimer = null;
+}
+
+/* ═══════════ LOAD CONVERSATIONS ═══════════ */
+async function loadConvs() {
+  const skel = Array(5).fill(0).map(() => `
+    <div style="display:flex;gap:10px;padding:13px 14px;border-bottom:1px solid var(--border);">
+      <div class="skeleton" style="width:36px;height:36px;border-radius:50%;flex-shrink:0;"></div>
+      <div style="flex:1;display:flex;flex-direction:column;gap:6px;justify-content:center;">
+        <div class="skeleton" style="height:12px;width:55%;"></div>
+        <div class="skeleton" style="height:11px;width:80%;"></div>
+      </div>
+    </div>`).join('');
+  document.getElementById('conv-list').innerHTML = skel;
+
+  try {
+    allConvs = await api.get('/messages/conversations');
+    renderConvList(allConvs);
+    const convParam = getParam('conv');
+    if (convParam) openConv(convParam);
+    startConvListPoll();
+  } catch {
+    document.getElementById('conv-list').innerHTML =
+      `<div style="padding:24px;text-align:center;font-size:13px;color:var(--ink-3);">Could not load conversations.</div>`;
+  }
+}
+
+function convItemHTML(c) {
+  return `
+    <div class="conv-item ${c.id === activeId ? 'active' : ''}" data-id="${c.id}" onclick="openConv('${c.id}')">
+      <div class="avatar avatar-sm" style="flex-shrink:0;margin-top:2px;">${getInitials(c.other_user.name)}</div>
+      <div class="conv-item-body">
+        <div class="conv-item-row1">
+          <span class="conv-item-name">${c.other_user.name}</span>
+          <span class="conv-item-time">${formatDate(c.last_message_at)}</span>
+        </div>
+        <div class="conv-item-preview ${c.unread_count > 0 ? 'unread' : ''}">${c.last_message || 'No messages yet'}</div>
+        ${c.listing_title ? `<div class="conv-listing-chip">${icons.tag} ${c.listing_title}</div>` : ''}
+      </div>
+      ${c.unread_count > 0 ? `<div class="unread-badge"></div>` : ''}
+    </div>`;
+}
+
+function renderConvList(convs) {
+  const empty = `<div style="padding:32px 16px;text-align:center;font-size:13px;color:var(--ink-3);line-height:1.7;">No conversations yet.<br>Contact a seller to start chatting.</div>`;
+  document.getElementById('conv-list').innerHTML = convs.length ? convs.map(convItemHTML).join('') : empty;
+}
+
+/* ═══════════ SEARCH ═══════════ */
+document.getElementById('conv-search').addEventListener('input', e => {
+  const q = e.target.value.toLowerCase();
+  renderConvList(q ? allConvs.filter(c =>
+    c.other_user.name.toLowerCase().includes(q) ||
+    (c.last_message||'').toLowerCase().includes(q) ||
+    (c.listing_title||'').toLowerCase().includes(q)
+  ) : allConvs);
+});
+
+/* ═══════════ OPEN CONVERSATION ═══════════ */
+async function openConv(id) {
+  activeId = id;
+  clearInterval(pollTimer);
+  stopConvListPoll();
+  window.history.replaceState({}, '', `?conv=${id}`);
+
+  // Mark active in list
+  document.querySelectorAll('.conv-item').forEach(el =>
+    el.classList.toggle('active', el.dataset.id === id));
+
+  // Show thread panel (mobile: toggle class, desktop: it's always visible)
+  document.getElementById('messages-root').classList.add('thread-open');
+  document.getElementById('thread-empty').style.display = 'none';
+
+  const tc = document.getElementById('thread-content');
+  tc.style.display = 'flex';
+
+  const conv = allConvs.find(c => c.id === id);
+  const otherName = conv?.other_user?.name || '…';
+  tc.innerHTML = buildThreadHTML(conv, otherName);
+  wireThreadEvents(id, conv);
+
+  await fetchThread(id);
+  pollTimer = setInterval(() => fetchThread(id, true), 4000);
+}
+window.openConv = openConv;
+
+function buildThreadHTML(conv, otherName) {
+  return `
+    <div class="thread-header">
+      <button class="mobile-back-btn" id="t-back" aria-label="Back">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+      </button>
+      <div class="avatar avatar-md" style="flex-shrink:0;cursor:pointer;" onclick="window.location.href='user-profile.html?id=${conv?.other_user?.id || ''}'">
+        ${getInitials(otherName)}
+      </div>
+      <div style="flex:1;min-width:0;cursor:pointer;" onclick="window.location.href='user-profile.html?id=${conv?.other_user?.id || ''}'">
+        <div class="thread-header-name">${otherName}</div>
+        <div class="thread-header-sub">${conv?.listing_title ? 'Re: ' + conv.listing_title : 'Direct message'}</div>
+      </div>
+      <div class="thread-header-actions">
+        ${conv?.listing_id ? `<a href="listing.html?id=${conv.listing_id}" class="btn btn-ghost btn-sm" style="display:flex;gap:4px;padding:5px 9px;font-size:12px;">${icons.eye}<span class="t-report-label">Listing</span></a>` : ''}
+        <button class="txn-bubble-btn" id="txn-bubble" title="Transaction status" style="display:none;">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg>
+        </button>
+        <button class="t-report-btn" id="t-report" title="Report conversation">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" y1="22" x2="4" y2="15"/></svg>
+          <span class="t-report-label">Report</span>
+        </button>
+      </div>
+    </div>
+    ${conv?.listing_title ? `
+    <div class="thread-listing-bar" onclick="window.location.href='/pages/listing.html?id=${conv.listing_id}'">
+      <div class="thread-listing-thumb">
+        ${conv.listing_images?.[0] ? `<img src="${conv.listing_images[0]}" alt="">` : icons.package}
+      </div>
+      <div style="flex:1;min-width:0;">
+        <div style="font-size:12px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${conv.listing_title}</div>
+        <div style="font-size:11px;color:var(--ink-3);">Tap to view listing</div>
+      </div>
+      <span style="color:var(--ink-3);display:flex;">${icons.chevronRight}</span>
+    </div>` : ''}
+    <div id="txn-bar-slot"></div>
+    <div id="ai-flag-slot"></div>
+    <div class="thread-messages" id="t-msgs">
+      <div style="display:flex;justify-content:center;padding:24px;color:var(--ink-3);">${icons.loader}</div>
+    </div>
+    <div class="thread-compose">
+      <textarea class="compose-ta" id="t-input" placeholder="Type a message…" rows="1"></textarea>
+      <button class="btn btn-primary btn-icon" id="t-send" title="Send"></button>
+    </div>`;
+}
+
+function wireThreadEvents(id, conv) {
+  document.getElementById('t-send').innerHTML = icons.send;
+
+  const ta = document.getElementById('t-input');
+  ta.addEventListener('input', () => {
+    ta.style.height = 'auto';
+    ta.style.height = Math.min(ta.scrollHeight, 110) + 'px';
+  });
+  ta.addEventListener('keydown', e => {
+    if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMsg(); }
+  });
+  document.getElementById('t-send').addEventListener('click', sendMsg);
+
+  document.getElementById('t-back').addEventListener('click', () => {
+    clearInterval(pollTimer);
+    activeId = null;
+    document.getElementById('messages-root').classList.remove('thread-open');
+    document.getElementById('thread-empty').style.display = 'flex';
+    document.getElementById('thread-content').style.display = 'none';
+    document.getElementById('thread-content').innerHTML = '';
+    window.history.replaceState({}, '', window.location.pathname);
+    startConvListPoll();
+  });
+
+  document.getElementById('t-report').addEventListener('click', () => openReportModal(id));
+}
+
+/* ═══════════ FETCH THREAD ═══════════ */
+async function fetchThread(id, silent = false) {
+  try {
+    const data = await api.get(`/messages/conversations/${id}`);
+    const msgsEl = document.getElementById('t-msgs');
+    if (!msgsEl) return;
+
+    const atBottom = msgsEl.scrollHeight - msgsEl.scrollTop <= msgsEl.clientHeight + 80;
+
+    if (!data.messages.length) {
+      msgsEl.innerHTML = `<div style="text-align:center;padding:40px;font-size:13px;color:var(--ink-3);line-height:1.7;">No messages yet.<br>Send one below to start the conversation.</div>`;
+      activeConv = { ...data.conversation, txn_status: data.txn_status || 'pending', buyer_rated: data.buyer_rated || false };
+      renderTxnBar(data.txn_status || 'pending', id);
+      return;
+    }
+
+    let lastDate = null;
+    msgsEl.innerHTML = data.messages.map(m => {
+      const d = new Date(m.created_at);
+      const dateStr = d.toLocaleDateString('en-NG', { weekday: 'short', month: 'short', day: 'numeric' });
+      const timeStr = d.toLocaleTimeString('en-NG', { hour: 'numeric', minute: '2-digit' });
+      let sep = '';
+      if (dateStr !== lastDate) { sep = `<div class="date-sep"><span>${dateStr}</span></div>`; lastDate = dateStr; }
+
+      if (m.is_admin_notification) {
+        return `${sep}
+          <div class="admin-notif-wrap">
+            <div class="admin-notif-bubble">
+              <div class="admin-notif-label">
+                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+                Admin Notice
+              </div>
+              <div class="admin-notif-text">${escHtml(m.content)}</div>
+              <div class="admin-notif-time">${timeStr}</div>
+            </div>
+          </div>`;
+      }
+
+      const mine = m.sender_id === me.id;
+      return `${sep}
+        <div class="msg-wrap ${mine ? 'mine' : ''}">
+          ${!mine ? `<div class="avatar" style="width:26px;height:26px;font-size:10px;flex-shrink:0;align-self:flex-end;">${getInitials(m.sender_name)}</div>` : ''}
+          <div>
+            <div class="msg-bubble ${mine ? 'mine' : 'theirs'}">${escHtml(m.content)}</div>
+            <div class="msg-meta ${mine ? 'mine' : ''}">${timeStr}</div>
+          </div>
+        </div>`;
+    }).join('');
+
+    if (atBottom || !silent) msgsEl.scrollTop = msgsEl.scrollHeight;
+
+    // ── AI Flag banner ───────────────────────────────────────────────────────
+    const flagSlot = document.getElementById('ai-flag-slot');
+    const compose  = document.querySelector('.thread-compose');
+    if (flagSlot) {
+      if (data.ai_flagged) {
+        flagSlot.innerHTML = `
+          <div class="ai-flag-banner">
+            <div class="ai-flag-icon">⚠️</div>
+            <div>
+              <div class="ai-flag-title">Conversation paused by AI moderation</div>
+              <div class="ai-flag-body">${escHtml(data.ai_flag_reason || 'This conversation was flagged for review. An admin will review it shortly and you will be notified.')}</div>
+            </div>
+          </div>`;
+        if (compose) compose.classList.add('compose-disabled');
+      } else {
+        flagSlot.innerHTML = '';
+        if (compose) compose.classList.remove('compose-disabled');
+      }
+    }
+
+    // ── Transaction bar ──────────────────────────────────────────────────────
+    activeConv = { ...data.conversation, txn_status: data.txn_status || 'pending', buyer_rated: data.buyer_rated || false };
+    renderTxnBar(data.txn_status || 'pending', id);
+
+    if (!silent) {
+      const updated = allConvs.find(c => c.id === id);
+      if (updated) updated.unread_count = 0;
+      renderConvList(allConvs);
+    }
+  } catch(e) {
+    if (!silent) console.error(e);
+  }
+}
+
+function renderTxnBar(txnStatus, convId) {
+  const slot   = document.getElementById('txn-bar-slot');
+  const bubble = document.getElementById('txn-bubble');
+  if (!slot) return;
+
+  const bubbleIcons = { pending: '🕐', completed: '✅', cancelled: '❌' };
+  const bIcon = bubbleIcons[txnStatus] || '🕐';
+
+  // Always show bubble
+  if (bubble) {
+    bubble.style.display = 'flex';
+    bubble.className = 'txn-bubble-btn status-' + (txnStatus || 'pending');
+    bubble.title = 'Transaction: ' + (txnStatus || 'pending');
+    bubble.innerHTML = `<span style="font-size:15px;">${bIcon}</span>`;
+    const fresh = bubble.cloneNode(true);
+    bubble.parentNode.replaceChild(fresh, bubble);
+    fresh.addEventListener('click', () => openOutcomeModal(txnStatus || 'pending', convId));
+  }
+
+  // Only show bar for completed/cancelled
+  if (!txnStatus || txnStatus === 'pending') {
+    slot.innerHTML = '';
+    return;
+  }
+
+  const isBuyer = activeConv && String(activeConv.buyer_id) === String(me.id);
+  const sl = {
+    completed: { icon: '✅', text: 'Deal completed',  color: '#059669' },
+    cancelled: { icon: '❌', text: 'Deal cancelled',   color: '#dc2626' },
+  }[txnStatus] || { icon: '🕐', text: txnStatus, color: 'var(--ink-3)' };
+
+  const rateAction = isBuyer && !activeConv?.buyer_rated
+    ? `<button class="txn-rate-btn" id="txn-rate-btn">★ Rate Seller</button>`
+    : (isBuyer && activeConv?.buyer_rated ? `<div class="txn-already-rated">✓ Rated</div>` : '');
+
+  slot.innerHTML = `
+    <div class="txn-bar">
+      <div class="txn-bar-left">
+        <div class="txn-bar-label">Transaction</div>
+        <div class="txn-bar-status">
+          <span>${sl.icon}</span>
+          <span style="color:${sl.color}">${sl.text}</span>
+        </div>
+      </div>
+      <div class="txn-bar-actions">${rateAction}</div>
+    </div>`;
+
+  const rateBtn = document.getElementById('txn-rate-btn');
+  if (rateBtn) rateBtn.addEventListener('click', () => openInlineRatingModal(convId, convId));
+}
+
+/* ═══════════ OUTCOME MODAL (bubble click) ═══════════ */
+// convTxnStatus is the current txn_status of the conversation (passed in from fetchThread)
+function openOutcomeModal(convTxnStatus, convId) {
+  const existing = document.getElementById('outcome-modal-backdrop');
+  if (existing) existing.remove();
+
+  const backdrop = document.createElement('div');
+  backdrop.className = 'outcome-modal-backdrop';
+  backdrop.id = 'outcome-modal-backdrop';
+  document.body.appendChild(backdrop);
+  history.pushState({ modal: 'outcome' }, '');
+  const close = () => { backdrop.remove(); if (history.state?.modal === 'outcome') history.back(); };
+  backdrop.addEventListener('click', e => { if (e.target === backdrop) close(); });
+
+  const isBuyer = activeConv && String(activeConv.buyer_id) === String(me.id);
+
+  // Already resolved — show status
+  if (convTxnStatus === 'completed' || convTxnStatus === 'cancelled') {
+    const statusIcon  = convTxnStatus === 'completed' ? '✅' : '❌';
+    const statusColor = convTxnStatus === 'completed' ? '#059669' : '#dc2626';
+    const rated = activeConv?.buyer_rated;
+    backdrop.innerHTML = `
+      <div class="outcome-modal">
+        <div style="width:36px;height:4px;border-radius:2px;background:var(--border);margin:0 auto 18px;"></div>
+        <div class="outcome-modal-title">Transaction Status</div>
+        <div class="outcome-modal-sub">This deal is marked <strong style="color:${statusColor}">${convTxnStatus}</strong>.</div>
+        <div style="text-align:center;font-size:48px;margin:16px 0;">${statusIcon}</div>
+        ${isBuyer && !rated
+          ? `<button id="oc-rate" class="btn btn-primary" style="width:100%;justify-content:center;margin-bottom:10px;">★ Rate your seller</button>` : ''}
+        <button id="oc-close" class="btn btn-ghost btn-sm" style="width:100%;justify-content:center;">Close</button>
+      </div>`;
+    backdrop.querySelector('#oc-close').addEventListener('click', close);
+    const rateBtn = backdrop.querySelector('#oc-rate');
+    if (rateBtn) rateBtn.addEventListener('click', () => { close(); openInlineRatingModal(convId, convId); });
+    return;
+  }
+
+  // Pending — show action buttons
+  backdrop.innerHTML = `
+    <div class="outcome-modal">
+      <div style="width:36px;height:4px;border-radius:2px;background:var(--border);margin:0 auto 18px;"></div>
+      <div class="outcome-modal-title">What happened?</div>
+      <div class="outcome-modal-sub">Mark the outcome of this conversation. Both buyer and seller can update this.</div>
+      <button class="outcome-btn completed" id="oc-complete">
+        <span class="outcome-btn-icon">✅</span>
+        <div>
+          <div class="outcome-btn-label">Deal completed</div>
+          <div class="outcome-btn-sub">We met and the transaction went through</div>
+        </div>
+      </button>
+      <button class="outcome-btn cancelled" id="oc-cancel">
+        <span class="outcome-btn-icon">❌</span>
+        <div>
+          <div class="outcome-btn-label">Deal cancelled</div>
+          <div class="outcome-btn-sub">The transaction didn't happen</div>
+        </div>
+      </button>
+      <button id="oc-dismiss" style="width:100%;padding:11px;border:none;background:none;cursor:pointer;font-size:13px;color:var(--ink-3);font-family:var(--font-body);margin-top:4px;">Not yet — still talking</button>
+    </div>`;
+
+  backdrop.querySelector('#oc-dismiss').addEventListener('click', close);
+
+  async function resolve(outcome) {
+    const btn = backdrop.querySelector(outcome === 'completed' ? '#oc-complete' : '#oc-cancel');
+    btn.style.opacity = '.6'; btn.style.pointerEvents = 'none';
+    try {
+      await api.post(`/messages/conversations/${convId}/txn-status`, { status: outcome });
+      close();
+      toast(outcome === 'completed' ? 'Deal marked complete! 🎉' : 'Deal cancelled.', outcome === 'completed' ? 'success' : 'info');
+      await fetchThread(convId, true);
+      // Always ask buyer to rate after any outcome
+      if (isBuyer) openInlineRatingModal(convId, convId);
+    } catch(e) {
+      toast(e.message, 'error');
+      btn.style.opacity = ''; btn.style.pointerEvents = '';
+    }
+  }
+
+  backdrop.querySelector('#oc-complete').addEventListener('click', () => resolve('completed'));
+  backdrop.querySelector('#oc-cancel').addEventListener('click',   () => resolve('cancelled'));
+}
+
+/* ═══════════ SEND MESSAGE ═══════════ */
+async function sendMsg() {
+  const ta = document.getElementById('t-input');
+  const content = ta?.value.trim();
+  if (!content || !activeId) return;
+
+  ta.value = '';
+  ta.style.height = 'auto';
+  const btn = document.getElementById('t-send');
+  if (btn) btn.disabled = true;
+
+  try {
+    await api.post('/messages/send', { conversation_id: activeId, content });
+    await fetchThread(activeId);
+    const c = allConvs.find(x => x.id === activeId);
+    if (c) { c.last_message = content; c.last_message_at = new Date().toISOString(); }
+    renderConvList(allConvs);
+  } catch(e) {
+    toast(e.message, 'error');
+    if (ta) ta.value = content;
+  }
+  if (btn) btn.disabled = false;
+}
+
+function escHtml(s) {
+  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+          .replace(/"/g,'&quot;').replace(/\n/g,'<br>');
+}
+
+/* ═══════════ RATING MODAL ═══════════ */
+function openInlineRatingModal(orderId, convId) {
+  const existing = document.getElementById('rating-modal-root');
+  if (existing) existing.remove();
+
+  let selectedStars = 0;
+  const root = document.createElement('div');
+  root.id = 'rating-modal-root';
+  root.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.5);display:flex;align-items:flex-end;justify-content:center;z-index:9999;padding:0;';
+  // On desktop: centre; on mobile: bottom sheet
+  root.innerHTML = `
+    <div style="
+      background:var(--surface);
+      border-radius:20px 20px 0 0;
+      padding:28px 24px 36px;
+      width:100%; max-width:480px;
+      box-shadow:0 -8px 40px rgba(0,0,0,.18);
+      animation: slideUp .22s ease;
+      position:relative;
+    ">
+      <button id="rating-close-btn" style="position:absolute;top:14px;left:14px;background:none;border:none;cursor:pointer;color:var(--ink-3);padding:6px;border-radius:8px;display:flex;align-items:center;gap:4px;font-size:13px;font-family:var(--font-body);">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"/></svg>
+        Back
+      </button>
+      <div style="width:36px;height:4px;border-radius:2px;background:var(--border);margin:0 auto 20px;"></div>
+      <div style="font-size:18px;font-weight:800;margin-bottom:5px;letter-spacing:-.3px;">Rate your seller</div>
+      <div style="font-size:13px;color:var(--ink-3);margin-bottom:22px;line-height:1.6;">
+        How was the transaction? Your review helps others on Bixcart.
+      </div>
+      <div id="star-row" style="display:flex;gap:8px;justify-content:center;margin-bottom:20px;">
+        ${[1,2,3,4,5].map(n => `
+          <button data-star="${n}" style="
+            font-size:38px;background:none;border:none;cursor:pointer;
+            color:#e5e7eb;transition:color .1s,transform .1s;
+            line-height:1;padding:4px;border-radius:6px;
+          ">★</button>`).join('')}
+      </div>
+      <div id="star-label" style="text-align:center;font-size:13px;color:var(--ink-3);margin-bottom:16px;min-height:18px;"></div>
+      <textarea id="rating-review" placeholder="Write a short review (optional) — what was good or bad about the transaction?" style="
+        width:100%;padding:11px 13px;
+        border:1.5px solid var(--border);border-radius:var(--radius-md);
+        font-family:var(--font-body);font-size:13px;resize:none;
+        min-height:80px;outline:none;box-sizing:border-box;
+        background:var(--bg);color:var(--ink);line-height:1.55;
+      "></textarea>
+      <div style="display:flex;gap:10px;margin-top:16px;">
+        <button id="rating-skip" style="
+          flex:1;padding:12px;border-radius:var(--radius-md);
+          border:1.5px solid var(--border);background:var(--surface);
+          font-size:14px;font-weight:600;cursor:pointer;color:var(--ink-3);
+        ">Skip for now</button>
+        <button id="rating-submit" disabled style="
+          flex:2;padding:12px;border-radius:var(--radius-md);
+          border:none;background:#f59e0b;color:white;
+          font-size:14px;font-weight:700;cursor:pointer;
+          opacity:.5;transition:opacity .12s;
+        ">Submit Rating</button>
+      </div>
+    </div>
+    <style>@keyframes slideUp{from{transform:translateY(100%)}to{transform:translateY(0)}}</style>`;
+
+  document.body.appendChild(root);
+
+  // Push history state so system back closes this modal
+  history.pushState({ modal: 'rating' }, '');
+
+  const closeRating = () => { root.remove(); if (history.state?.modal === 'rating') history.back(); };
+
+  root.querySelector('#rating-close-btn').addEventListener('click', closeRating);
+  root.querySelector('#rating-skip').addEventListener('click', closeRating);
+  root.addEventListener('click', e => { if (e.target === root) closeRating(); });
+
+  const stars    = root.querySelectorAll('[data-star]');
+  const label    = root.querySelector('#star-label');
+  const submit   = root.querySelector('#rating-submit');
+  const labels   = ['', 'Poor', 'Fair', 'Good', 'Great', 'Excellent!'];
+
+  function paintStars(n) {
+    stars.forEach(s => {
+      const v = parseInt(s.dataset.star);
+      s.style.color = v <= n ? '#f59e0b' : '#e5e7eb';
+      s.style.transform = v === n && n > 0 ? 'scale(1.15)' : 'scale(1)';
+    });
+    label.textContent = n > 0 ? labels[n] : '';
+    label.style.color = n > 0 ? '#f59e0b' : 'var(--ink-3)';
+    label.style.fontWeight = '700';
+  }
+
+  stars.forEach(s => {
+    s.addEventListener('mouseenter', () => paintStars(parseInt(s.dataset.star)));
+    s.addEventListener('mouseleave', () => paintStars(selectedStars));
+    s.addEventListener('click', () => {
+      selectedStars = parseInt(s.dataset.star);
+      paintStars(selectedStars);
+      submit.disabled = false;
+      submit.style.opacity = '1';
+    });
+  });
+
+  submit.addEventListener('click', async () => {
+    if (!selectedStars) return;
+    submit.disabled = true; submit.textContent = 'Submitting…';
+    try {
+      await api.post(`/messages/conversations/${orderId}/rate`, {
+        rating: selectedStars,
+        review: root.querySelector('#rating-review').value.trim(),
+      });
+      root.remove();
+      if (history.state?.modal === 'rating') history.back();
+      toast('Thanks for rating! ⭐', 'success');
+      await fetchThread(convId, true);
+    } catch(e) {
+      toast(e.message, 'error');
+      submit.disabled = false; submit.textContent = 'Submit Rating';
+      submit.style.opacity = '1';
+    }
+  });
+}
+
+/* ═══════════ REPORT MODAL ═══════════ */
+function openReportModal(convId) {
+  const existing = document.getElementById('report-modal-backdrop');
+  if (existing) existing.remove();
+
+  const backdrop = document.createElement('div');
+  backdrop.className = 'report-modal-backdrop';
+  backdrop.id = 'report-modal-backdrop';
+  backdrop.innerHTML = `
+    <div class="report-modal" role="dialog" aria-modal="true" aria-labelledby="report-modal-title">
+      <button id="report-back-btn" style="display:flex;align-items:center;gap:4px;background:none;border:none;cursor:pointer;color:var(--ink-3);font-size:13px;font-family:var(--font-body);padding:0 0 14px 0;margin-bottom:2px;">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"/></svg>
+        Back
+      </button>
+      <h3 id="report-modal-title">Report Conversation</h3>
+      <p>Describe the issue. An admin will review it and decide on action.</p>
+      <textarea class="report-reason-ta" id="report-reason-input" placeholder="e.g. Harassment, scam attempt, inappropriate content…" maxlength="500"></textarea>
+      <div style="font-size:11px;color:var(--ink-3);margin-top:4px;" id="report-char-count">0 / 500</div>
+      <div class="report-modal-actions">
+        <button class="btn btn-primary btn-sm" id="report-submit-btn" style="background:var(--red,#e53e3e);border-color:var(--red,#e53e3e);">Submit Report</button>
+      </div>
+    </div>`;
+
+  document.body.appendChild(backdrop);
+  history.pushState({ modal: 'report' }, '');
+
+  const ta       = backdrop.querySelector('#report-reason-input');
+  const charCount= backdrop.querySelector('#report-char-count');
+  const submit   = backdrop.querySelector('#report-submit-btn');
+  const closeReport = () => { backdrop.remove(); if (history.state?.modal === 'report') history.back(); };
+
+  ta.focus();
+  ta.addEventListener('input', () => { charCount.textContent = `${ta.value.length} / 500`; });
+  backdrop.querySelector('#report-back-btn').addEventListener('click', closeReport);
+  backdrop.addEventListener('click', e => { if (e.target === backdrop) closeReport(); });
+
+  submit.addEventListener('click', async () => {
+    const reason = ta.value.trim();
+    if (!reason) { ta.focus(); toast('Please describe the issue.', 'error'); return; }
+    submit.disabled = true;
+    submit.textContent = 'Submitting…';
+    try {
+      await api.post('/messages/report', { conversation_id: convId, reason });
+      closeReport();
+      toast('Report submitted. An admin will review this conversation.', 'success');
+    } catch(e) {
+      toast(e.message, 'error');
+      submit.disabled = false;
+      submit.textContent = 'Submit Report';
+    }
+  });
+}
+
+window.addEventListener('popstate', () => {
+  // Close any open modal on system/hardware back
+  const rating  = document.getElementById('rating-modal-root');
+  const report  = document.getElementById('report-modal-backdrop');
+  const outcome = document.getElementById('outcome-modal-backdrop');
+  if (rating)  { rating.remove();  return; }
+  if (report)  { report.remove();  return; }
+  if (outcome) { outcome.remove(); return; }
+});
+
+window.addEventListener('beforeunload', () => { clearInterval(pollTimer); stopConvListPoll(); });
+loadConvs();
+</script>
+</body>
+</html>

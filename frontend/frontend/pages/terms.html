@@ -1,0 +1,816 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<!-- ── SEO ── -->
+<meta name="description" content="The rules for using Bixcart — written in plain English, not legalese. Read before signing up.">
+<meta name="robots" content="index, follow">
+<link rel="canonical" href="https://bixcart.onrender.com/pages/terms.html">
+
+<!-- Open Graph -->
+<meta property="og:type" content="website">
+<meta property="og:title" content="Terms of Service — Bixcart">
+<meta property="og:description" content="The rules for using Bixcart — written in plain English, not legalese. Read before signing up.">
+<meta property="og:url" content="https://bixcart.onrender.com/pages/terms.html">
+<meta property="og:site_name" content="Bixcart">
+<meta property="og:image" content="https://bixcart.onrender.com/og-image.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="Bixcart — ACU Student Marketplace">
+
+<!-- Twitter / X -->
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:site" content="@bixcart">
+<meta name="twitter:title" content="Terms of Service — Bixcart">
+<meta name="twitter:description" content="The rules for using Bixcart — written in plain English, not legalese. Read before signing up.">
+<meta name="twitter:image" content="https://bixcart.onrender.com/og-image.png">
+<title>Terms of Service — Bixcart</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@600;700&family=Raleway:wght@400;500;600;700;800;900&family=Nunito:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+
+/* ── RESET ── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; font-size: 16px; }
+img { max-width: 100%; display: block; }
+a { color: inherit; text-decoration: none; }
+button { cursor: pointer; }
+
+/* ── TOKENS ── */
+:root {
+  --bg:            #F7F4EF;
+  --surface:       #FFFFFF;
+  --surface-2:     #F0EDE7;
+  --border:        #E2DDD6;
+  --border-strong: #C8C2B8;
+  --ink:           #18150F;
+  --ink-2:         #4A4238;
+  --ink-3:         #7A7269;
+  --accent:        #C8522A;
+  --accent-hover:  #B04720;
+  --accent-bg:     #FDF0EB;
+  --green:         #2D7A4F;
+  --green-bg:      #EAF5EE;
+  --amber:         #B07000;
+  --amber-bg:      #FDF6E3;
+  --blue:          #1A5FA8;
+  --blue-bg:       #EBF2FC;
+  --red:           #C0312B;
+  --red-bg:        #FDECEA;
+  --shadow-sm:     0 1px 3px rgba(24,21,15,.06), 0 1px 2px rgba(24,21,15,.04);
+  --shadow-md:     0 4px 12px rgba(24,21,15,.08), 0 2px 4px rgba(24,21,15,.04);
+  --radius-sm:     0;
+  --radius-md:     0;
+  --radius-lg:     0;
+  --radius-full:   0;
+  --font-logo:     'Fredoka', sans-serif;
+  --font-display:  'Raleway', sans-serif;
+  --font-body:     'Nunito', sans-serif;
+  --nav-h:         64px;
+}
+
+body {
+  font-family: var(--font-body);
+  background: var(--bg);
+  color: var(--ink);
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+
+h1, h2, h3 {
+  font-family: var(--font-display);
+  font-weight: 800;
+  line-height: 1.15;
+  letter-spacing: -0.02em;
+}
+
+/* ── NAV ── */
+.nav {
+  position: sticky; top: 0; z-index: 200;
+  height: var(--nav-h);
+  background: rgba(247,244,239,.92);
+  backdrop-filter: blur(12px);
+  border-bottom: 1.5px solid var(--border);
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 0 32px;
+}
+.nav-logo {
+  font-family: var(--font-logo);
+  font-size: 22px; font-weight: 700; letter-spacing: -0.5px;
+  color: var(--ink);
+}
+.nav-logo span { color: var(--accent); }
+.nav-actions { display: flex; align-items: center; gap: 8px; }
+.btn {
+  display: inline-flex; align-items: center; justify-content: center;
+  padding: 8px 18px; border-radius: var(--radius-full);
+  font-family: var(--font-body); font-size: 14px; font-weight: 600;
+  border: none; cursor: pointer; transition: all .18s ease; white-space: nowrap;
+}
+.btn-ghost {
+  background: transparent; color: var(--ink);
+  border: 1.5px solid var(--border);
+}
+.btn-ghost:hover { border-color: var(--ink); background: var(--surface); }
+.btn-primary { background: var(--ink); color: #fff; }
+.btn-primary:hover { background: var(--accent); }
+
+/* ── LAYOUT ── */
+.container { max-width: 1120px; margin: 0 auto; padding: 0 32px; }
+.page { padding: 40px 0 80px; }
+.legal-wrap { max-width: 780px; margin: 0 auto; }
+
+/* ── BACK LINK ── */
+.back-link {
+  display: inline-flex; align-items: center; gap: 6px;
+  color: var(--ink-3); font-size: 14px; font-weight: 500;
+  margin-bottom: 32px; transition: color .15s;
+}
+.back-link:hover { color: var(--accent); }
+
+/* ── HERO ── */
+.legal-hero { text-align: center; padding: 48px 0 40px; }
+.eyebrow {
+  display: inline-flex; align-items: center; gap: 6px;
+  background: var(--accent-bg); color: var(--accent);
+  border: 1.5px solid rgba(200,82,42,.15);
+  border-radius: var(--radius-full);
+  padding: 5px 14px; font-size: 12px; font-weight: 700;
+  letter-spacing: .04em; text-transform: uppercase; margin-bottom: 20px;
+}
+.legal-hero h1 {
+  font-size: 48px; letter-spacing: -2px; margin-bottom: 16px;
+}
+.legal-hero .subtitle {
+  font-size: 17px; color: var(--ink-3); line-height: 1.65;
+  max-width: 500px; margin: 0 auto 24px;
+}
+.meta-row {
+  display: flex; align-items: center; justify-content: center;
+  gap: 10px; flex-wrap: wrap;
+}
+.meta-pill {
+  display: inline-flex; align-items: center; gap: 5px;
+  background: var(--surface); border: 1.5px solid var(--border);
+  border-radius: var(--radius-full); padding: 5px 12px;
+  font-size: 12px; color: var(--ink-3); font-weight: 500;
+}
+
+/* ── TABLE OF CONTENTS ── */
+.toc-card {
+  background: var(--surface); border: 1.5px solid var(--border);
+  border-radius: var(--radius-lg); padding: 28px 32px;
+  margin-bottom: 48px; box-shadow: var(--shadow-sm);
+}
+.toc-card .toc-label {
+  font-size: 11px; text-transform: uppercase; letter-spacing: .08em;
+  color: var(--ink-3); font-weight: 700; margin-bottom: 14px;
+}
+.toc-grid {
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); gap: 4px;
+}
+.toc-grid a {
+  display: flex; align-items: center; gap: 8px; padding: 8px 10px;
+  border-radius: var(--radius-sm); font-size: 13px; color: var(--ink-2);
+  font-weight: 500; transition: all .15s;
+}
+.toc-grid a:hover { background: var(--accent-bg); color: var(--accent); }
+.toc-num { font-size: 11px; font-weight: 700; color: var(--ink-3); min-width: 18px; }
+
+/* ── SECTIONS ── */
+.legal-section { margin-bottom: 52px; scroll-margin-top: 84px; }
+.section-header {
+  display: flex; align-items: center; gap: 12px;
+  margin-bottom: 18px; padding-bottom: 14px;
+  border-bottom: 1.5px solid var(--border);
+}
+.section-num {
+  background: var(--ink); color: white;
+  border-radius: var(--radius-sm); width: 32px; height: 32px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 13px; font-weight: 700; flex-shrink: 0;
+  font-family: var(--font-body);
+}
+.legal-section h2 { font-size: 21px; letter-spacing: -.4px; }
+.legal-section h3 {
+  font-size: 15px; font-weight: 700;
+  margin: 22px 0 10px; color: var(--ink);
+}
+.legal-section p {
+  margin-bottom: 12px; line-height: 1.75;
+  color: var(--ink-2); font-size: 15px;
+}
+.legal-section ul {
+  list-style: none; padding: 0;
+  display: flex; flex-direction: column; gap: 8px; margin-bottom: 14px;
+}
+.legal-section li {
+  display: flex; align-items: flex-start; gap: 10px;
+  font-size: 15px; color: var(--ink-2); line-height: 1.6;
+}
+.legal-section li::before {
+  content: '';
+  width: 6px; height: 6px; border-radius: 50%;
+  background: var(--accent); flex-shrink: 0; margin-top: 9px;
+}
+
+/* ── CALLOUTS ── */
+.callout {
+  border-radius: var(--radius-md); padding: 16px 18px;
+  margin: 18px 0; display: flex; gap: 13px;
+}
+.callout-icon { font-size: 20px; flex-shrink: 0; line-height: 1.4; }
+.callout-body { flex: 1; }
+.callout-title { font-size: 13px; font-weight: 700; margin-bottom: 4px; }
+.callout-body p { font-size: 14px; margin: 0; line-height: 1.6; color: var(--ink-2); }
+.callout-why  { background: var(--surface-2); border: 1.5px solid var(--border); border-left: 3px solid var(--accent); }
+.callout-why  .callout-title { color: var(--accent); }
+.callout-info { background: var(--blue-bg); border: 1.5px solid rgba(26,95,168,.12); border-left: 3px solid var(--blue); }
+.callout-info .callout-title { color: var(--blue); }
+.callout-warn { background: var(--amber-bg); border: 1.5px solid rgba(176,112,0,.12); border-left: 3px solid var(--amber); }
+.callout-warn .callout-title { color: var(--amber); }
+.callout-good { background: var(--green-bg); border: 1.5px solid rgba(45,122,79,.12); border-left: 3px solid var(--green); }
+.callout-good .callout-title { color: var(--green); }
+
+/* ── PROHIBITED GRID ── */
+.prohibited-grid {
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 12px; margin: 14px 0;
+}
+.prohibited-item {
+  background: var(--surface); border: 1.5px solid var(--border);
+  border-radius: var(--radius-md); padding: 16px;
+}
+.p-icon { font-size: 22px; margin-bottom: 8px; }
+.p-cat  { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .05em; color: var(--red); margin-bottom: 6px; }
+.p-desc { font-size: 13px; color: var(--ink-2); line-height: 1.55; margin-bottom: 8px; }
+.p-note { font-size: 12px; color: var(--ink-3); font-style: italic; }
+
+/* ── ALLOWED GRID ── */
+.allowed-grid {
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+  gap: 10px; margin: 14px 0;
+}
+.allowed-item {
+  display: flex; align-items: flex-start; gap: 10px; padding: 14px;
+  background: var(--green-bg); border: 1.5px solid rgba(45,122,79,.15);
+  border-radius: var(--radius-md);
+}
+.allowed-item .a-check { color: var(--green); font-size: 16px; flex-shrink: 0; margin-top: 1px; }
+.allowed-item p { margin: 0; font-size: 13px; color: var(--ink-2); line-height: 1.55; }
+
+/* ── AI LAYERS ── */
+.layer-grid {
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
+  gap: 12px; margin: 14px 0;
+}
+.layer-card {
+  background: var(--surface); border: 1.5px solid var(--border);
+  border-radius: var(--radius-md); padding: 18px; text-align: center;
+}
+.layer-card .l-icon  { font-size: 26px; margin-bottom: 10px; }
+.layer-card .l-label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; color: var(--ink-3); margin-bottom: 4px; }
+.layer-card .l-name  { font-size: 15px; font-weight: 700; color: var(--ink); margin-bottom: 6px; }
+.layer-card .l-desc  { font-size: 13px; color: var(--ink-3); line-height: 1.5; margin: 0; }
+
+/* ── VIOLATION TIERS ── */
+.tier-list { display: flex; flex-direction: column; gap: 10px; margin: 14px 0; }
+.tier-item {
+  display: flex; align-items: flex-start; gap: 12px; padding: 14px 16px;
+  background: var(--surface); border: 1.5px solid var(--border); border-radius: var(--radius-md);
+}
+.tier-badge {
+  padding: 3px 10px; border-radius: var(--radius-full);
+  font-size: 11px; font-weight: 700; white-space: nowrap; flex-shrink: 0;
+  font-family: var(--font-body);
+}
+.tier-badge.t-red   { background: var(--red-bg);   color: var(--red); }
+.tier-badge.t-amber { background: var(--amber-bg);  color: var(--amber); }
+.tier-badge.t-blue  { background: var(--blue-bg);   color: var(--blue); }
+.tier-badge.t-ink   { background: var(--ink);       color: white; }
+.tier-item p { margin: 0; font-size: 14px; color: var(--ink-2); line-height: 1.55; }
+
+/* ── CONTACT LIST ── */
+.contact-list { display: flex; flex-direction: column; gap: 10px; margin: 14px 0; }
+.contact-row {
+  display: flex; align-items: flex-start; gap: 14px; padding: 14px 16px;
+  background: var(--surface); border: 1.5px solid var(--border); border-radius: var(--radius-md);
+}
+.contact-row .c-icon { font-size: 20px; flex-shrink: 0; margin-top: 2px; }
+.c-label { font-size: 11px; font-weight: 700; color: var(--ink-3); text-transform: uppercase; letter-spacing: .04em; margin-bottom: 3px; }
+.c-value { font-size: 14px; color: var(--ink-2); line-height: 1.5; }
+.c-value a { color: var(--accent); font-weight: 600; }
+.c-value a:hover { text-decoration: underline; }
+
+/* ── FOOTER CALLOUT ── */
+.footer-callout {
+  background: linear-gradient(135deg, var(--accent-bg) 0%, var(--surface) 100%);
+  border: 1.5px solid rgba(200,82,42,.2); border-radius: var(--radius-lg);
+  padding: 36px; text-align: center; margin-top: 48px;
+}
+.fc-logo { font-family: var(--font-logo); font-size: 26px; font-weight: 700; color: var(--ink); margin-bottom: 8px; }
+.fc-logo span { color: var(--accent); }
+.fc-tagline { font-size: 16px; font-weight: 600; color: var(--ink); margin-bottom: 8px; }
+.fc-sub { font-size: 14px; color: var(--ink-3); }
+
+/* ── SITE FOOTER ── */
+.site-footer {
+  background: var(--ink); color: rgba(255,255,255,.85);
+  padding: 48px 0 28px; margin-top: 80px;
+}
+.footer-inner {
+  max-width: 1120px; margin: 0 auto; padding: 0 32px;
+}
+.footer-top {
+  display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 48px; margin-bottom: 40px;
+}
+.footer-brand-logo { font-family: var(--font-logo); font-size: 22px; font-weight: 700; color: white; margin-bottom: 10px; }
+.footer-brand-logo span { color: var(--accent); }
+.footer-brand p { font-size: 13px; color: rgba(255,255,255,.45); line-height: 1.7; max-width: 220px; }
+.footer-col h5 { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .1em; color: rgba(255,255,255,.35); margin-bottom: 14px; font-family: var(--font-body); }
+.footer-col ul { list-style: none; display: flex; flex-direction: column; gap: 8px; }
+.footer-col li::before { display: none; }
+.footer-col a { font-size: 13px; color: rgba(255,255,255,.55); transition: color .15s; }
+.footer-col a:hover { color: white; }
+.footer-bottom {
+  border-top: 1px solid rgba(255,255,255,.08); padding-top: 20px;
+  display: flex; justify-content: space-between; align-items: center;
+  font-size: 12px; color: rgba(255,255,255,.3);
+}
+
+/* ── RESPONSIVE ── */
+@media (max-width: 768px) {
+  .nav { padding: 0 16px; height: 56px; }
+  .nav-logo { font-size: 19px; }
+  .btn-ghost { display: none; }
+  .container { padding: 0 16px; }
+  .legal-hero h1 { font-size: 32px; letter-spacing: -1.5px; }
+  .legal-hero .subtitle { font-size: 15px; }
+  .toc-card { padding: 20px; }
+  .legal-section h2 { font-size: 18px; }
+  .footer-top { grid-template-columns: 1fr; gap: 24px; }
+  .footer-bottom { flex-direction: column; gap: 6px; text-align: center; }
+  .footer-callout { padding: 24px 20px; }
+}
+</style>
+</head>
+<body>
+
+<!-- ── NAV ── -->
+<nav class="nav">
+  <a href="/" class="nav-logo">Bix<span>cart</span></a>
+  
+</nav>
+
+<!-- ── PAGE ── -->
+<div class="container page">
+  <div class="legal-wrap">
+
+    <a href="https://bixcart.onrender.com" class="back-link">← Back to Bixcart</a>
+
+    <!-- HERO -->
+    <div class="legal-hero">
+      <div class="eyebrow">📋 Legal</div>
+      <h1>Terms of Service</h1>
+      <p class="subtitle">Written in plain English — because you shouldn't need a law degree to understand the rules of a student marketplace.</p>
+      <div class="meta-row">
+        <span class="meta-pill">📅 Last updated: August 17, 2026</span>
+        
+        <span class="meta-pill">⏱ ~5 min read</span>
+      </div>
+    </div>
+
+    <!-- TABLE OF CONTENTS -->
+    <div class="toc-card">
+      <div class="toc-label">On this page</div>
+      <div class="toc-grid">
+        <a href="#acceptance"><span class="toc-num">01</span> Accepting these terms</a>
+        <a href="#eligibility"><span class="toc-num">02</span> Who can use Bixcart</a>
+        <a href="#prohibited"><span class="toc-num">03</span> What's not allowed</a>
+        <a href="#moderation"><span class="toc-num">04</span> How moderation works</a>
+        <a href="#allowed"><span class="toc-num">05</span> What IS allowed</a>
+        <a href="#listings"><span class="toc-num">06</span> Listings & transactions</a>
+        <a href="#responsibilities"><span class="toc-num">07</span> Your responsibilities</a>
+        <a href="#suspension"><span class="toc-num">08</span> Account suspension</a>
+        <a href="#liability"><span class="toc-num">09</span> Liability & disclaimers</a>
+        <a href="#changes"><span class="toc-num">10</span> When we update things</a>
+        <a href="#contact"><span class="toc-num">11</span> Get in touch</a>
+      </div>
+    </div>
+
+    <!-- 1. ACCEPTANCE -->
+    <div class="legal-section" id="acceptance">
+      <div class="section-header">
+        <div class="section-num">1</div>
+        <h2>Accepting these terms</h2>
+      </div>
+      <p>By signing up or using Bixcart, you're agreeing to follow these rules. If you don't agree — that's okay, but you won't be able to use the platform.</p>
+      <p>Bixcart is built exclusively for students of <strong>Ajayi Crowther University (ACU)</strong>. When you register with your <strong>email address</strong>, you're confirming that the information you provide is accurate and that you'll play by the rules.</p>
+      <div class="callout callout-info">
+        <div class="callout-icon">💡</div>
+        <div class="callout-body">
+          <p class="callout-title">Why so strict about ACU?</p>
+          <p>Bixcart works because it's a trusted community. Keeping it to ACU students means you're trading with people you might sit next to in class. That trust is the whole point.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- 2. ELIGIBILITY -->
+    <div class="legal-section" id="eligibility">
+      <div class="section-header">
+        <div class="section-num">2</div>
+        <h2>Who can use Bixcart</h2>
+      </div>
+      <p>To create an account, you need to:</p>
+      <ul>
+        <li>Be a currently enrolled student at Ajayi Crowther University. There is no guarantee of approval if you are not an enrolled student.</li>
+        <li>Use an email address you can access for verification and important account communication.</li>
+        
+        <li>Provide accurate information when signing up</li>
+      </ul>
+      <p>A few more things: you can only have <strong>one account</strong>. Accounts are yours alone — non-transferable, non-shareable. You're responsible for keeping your password safe and for anything that happens under your account.</p>
+      <div class="callout callout-warn">
+        <div class="callout-icon">⚠️</div>
+        <div class="callout-body">
+          <p class="callout-title">Non-ACU users</p>
+          <p>Bixcart is intended for the ACU student community. You may use any email address you can access for account verification and important communication; using an email address does not by itself prove student status.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- 3. PROHIBITED -->
+    <div class="legal-section" id="prohibited">
+      <div class="section-header">
+        <div class="section-num">3</div>
+        <h2>What's not allowed</h2>
+      </div>
+      <p>Bixcart uses AI-powered moderation that scans messages and listings in real time. Violations lead to content removal, warnings, or bans depending on severity.</p>
+
+      <h3>📵 Taking conversations off-platform</h3>
+      <div class="callout callout-why">
+        <div class="callout-icon">🛡️</div>
+        <div class="callout-body">
+          <p class="callout-title">Why this rule exists</p>
+          <p>If a deal goes sideways on WhatsApp or Telegram, we can't help you. Keeping things on Bixcart means we can step in if something sketchy happens.</p>
+        </div>
+      </div>
+      <p>Don't share or ask for:</p>
+      <ul>
+        <li>Social handles — WhatsApp, Snapchat, Instagram, TikTok, Telegram, Facebook, X/Twitter</li>
+        <li>Phone numbers in any format (08xx, 09xx, +234, etc.)</li>
+        <li>Phrases like "DM me", "message me on...", "find me on...", or "let's move outside this app"</li>
+      </ul>
+
+      <h3>📚 Academic fraud</h3>
+      <div class="callout callout-why">
+        <div class="callout-icon">🎓</div>
+        <div class="callout-body">
+          <p class="callout-title">Why this rule exists</p>
+          <p>This violates ACU's honor code and puts everyone's academic future at risk. Bixcart will not be a tool for cheating, full stop.</p>
+        </div>
+      </div>
+      <ul>
+        <li>Exam expo, runz, leaks, or question papers</li>
+        <li>Assignments, projects, or theses for sale</li>
+        <li>"Write your assignment for ₦..." type offers</li>
+        <li>Any payment in exchange for academic work</li>
+      </ul>
+
+      <h3>🚫 Prohibited items</h3>
+      <div class="prohibited-grid">
+        <div class="prohibited-item">
+          <div class="p-icon">💊</div>
+          <div class="p-cat">Drugs & Paraphernalia</div>
+          <div class="p-desc">Weed, igbo, loud, shisha, codeine, tramadol, refnol, mkpuru, cocaine, heroin, meth — and any other illegal substances.</div>
+          <div class="p-note">Prescription drugs without a valid prescription are also off-limits.</div>
+        </div>
+        <div class="prohibited-item">
+          <div class="p-icon">🔫</div>
+          <div class="p-cat">Weapons</div>
+          <div class="p-desc">Guns, pistols, rifles, ammunition, cutlasses, or blades listed as weapons.</div>
+          <div class="p-note">Not sure if your item qualifies? Email support before listing.</div>
+        </div>
+        <div class="prohibited-item">
+          <div class="p-icon">🔞</div>
+          <div class="p-cat">Adult Content</div>
+          <div class="p-desc">Pornography, nudes, sexual videos, or explicit content of any kind — including hookup requests or solicitations.</div>
+          <div class="p-note">This is a student marketplace, not a dating app.</div>
+        </div>
+        <div class="prohibited-item">
+          <div class="p-icon">🎭</div>
+          <div class="p-cat">Stolen or Fake Goods</div>
+          <div class="p-desc">Stolen items, pirated software or media, counterfeit products, fake IDs, or fraudulent academic credentials.</div>
+          <div class="p-note">If you didn't legitimately own or make it, don't list it.</div>
+        </div>
+      </div>
+
+      <h3>❌ Other conduct that'll get you flagged</h3>
+      <ul>
+        <li>Harassment, bullying, hate speech, or threats toward other users</li>
+        <li>Spam, fake listings, or intentionally misleading descriptions</li>
+        <li>Impersonating another student or ACU staff member</li>
+        <li>Manipulating or gaming reviews and ratings</li>
+        <li>Listing items you don't own or have no right to sell</li>
+      </ul>
+    </div>
+
+    <!-- 4. AI MODERATION -->
+    <div class="legal-section" id="moderation">
+      <div class="section-header">
+        <div class="section-num">4</div>
+        <h2>How our moderation works</h2>
+      </div>
+      <p>Bixcart runs a two-layer AI system to keep the platform safe. Here's how it works:</p>
+      <div class="layer-grid">
+        <div class="layer-card">
+          <div class="l-icon">⚡</div>
+          <div class="l-label">Layer 1</div>
+          <div class="l-name">Keyword Filter</div>
+          <p class="l-desc">Scans every message and listing instantly. Catches about 90% of violations in real time.</p>
+        </div>
+        <div class="layer-card">
+          <div class="l-icon">🤖</div>
+          <div class="l-label">Layer 2</div>
+          <div class="l-name">AI Review</div>
+          <p class="l-desc">For ambiguous cases, a language model takes a closer look and handles edge cases keywords can't judge.</p>
+        </div>
+        <div class="layer-card">
+          <div class="l-icon">🔄</div>
+          <div class="l-label">Sweep Job</div>
+          <div class="l-name">Periodic Re-scan</div>
+          <p class="l-desc">Every 26 hours, AI re-scans all active listings and recent messages to catch anything that slipped through.</p>
+        </div>
+      </div>
+
+      <h3>If your content gets flagged</h3>
+      <ul>
+        <li>You'll get a push notification explaining what was flagged and why</li>
+        <li>Flagged listings are hidden from the marketplace until reviewed</li>
+        <li>Both parties in a flagged conversation are notified</li>
+        <li>Repeated violations lead to suspension or a permanent ban (see section 8)</li>
+      </ul>
+      <div class="callout callout-warn">
+        <div class="callout-icon">🙋</div>
+        <div class="callout-body">
+          <p class="callout-title">Think we got it wrong?</p>
+          <p>AI isn't perfect. If you believe your content was incorrectly flagged, email <strong>moderation@bixcart.com</strong> with the listing or message ID and a brief explanation. A human will review it within 48 hours.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- 5. ALLOWED -->
+    <div class="legal-section" id="allowed">
+      <div class="section-header">
+        <div class="section-num">5</div>
+        <h2>What IS allowed</h2>
+      </div>
+      <p>To be clear — Bixcart is a lively, normal student marketplace. Plenty of things that might seem borderline are completely fine:</p>
+      <div class="allowed-grid">
+        <div class="allowed-item">
+          <span class="a-check">✅</span>
+          <p><strong>Negotiating prices</strong> — haggling is part of the culture. Go for it.</p>
+        </div>
+        <div class="allowed-item">
+          <span class="a-check">✅</span>
+          <p><strong>Campus meetups</strong> — arranging exchanges at the library, cafeteria, or lecture halls.</p>
+        </div>
+        <div class="allowed-item">
+          <span class="a-check">✅</span>
+          <p><strong>Asking about condition</strong> — requesting more photos or details before buying.</p>
+        </div>
+        <div class="allowed-item">
+          <span class="a-check">✅</span>
+          <p><strong>Sharing bank details for payment</strong> — as long as the conversation stays on Bixcart.</p>
+        </div>
+        <div class="allowed-item">
+          <span class="a-check">✅</span>
+          <p><strong>Casual student talk</strong> — Nigerian slang, banter, and normal chat is all welcome.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- 6. LISTINGS -->
+    <div class="legal-section" id="listings">
+      <div class="section-header">
+        <div class="section-num">6</div>
+        <h2>Listings & transactions</h2>
+      </div>
+      <h3>📦 When you post a listing</h3>
+      <ul>
+        <li>Include a clear title, an honest description, a price in ₦ Naira, and at least one photo</li>
+        <li>Be straight about the condition — New, Like New, Good, or Fair</li>
+        <li>Price it fairly. Bait-and-switch tactics will get you reported fast</li>
+        <li>Creating, maintaining, and renewing listings on Bixcart is free.</li>
+        <li>Listings remain active for 3 months and may be renewed when they expire.</li>
+      </ul>
+
+      <h3>💳 Orders, payments & refunds</h3>
+      <ul>
+        <li>When an order is paid for through Bixcart, the payment is processed through our payment provider and tracked as part of the order.</li>
+        <li>Bixcart uses Paystack Split Payments to allocate seller shares and Bixcart commissions at checkout. Delivery confirmation is used to complete the order record.</li>
+        <li>If a seller declines an order or an order is cancelled under Bixcart's rules, Bixcart will initiate a refund to the buyer through the original payment method where the payment is refundable.</li>
+        <li>When a refund is initiated, the buyer may receive an in-app/push notification and an email confirming that the refund has been initiated. A notification that a refund was initiated does not mean the funds have already reached the buyer's account.</li>
+        <li>Refund timing depends on the payment provider and the buyer's financial institution.</li>
+        <li>Never share your account passwords, PINs, or OTPs with anyone.</li>
+      </ul>
+
+      <h3>📈 Seller commission</h3>
+      <ul>
+        <li>There is no charge for creating or maintaining a listing.</li>
+        <li>For successfully completed sales, Bixcart charges a flat 7% commission.</li>
+        <li>The commission rate is the same for every seller and does not decrease based on sales volume.</li>
+        <li>Any future change to the platform commission requires an admin Agree/Disagree governance vote before it takes effect.</li>
+      </ul>
+
+      <h3>🏪 Seller locations</h3>
+      <ul>
+        <li>Sellers must choose either a hostel location or a shop location for their seller profile.</li>
+        <li>A seller cannot use both a hostel and a shop location at the same time.</li>
+        <li>If a seller chooses a hostel, their hostel and room information must be provided. If they choose a shop, the shop name, shop number, and shop address must be provided.</li>
+      </ul>
+
+      <h3>✅ Seller approval</h3>
+      <ul>
+        <li>New seller accounts require admin approval before seller features can be used.</li>
+        <li>Seller applications are normally reviewed within approximately 6 hours, but this is an estimate rather than a guarantee.</li>
+        <li>If an application is rejected, Bixcart will provide a reason for the rejection.</li>
+      </ul>
+      <div class="callout callout-good">
+        <div class="callout-icon">🤝</div>
+        <div class="callout-body">
+          <p class="callout-title">Safety tip for meetups</p>
+          <p>Always swap items in a public campus spot — the library, cafeteria, or Student Affairs building are all great. Bringing a friend along never hurts either.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- 7. RESPONSIBILITIES -->
+    <div class="legal-section" id="responsibilities">
+      <div class="section-header">
+        <div class="section-num">7</div>
+        <h2>Your responsibilities</h2>
+      </div>
+      <p>By using Bixcart, you're agreeing to be a good community member. That means:</p>
+      <ul>
+        <li>Being honest about what you're selling — condition, functionality, all of it</li>
+        <li>Responding to messages within 48 hours so buyers aren't left hanging</li>
+        <li>Following through on agreed deals, or communicating if something changes</li>
+        <li>Reporting scams, suspicious users, or prohibited content to <a href="mailto:support@bixcart.com" style="color:var(--accent);font-weight:600;">support@bixcart.com</a></li>
+        <li>Meeting buyers/sellers in safe, public campus locations</li>
+        <li>Keeping all conversations on Bixcart — not moving to WhatsApp or any other app</li>
+      </ul>
+    </div>
+
+    <!-- 8. SUSPENSION -->
+    <div class="legal-section" id="suspension">
+      <div class="section-header">
+        <div class="section-num">8</div>
+        <h2>Account suspension & bans</h2>
+      </div>
+      <p>We don't want to suspend anyone — but we will if we have to. Here's how the tiers work:</p>
+      <div class="tier-list">
+        <div class="tier-item">
+          <span class="tier-badge t-ink">Immediate ban</span>
+          <p>Academic fraud, listing weapons or drugs, sexual content, or harassment. No warnings — these go straight to permanent removal.</p>
+        </div>
+        <div class="tier-item">
+          <span class="tier-badge t-red">Permanent ban</span>
+          <p>Three violations within 6 months, or any single severe violation (drugs, academic fraud, prohibited items).</p>
+        </div>
+        <div class="tier-item">
+          <span class="tier-badge t-amber">30-day suspension</span>
+          <p>Two or more AI-flagged messages or listings within a 90-day window.</p>
+        </div>
+        <div class="tier-item">
+          <span class="tier-badge t-blue">Warning + restriction</span>
+          <p>First-time minor violations, repeated low-quality listings, or light spam.</p>
+        </div>
+      </div>
+      <div class="callout callout-info">
+        <div class="callout-icon">⚖️</div>
+        <div class="callout-body">
+          <p class="callout-title">Want to appeal?</p>
+          <p>Email <strong>appeals@bixcart.com</strong> with your case. If approved, your account will be restored within 7 days.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- 9. LIABILITY -->
+    <div class="legal-section" id="liability">
+      <div class="section-header">
+        <div class="section-num">9</div>
+        <h2>Liability & disclaimers</h2>
+      </div>
+      <p>Here's the legal bit we have to include. To the maximum extent permitted by law, Bixcart and its operators are not liable for:</p>
+      <ul>
+        <li>Financial loss, data loss, or damage arising from transactions between users</li>
+        <li>Third-party links, services, or content that appear on the platform</li>
+        <li>Loss of profits or business resulting from platform downtime</li>
+        <li>Any indirect, special, or consequential damages</li>
+      </ul>
+      <p>Bixcart is provided "as is". We do our best to keep it running smoothly, but can't promise it'll always be error-free, uninterrupted, or perfectly secure.</p>
+    </div>
+
+    <!-- 10. CHANGES -->
+    <div class="legal-section" id="changes">
+      <div class="section-header">
+        <div class="section-num">10</div>
+        <h2>When we update these terms</h2>
+      </div>
+      <p>Rules evolve as the platform does. If we make meaningful changes, we'll let you know via:</p>
+      <ul>
+        <li>An in-app banner you'll see when you log in</li>
+        <li>An email to your registered email address</li>
+        <li>A notice posted on the Bixcart homepage</li>
+      </ul>
+      <p>Continuing to use Bixcart after changes means you're okay with the updated terms.</p>
+    </div>
+
+    <!-- 11. CONTACT -->
+    <div class="legal-section" id="contact">
+      <div class="section-header">
+        <div class="section-num">11</div>
+        <h2>Get in touch</h2>
+      </div>
+      <p>We're real people. Here's how to reach the right team:</p>
+      <div class="contact-list">
+        <div class="contact-row">
+          <div class="c-icon">📧</div>
+          <div>
+            <div class="c-label">General support</div>
+            <div class="c-value"><a href="mailto:support@bixcart.com">support@bixcart.com</a> — bugs, questions, account issues</div>
+          </div>
+        </div>
+        <div class="contact-row">
+          <div class="c-icon">⚖️</div>
+          <div>
+            <div class="c-label">Moderation appeals</div>
+            <div class="c-value"><a href="mailto:appeals@bixcart.com">appeals@bixcart.com</a> — reviewed within 48 hours</div>
+          </div>
+        </div>
+        <div class="contact-row">
+          <div class="c-icon">📝</div>
+          <div>
+            <div class="c-label">Legal & copyright</div>
+            <div class="c-value"><a href="mailto:legal@bixcart.com">legal@bixcart.com</a> — DMCA & legal matters (5–7 days)</div>
+          </div>
+        </div>
+        <div class="contact-row">
+          <div class="c-icon">📍</div>
+          <div>
+            <div class="c-label">In person</div>
+            <div class="c-value">Ajayi Crowther University, Oyo State — Student Union Building, 2nd floor</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- FOOTER CALLOUT -->
+    <div class="footer-callout">
+      <div class="fc-logo">Bix<span>cart</span></div>
+      <p class="fc-tagline">Built by ACU students, for ACU students. 🎓</p>
+      <p class="fc-sub">Keep it safe. Keep it on campus. Keep it on Bixcart.</p>
+    </div>
+
+  </div>
+</div>
+
+<!-- ── SITE FOOTER ── -->
+<footer class="site-footer">
+  <div class="footer-inner">
+    <div class="footer-top">
+      <div class="footer-brand">
+        <div class="footer-brand-logo">Bix<span>cart</span></div>
+        <p>The peer-to-peer marketplace exclusively for ACU students. Buy, sell, and connect on campus.</p>
+      </div>
+      <div class="footer-col">
+        <h5>Marketplace</h5>
+        <ul>
+          <li><a href="/pages/marketplace.html">Browse listings</a></li>
+          <li><a href="/pages/sell.html">List an item</a></li>
+          <li><a href="/pages/marketplace.html?category=Textbooks">Textbooks</a></li>
+          <li><a href="/pages/marketplace.html?category=Electronics">Electronics</a></li>
+        </ul>
+      </div>
+      <div class="footer-col">
+        <h5>Company</h5>
+        <ul>
+          <li><a href="/pages/about.html">About</a></li>
+          <li><a href="/pages/safety.html">Safety tips</a></li>
+          <li><a href="/pages/terms.html" style="color:rgba(255,255,255,.85);">Terms of Service</a></li>
+          <li><a href="/pages/privacy.html">Privacy Policy</a></li>
+          <li><a href="mailto:support@bixcart.com">Contact</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <span>© 2026 Bixcart. Built for ACU students.</span>
+      <span>🎓 Ajayi Crowther University</span>
+    </div>
+  </div>
+</footer>
+
+</body>
+</html>
