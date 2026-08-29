@@ -1,7 +1,7 @@
 const mongoose = require('mongoose');
 const express = require('express');
 const router  = express.Router();
-const { User, Listing, Conversation, Message, Order, ConversationReport, UserReport, Broadcast, Hostel, DeliverySpot, AdminAction, UserActivity } = require('../db/database');
+const { User, Listing, Conversation, Message, Order, ConversationReport, UserReport, Broadcast, Hostel, DeliverySpot, AdminAction, UserActivity, PlatformSetting, CommissionProposal, getCurrentCommissionPercent } = require('../db/database');
 const { adminMiddleware } = require('../middleware/auth');
 const { notifyUser } = require('../db/push');
 const { sendSellerDecisionEmail } = require('../utils/email');
@@ -25,6 +25,57 @@ async function logAdminAction(req, action, target = null, reason = '', metadata 
   });
 }
 
+
+
+// ── PLATFORM COMMISSION GOVERNANCE ──────────────────────────────────────────
+router.get('/commission', async (req, res) => {
+  try {
+    const [percent, pending, history] = await Promise.all([
+      getCurrentCommissionPercent(),
+      CommissionProposal.findOne({ status: 'pending' }).populate('proposed_by', 'full_name email').sort({ created_at: -1 }).lean(),
+      CommissionProposal.find({ status: { $in: ['approved','rejected','cancelled'] } }).populate('proposed_by', 'full_name email').sort({ decided_at: -1, created_at: -1 }).limit(20).lean(),
+    ]);
+    const format = p => p ? ({ ...p, id: p._id, proposer: p.proposed_by ? { id: p.proposed_by._id, full_name: p.proposed_by.full_name, email: p.proposed_by.email } : null, votes: (p.votes || []).map(v => ({ ...v, id: v._id })) }) : null;
+    res.json({ commission_percent: percent, pending: format(pending), history: history.map(format) });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+router.post('/commission/proposals', async (req, res) => {
+  try {
+    const proposed_percent = Number(req.body?.proposed_percent);
+    const reason = String(req.body?.reason || '').trim();
+    if (!Number.isFinite(proposed_percent) || proposed_percent < 0 || proposed_percent > 100) return res.status(400).json({ error: 'Commission must be between 0% and 100%.' });
+    const current = await getCurrentCommissionPercent();
+    if (proposed_percent === current) return res.status(409).json({ error: `Commission is already ${current}%.` });
+    const existing = await CommissionProposal.findOne({ status: 'pending' });
+    if (existing) return res.status(409).json({ error: 'There is already a pending commission change awaiting a vote.' });
+    const proposal = await CommissionProposal.create({ proposed_percent, proposed_by: req.user.id, reason });
+    res.status(201).json({ success: true, proposal: { ...proposal.toObject(), id: proposal._id } });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+router.post('/commission/proposals/:id/vote', async (req, res) => {
+  try {
+    const vote = String(req.body?.vote || '').toLowerCase();
+    if (!['agree','disagree'].includes(vote)) return res.status(400).json({ error: 'Vote must be agree or disagree.' });
+    const proposal = await CommissionProposal.findById(req.params.id);
+    if (!proposal || proposal.status !== 'pending') return res.status(404).json({ error: 'Pending commission proposal not found.' });
+    if (String(proposal.proposed_by) === String(req.user.id)) return res.status(403).json({ error: 'The admin who proposed the change cannot cast the required deciding vote.' });
+    if (proposal.votes.some(v => String(v.voter_id) === String(req.user.id))) return res.status(409).json({ error: 'You have already voted on this proposal.' });
+
+    proposal.votes.push({ voter_id: req.user.id, vote, voted_at: new Date() });
+    proposal.status = vote === 'agree' ? 'approved' : 'rejected';
+    proposal.decided_at = new Date();
+    await proposal.save();
+
+    if (vote === 'agree') {
+      const previous_percent = await getCurrentCommissionPercent();
+      await PlatformSetting.findOneAndUpdate({ key: 'commission_percent' }, { $set: { value: proposal.proposed_percent } }, { upsert: true, new: true, setDefaultsOnInsert: true });
+      await logAdminAction(req, 'commission_changed', null, proposal.reason || '', { proposal_id: String(proposal._id), previous_percent, new_percent: proposal.proposed_percent, vote: 'agree' });
+    }
+    res.json({ success: true, status: proposal.status, commission_percent: await getCurrentCommissionPercent() });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
 
 // ── STATS ────────────────────────────────────────────────────────────────────
 // GET /api/admin/stats
@@ -963,7 +1014,7 @@ const { sendSellerDecisionEmail } = require('../utils/email');
       title: '📣 Admin Notice',
       body: message.trim().slice(0, 100),
       type: 'admin_notification',
-      url: `/pages/marketplace.html`,
+      url: `/pages/messages.html?conv=${conv._id}`,
     }).catch(() => {});
 
     res.json({ success: true, message_id: msg._id });
@@ -1018,7 +1069,7 @@ router.post('/flagged/conversations/:id/unflag', async (req, res) => {
       title: '✅ Conversation Cleared',
       body:  'Your flagged conversation has been reviewed and cleared by an admin. You may continue.',
       type:  'ai_cleared',
-      url:   `/pages/marketplace.html`,
+      url:   `/pages/messages.html?conv=${conv._id}`,
     }).catch(() => {}));
 
     res.json({ success: true });

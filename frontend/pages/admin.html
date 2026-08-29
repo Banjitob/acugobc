@@ -694,6 +694,7 @@ body {
     <button class="admin-nav-item" data-tab="deletion-requests">Account Deletions</button>
     <button class="admin-nav-item admin-only" data-tab="controls">🛡️ Controls</button>
     <button class="admin-nav-item admin-only" data-tab="control-actions">↩ Control Actions</button>
+    <button class="admin-nav-item admin-only" data-tab="commission">💰 Commission</button>
     <button class="admin-nav-item admin-only" data-tab="actions">
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20V10"/><path d="M18 20V4"/><path d="M6 20v-6"/></svg>
       Admin Actions
@@ -829,13 +830,13 @@ function adminLogout() { adminAuth.clear(); window.location.replace('admin-login
 // ── Tab routing ─────────────────────────────────────────────────────────────
 const isControlUser = () => adminAuth.getUser()?.role === 'control';
 const controlPath = path => isControlUser() ? path.replace(/^\/admin/, '/control') : path;
-const TABS = { overview: 'Overview', controls: 'Controls', 'control-actions': 'Control Actions', 'seller-approvals': 'Seller Approvals', 'deletion-requests': 'Account Deletions', actions: 'Admin Actions', users: 'Users', listings: 'Listings', broadcast: 'Broadcast', hostels: 'Hostels', 'delivery-spots': 'Delivery Spots', messages: 'Conversation Reports', 'user-reports': 'User Reports', flagged: 'AI Flagged' };
+const TABS = { overview: 'Overview', commission: 'Commission', controls: 'Controls', 'control-actions': 'Control Actions', 'seller-approvals': 'Seller Approvals', 'deletion-requests': 'Account Deletions', actions: 'Admin Actions', users: 'Users', listings: 'Listings', broadcast: 'Broadcast', hostels: 'Hostels', 'delivery-spots': 'Delivery Spots', messages: 'Conversation Reports', 'user-reports': 'User Reports', flagged: 'AI Flagged' };
 const ACTION_LABELS = {
   seller_approved: 'Approved seller', seller_rejected: 'Rejected seller',
   seller_override: 'Overrode seller decision',
   user_warned: 'Warned user', user_suspended: 'Suspended user', user_unsuspended: 'Restored user',
   account_deletion_approved: 'Approved account deletion', account_deletion_rejected: 'Rejected account deletion',
-  control_created: 'Created Control account', control_action_reversed: 'Reversed Control action',
+  control_created: 'Created Control account', control_action_reversed: 'Reversed Control action', commission_changed: 'Changed platform commission',
 };
 let currentTab = isControlUser() ? 'seller-approvals' : 'overview';
 
@@ -873,6 +874,7 @@ function switchTab(tab) {
   const content = document.getElementById('admin-content');
   content.innerHTML = '<div class="admin-empty">Loading…</div>';
   if (tab === 'overview')  renderOverview();
+  if (tab === 'commission') renderCommission();
   if (tab === 'controls') renderControls();
   if (tab === 'control-actions') renderControlActions();
   if (tab === 'seller-approvals') renderSellerApprovals();
@@ -1136,6 +1138,45 @@ window.addEventListener('popstate', () => {
   if (document.getElementById('admin-modal').style.display !== 'none') { closeModal(); return; }
   if (document.getElementById('drawer-root').innerHTML) { closeDrawer(); }
 });
+
+// ══════════════════════════════════════════════════════════════════════════════
+// COMMISSION GOVERNANCE
+// ══════════════════════════════════════════════════════════════════════════════
+async function renderCommission() {
+  const c = document.getElementById('admin-content');
+  c.innerHTML = '<div class="admin-empty">Loading commission settings…</div>';
+  try {
+    const d = await api.get('/admin/commission');
+    const p = d.pending;
+    const userId = adminAuth.getUser()?.id;
+    const isProposer = p && String(p.proposed_by?._id || p.proposed_by?.id || p.proposed_by) === String(userId);
+    c.innerHTML = `
+      <div style="margin-bottom:18px"><div class="section-kicker">Platform fee</div><h2 style="font-size:28px">Commission</h2><p style="color:var(--ink-3);font-size:13px">Bixcart uses one platform-wide commission rate. It is currently <strong>${Number(d.commission_percent).toFixed(1)}%</strong>. Any change requires an Agree/Disagree vote from a second admin.</p></div>
+      <div class="card" style="padding:20px;margin-bottom:18px">
+        <div style="display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap">
+          <div><div style="font-size:12px;color:var(--ink-3)">Current rate</div><div style="font-size:34px;font-weight:800">${Number(d.commission_percent).toFixed(1)}%</div></div>
+          <div style="font-size:13px;color:var(--ink-3);max-width:560px">No game, tier, sales-based discount, or variable commission applies. Every seller is charged the same rate.</div>
+        </div>
+      </div>
+      ${p ? `<div class="card" style="padding:20px;margin-bottom:18px;border:1.5px solid var(--border)">
+        <div style="font-weight:800;font-size:17px;margin-bottom:6px">Pending change: ${Number(p.proposed_percent).toFixed(1)}%</div>
+        <div style="font-size:13px;color:var(--ink-3);margin-bottom:14px">Proposed by ${escHtml(p.proposed_by?.full_name || p.proposed_by?.email || 'Admin')}${p.reason ? ` · ${escHtml(p.reason)}` : ''}</div>
+        ${isProposer ? `<div class="notice notice-info">You proposed this change. A different admin must vote Agree or Disagree before the rate can change.</div>` : `<div style="display:flex;gap:10px;flex-wrap:wrap"><button class="btn btn-primary" onclick="voteCommission('${p.id}','agree')">✓ Agree</button><button class="btn btn-danger" onclick="voteCommission('${p.id}','disagree')">✕ Disagree</button></div>`}
+      </div>` : `<div class="card" style="padding:20px;margin-bottom:18px"><h3 style="margin-bottom:12px">Propose a new rate</h3><div style="display:grid;grid-template-columns:180px 1fr;gap:10px"><input id="commission-rate" class="form-input" type="number" min="0" max="100" step="0.1" value="${Number(d.commission_percent).toFixed(1)}"><input id="commission-reason" class="form-input" placeholder="Reason for the change (optional)"></div><button class="btn btn-primary" style="margin-top:12px" onclick="proposeCommission()">Create vote</button></div>`}
+      <div><h3 style="font-size:17px;margin-bottom:10px">Recent decisions</h3>${(d.history||[]).length ? `<div class="admin-table-wrap"><table class="admin-table"><thead><tr><th>Date</th><th>Proposed by</th><th>Rate</th><th>Decision</th></tr></thead><tbody>${d.history.map(x=>`<tr><td>${fmtTime(x.decided_at || x.created_at)}</td><td>${escHtml(x.proposed_by?.full_name || 'Admin')}</td><td>${Number(x.proposed_percent).toFixed(1)}%</td><td>${escHtml(x.status)}</td></tr>`).join('')}</tbody></table></div>` : '<div class="admin-empty">No commission changes yet.</div>'}</div>`;
+  } catch(e) { c.innerHTML = `<div class="admin-empty">Failed to load commission settings: ${escHtml(e.message)}</div>`; }
+}
+window.proposeCommission = async function() {
+  const rate = Number(document.getElementById('commission-rate')?.value);
+  const reason = document.getElementById('commission-reason')?.value?.trim() || '';
+  if (!Number.isFinite(rate) || rate < 0 || rate > 100) return toast('Enter a valid commission between 0% and 100%.', 'error');
+  try { await api.post('/admin/commission/proposals', { proposed_percent: rate, reason }); toast('Commission change proposed. Another admin must vote.', 'success'); renderCommission(); } catch(e) { toast(e.message, 'error'); }
+};
+window.voteCommission = async function(id, vote) {
+  const word = vote === 'agree' ? 'Agree' : 'Disagree';
+  if (!confirm(`${word} to this commission change?`)) return;
+  try { const r = await api.post(`/admin/commission/proposals/${id}/vote`, { vote }); toast(r.status === 'approved' ? `Commission changed to ${Number(r.commission_percent).toFixed(1)}%.` : 'Proposal rejected.', r.status === 'approved' ? 'success' : 'warning'); renderCommission(); } catch(e) { toast(e.message, 'error'); }
+};
 
 // ══════════════════════════════════════════════════════════════════════════════
 // OVERVIEW

@@ -35,9 +35,6 @@ const userSchema = new mongoose.Schema({
   discoverability_score: { type: Number, default: 100, min: 0, max: 100 },
   listing_credits:  { type: Number, default: 1 },
   successful_sales_count: { type: Number, default: 0, min: 0 },
-  commission_tier:  { type: Number, default: 1, min: 1, max: 4 },
-  commission_percent: { type: Number, default: 7, min: 0, max: 100 },
-  tier_unlocked_at: { type: Date, default: null },
   bank_name:        { type: String, default: '' },
   bank_code:        { type: String, default: '' },
   account_number:   { type: String, default: '' },
@@ -152,6 +149,7 @@ savedListingSchema.index({ user_id: 1, listing_id: 1 }, { unique: true });
 const cartItemSchema = new mongoose.Schema({
   user_id:    { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
   listing_id: { type: mongoose.Schema.Types.ObjectId, ref: 'Listing', required: true },
+  quantity:   { type: Number, default: 1, min: 1 },
 }, { timestamps: { createdAt: 'created_at', updatedAt: false } });
 
 cartItemSchema.index({ user_id: 1, listing_id: 1 }, { unique: true });
@@ -223,6 +221,7 @@ userReportSchema.index({ reporter_id: 1, reported_user_id: 1, status: 1 });
 
 const orderSchema = new mongoose.Schema({
   listing_id:             { type: mongoose.Schema.Types.ObjectId, ref: 'Listing', required: true },
+  quantity:                { type: Number, default: 1, min: 1 },
   buyer_id:               { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
   seller_id:              { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
   amount:                 { type: Number, required: true },
@@ -334,7 +333,8 @@ const buyRequestSchema = new mongoose.Schema({
   buyer_id:       { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
   seller_id:      { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
   listing_id:      { type: mongoose.Schema.Types.ObjectId, ref: 'Listing', required: true },
-  amount:         { type: Number, required: true }, // listing price captured at request time
+  amount:         { type: Number, required: true }, // total price captured at request time
+  quantity:       { type: Number, default: 1, min: 1 },
   status:         { type: String, enum: ['pending','accepted','declined','expired','paid','cancelled'], default: 'pending' },
   request_group:  { type: String, default: null },
   decline_reason: { type: String, default: '' },
@@ -342,6 +342,12 @@ const buyRequestSchema = new mongoose.Schema({
   responded_at:   { type: Date, default: null },
   payment_deadline_at: { type: Date, default: null },  // buyer must pay by this time once accepted
   order_id:       { type: mongoose.Schema.Types.ObjectId, ref: 'Order', default: null },
+  // Set by the SELLER at accept time, only required when buyer and seller
+  // aren't in the same hostel — see routes/buyRequests.js. Same-hostel
+  // handoffs are left informal; cross-hostel ones need a scheduled spot.
+  same_hostel:    { type: Boolean, default: null },
+  delivery_spot:  { type: String, default: '' },
+  delivery_scheduled_at: { type: Date, default: null },
 }, { timestamps: { createdAt: 'created_at', updatedAt: 'updated_at' } });
 
 buyRequestSchema.index({ buyer_id: 1 });
@@ -358,6 +364,26 @@ const broadcastSchema = new mongoose.Schema({
   sent_by:          { type: mongoose.Schema.Types.ObjectId, ref: 'User', default: null },
 }, { timestamps: { createdAt: 'created_at', updatedAt: 'updated_at' } });
 
+
+const platformSettingSchema = new mongoose.Schema({
+  key: { type: String, required: true, unique: true },
+  value: { type: mongoose.Schema.Types.Mixed, default: null },
+}, { timestamps: { createdAt: 'created_at', updatedAt: 'updated_at' } });
+
+const commissionProposalSchema = new mongoose.Schema({
+  proposed_percent: { type: Number, required: true, min: 0, max: 100 },
+  proposed_by: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
+  status: { type: String, enum: ['pending','approved','rejected','cancelled'], default: 'pending' },
+  reason: { type: String, default: '' },
+  decided_at: { type: Date, default: null },
+  votes: [{
+    voter_id: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
+    vote: { type: String, enum: ['agree','disagree'], required: true },
+    voted_at: { type: Date, default: Date.now },
+  }],
+}, { timestamps: { createdAt: 'created_at', updatedAt: 'updated_at' } });
+commissionProposalSchema.index({ status: 1, created_at: -1 });
+
 const User               = mongoose.model('User',               userSchema);
 const Listing            = mongoose.model('Listing',            listingSchema);
 const Waitlist           = mongoose.model('Waitlist',           waitlistSchema);
@@ -372,45 +398,14 @@ const Order              = mongoose.model('Order',              orderSchema);
 const Broadcast          = mongoose.model('Broadcast',          broadcastSchema);
 const CheckoutIntent     = mongoose.model('CheckoutIntent',     checkoutIntentSchema);
 const BuyRequest         = mongoose.model('BuyRequest',         buyRequestSchema);
+const PlatformSetting    = mongoose.model('PlatformSetting',    platformSettingSchema);
+const CommissionProposal = mongoose.model('CommissionProposal', commissionProposalSchema);
 
-const SELLER_COMMISSION_TIERS = [
-  { level: 1, threshold: 0, commission_percent: 7.0, label: 'Starter', discount_cap: 0 },
-  { level: 2, threshold: 10, commission_percent: 6.5, label: 'Trusted', discount_cap: 2 },
-  { level: 3, threshold: 25, commission_percent: 6.0, label: 'Reliable', discount_cap: 4 },
-  { level: 4, threshold: 50, commission_percent: 5.5, label: 'Top seller', discount_cap: 6 },
-];
-
-function getSellerCommissionInfo(successfulSalesCount = 0) {
-  let selected = SELLER_COMMISSION_TIERS[0];
-  let next = null;
-
-  for (let i = 0; i < SELLER_COMMISSION_TIERS.length; i += 1) {
-    const tier = SELLER_COMMISSION_TIERS[i];
-    if (successfulSalesCount >= tier.threshold) {
-      selected = tier;
-      continue;
-    }
-    next = tier;
-    break;
-  }
-
-  const salesSinceCurrent = Math.max(0, successfulSalesCount - selected.threshold);
-  const remainingToNext = next ? Math.max(0, next.threshold - successfulSalesCount) : 0;
-  const span = next ? Math.max(1, next.threshold - selected.threshold) : 1;
-  const progressToNext = next ? Math.min(100, Math.max(0, (salesSinceCurrent / span) * 100)) : 100;
-
-  return {
-    level: selected.level,
-    label: selected.label,
-    commission_percent: Number(selected.commission_percent),
-    discount_cap: selected.discount_cap,
-    sales_count: Number(successfulSalesCount),
-    next_tier: next ? next.level : null,
-    next_tier_label: next ? next.label : null,
-    next_threshold: next ? next.threshold : null,
-    remaining_sales_to_next: remainingToNext,
-    progress_to_next: Math.round(progressToNext),
-  };
+const DEFAULT_COMMISSION_PERCENT = 7;
+async function getCurrentCommissionPercent() {
+  const setting = await PlatformSetting.findOne({ key: 'commission_percent' }).lean();
+  const n = Number(setting?.value);
+  return Number.isFinite(n) && n >= 0 && n <= 100 ? n : DEFAULT_COMMISSION_PERCENT;
 }
 
 async function connectDb() {
@@ -443,6 +438,6 @@ module.exports = {
   BuyRequest,
   AdminAction,
   UserActivity,
-  SELLER_COMMISSION_TIERS,
-  getSellerCommissionInfo,
+  DEFAULT_COMMISSION_PERCENT,
+  getCurrentCommissionPercent,
 };

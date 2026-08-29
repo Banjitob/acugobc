@@ -175,14 +175,14 @@ async function sweepExpiredOrders() {
         title: 'Refund initiated',
         body: `Your payment for ${title} has been cancelled and a refund has been initiated. You will receive the funds back through the original payment method.` ,
         type: 'refund',
-        url: `/pages/buyer-dashboard.html?tab=orders`,
+        url: `/pages/orders.html?id=${order._id}`,
       }).catch(() => {});
 
       await notifyUser(String(order.seller_id), {
         title: 'Order cancelled',
         body: `${title} was cancelled because the order deadline was missed.`,
         type: 'order',
-        url: `/pages/seller-dashboard.html?tab=orders`,
+        url: `/pages/messages.html?conv=${order._id}`,
       }).catch(() => {});
 
       if (result.initiated) {

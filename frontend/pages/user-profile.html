@@ -392,16 +392,18 @@
       document.getElementById('profile-name-block').insertAdjacentHTML('beforeend', pickupInfo);
     }
 
-    // Compose message CTA — removed: buyer/seller messaging is disabled.
-    // Delivery is coordinated through the structured meetup flow instead.
+    // Compose message CTA (only for logged-in users viewing someone else)
     const me = auth.getUser();
     const viewingOther = auth.isLoggedIn() && me?.id !== userId && me?.id !== u.id;
+    const messageCTA = viewingOther
+      ? `<a href="messages.html" class="btn btn-primary btn-sm" style="display:inline-flex;align-items:center;gap:5px;">${icons.messageCircle || '💬'} Message</a>`
+      : '';
     const reportCTA = viewingOther
       ? `<button class="btn btn-surface btn-sm report-btn" onclick="openUserReportModal('${u.id}')">⚑ Report user</button>`
       : '';
     // Render the whole body
     document.getElementById('profile-body').innerHTML = `
-      ${reportCTA ? `<div class="profile-actions" style="justify-content:flex-end;">${reportCTA}</div>` : ''}
+      ${(messageCTA || reportCTA) ? `<div class="profile-actions" style="justify-content:flex-end;">${messageCTA}${reportCTA}</div>` : ''}
       <div class="profile-stats-row">${statsHTML}</div>
       ${listingsHTML}
       ${reviewsHTML}`;

@@ -32,6 +32,9 @@
   .cart-line-seller { font-size: 12px; color: var(--ink-3); }
   .cart-line-unavailable { font-size: 12px; color: var(--red); font-weight: 600; margin-top: 4px; }
   .cart-line-price { font-size: 16px; font-weight: 700; white-space: nowrap; }
+  .cart-qty { display:flex; align-items:center; border:1.5px solid var(--border); border-radius:var(--radius-md); overflow:hidden; margin-top:8px; width:max-content; }
+  .cart-qty button { width:30px; height:30px; border:0; background:var(--surface-2); cursor:pointer; }
+  .cart-qty input { width:42px; height:30px; border:0; border-left:1px solid var(--border); border-right:1px solid var(--border); text-align:center; background:var(--surface); color:var(--ink); font-weight:700; }
   .cart-line-remove {
     width: 32px; height: 32px; border-radius: 50%; border: none; background: none;
     color: var(--ink-3); display: flex; align-items: center; justify-content: center;
@@ -106,8 +109,8 @@
     }
 
     sub.textContent = `${items.length} ${items.length === 1 ? 'item' : 'items'} in your cart`;
-    const available = items.filter(i => i.status === 'active');
-    const subtotal  = available.reduce((s, i) => s + i.price, 0);
+    const available = items.filter(i => i.status === 'active' && Number(i.stock_quantity || 0) >= Number(i.quantity || 1));
+    const subtotal  = available.reduce((s, i) => s + (Number(i.price || 0) * Number(i.quantity || 1)), 0);
     const hasBlocked = available.length !== items.length;
 
     el.innerHTML = `
@@ -120,7 +123,7 @@
           <div class="cart-summary-row"><span>Subtotal (${available.length})</span><span>${formatPrice(subtotal)}</span></div>
           <div class="cart-summary-row"><span>Delivery</span><span>Free</span></div>
           <div class="cart-summary-row total"><span>Total</span><span>${formatPrice(subtotal)}</span></div>
-          ${hasBlocked ? `<p style="font-size:12px;color:var(--red);margin:10px 0 0;">Remove unavailable items before requesting to buy.</p>` : ''}
+          ${hasBlocked ? `<p style="font-size:12px;color:var(--red);margin:10px 0 0;">Fix unavailable items or quantities before requesting to buy.</p>` : ''}
           <button class="btn btn-accent w-full" style="margin-top:16px;" id="checkout-btn" ${hasBlocked || !available.length ? 'disabled' : ''} onclick="requestToBuy()">
             Request to buy ${icons.chevronRight}
           </button>
@@ -141,12 +144,33 @@
           <a href="listing.html?id=${i.id}" style="color:inherit;"><div class="cart-line-title">${i.title}</div></a>
           <div class="cart-line-meta">${conditionDot(i.condition)} ${i.condition} · ${i.category}</div>
           <div class="cart-line-seller">by ${i.seller_name || 'ACU Student'}</div>
-          ${i.status !== 'active' ? `<div class="cart-line-unavailable">${icons.alertCircle} No longer available</div>` : ''}
+          ${i.status === 'active' ? `<div class="cart-qty"><button type="button" onclick="changeCartQty('${i.id}', -1)">−</button><input type="number" min="1" max="${Math.max(1, Number(i.stock_quantity || 1))}" value="${Number(i.quantity || 1)}" onchange="setCartQty('${i.id}', this.value)"></div>` : ''}
+          ${i.status !== 'active' ? `<div class="cart-line-unavailable">${icons.alertCircle} No longer available</div>` : Number(i.quantity || 1) > Number(i.stock_quantity || 0) ? `<div class="cart-line-unavailable">${icons.alertCircle} Only ${Number(i.stock_quantity || 0)} available — reduce quantity</div>` : ''}
         </div>
-        <div class="cart-line-price">${formatPrice(i.price)}</div>
+        <div class="cart-line-price">${formatPrice(Number(i.price || 0) * Number(i.quantity || 1))}<div style="font-size:11px;color:var(--ink-3);font-weight:500;">${formatPrice(i.price)} each</div></div>
         <button class="cart-line-remove" title="Remove" onclick="removeLine('${i.id}')">${icons.x}</button>
       </div>`;
   }
+
+  async function setCartQty(id, raw) {
+    const item = items.find(i => String(i.id) === String(id));
+    if (!item) return;
+    const qty = Math.max(1, Math.min(Number(item.stock_quantity || 1), parseInt(raw, 10) || 1));
+    try {
+      await cart.updateQuantity(id, qty);
+      item.quantity = qty;
+      render();
+    } catch (e) { toast(e.message, 'error'); render(); }
+  }
+
+  function changeCartQty(id, delta) {
+    const item = items.find(i => String(i.id) === String(id));
+    if (!item) return;
+    setCartQty(id, Number(item.quantity || 1) + delta);
+  }
+
+  window.setCartQty = setCartQty;
+  window.changeCartQty = changeCartQty;
 
   async function removeLine(id) {
     try {

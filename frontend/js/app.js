@@ -105,12 +105,15 @@ async function refreshCartState() {
 }
 
 const cart = {
-  async add(listingId) {
-    const r = await api.post('/cart/add', { listing_id: listingId });
+  async add(listingId, quantity = 1) {
+    const r = await api.post('/cart/add', { listing_id: listingId, quantity });
     cartState.ids.add(String(listingId));
     updateCartBadge(r.count);
     syncCartButtons();
     return r;
+  },
+  async updateQuantity(listingId, quantity) {
+    return api.patch(`/cart/${listingId}`, { quantity });
   },
   async remove(listingId) {
     const r = await api.delete(`/cart/${listingId}`);
@@ -412,9 +415,11 @@ function renderFooter() {
 
   const accountLinks = isSeller ? `
     <li><a href="/pages/seller-dashboard.html">Seller dashboard</a></li>
+    <li><a href="/pages/messages.html">Messages</a></li>
     <li><a href="/pages/settings.html">Account settings</a></li>
   ` : `
     <li><a href="/pages/buyer-dashboard.html">My purchases</a></li>
+    <li><a href="/pages/messages.html">Messages</a></li>
     <li><a href="/pages/settings.html">Account settings</a></li>
   `;
 

@@ -177,7 +177,7 @@ router.post('/send', authMiddleware, async (req, res) => {
       body: content.trim().slice(0, 100),
       type: 'message',
       tag: `msg-${convDoc._id}`,
-      url: `/pages/marketplace.html`,
+      url: `/pages/messages.html?conv=${convDoc._id}`,
     }).catch(() => {});
 
     // ── AI moderation (fire-and-forget, non-blocking) ────────────────────────
@@ -212,13 +212,13 @@ router.post('/send', authMiddleware, async (req, res) => {
             title: '⚠️ Conversation Flagged',
             body: flagMsg,
             type: 'ai_flag',
-            url: `/pages/marketplace.html`,
+            url: `/pages/messages.html?conv=${convDoc._id}`,
           }).catch(() => {});
           notifyUser(receiverId, {
             title: '⚠️ Conversation Flagged',
             body: flagMsg,
             type: 'ai_flag',
-            url: `/pages/marketplace.html`,
+            url: `/pages/messages.html?conv=${convDoc._id}`,
           }).catch(() => {});
         }
       } catch(e) { console.warn('[AI mod] message check failed:', e.message); }

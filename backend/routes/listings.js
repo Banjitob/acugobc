@@ -69,7 +69,7 @@ router.get('/', optionalAuth, async (req, res) => {
   try {
     const { q, category, condition, min_price, max_price, sort = 'recommended', page = 1, limit = 12 } = req.query;
 
-    const filter = { status: 'active' };
+    const filter = { status: 'active', stock_quantity: { $gt: 0 } };
     const now = new Date();
     filter.$and = [
       { $or: [{ expires_at: { $exists: false } }, { expires_at: null }, { expires_at: { $gt: now } }] },
@@ -150,7 +150,7 @@ router.get('/saved', authMiddleware, async (req, res) => {
       .sort({ created_at: -1 }).lean();
 
     const listings = saves
-      .filter(s => s.listing_id && s.listing_id.status === 'active' && !isListingExpired(s.listing_id))
+      .filter(s => s.listing_id && s.listing_id.status === 'active' && Number(s.listing_id.stock_quantity || 0) > 0 && !isListingExpired(s.listing_id))
       .map(s => {
         const l = s.listing_id;
         return {
@@ -168,19 +168,6 @@ router.get('/saved', authMiddleware, async (req, res) => {
     res.json({ listings });
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
-// GET /api/listings/:id/stock — lightweight polling endpoint for the listing
-// page's live "N left" indicator. Deliberately minimal (no population, no
-// view-count increment) since it's designed to be called every few seconds
-// while a listing page is open.
-router.get('/:id/stock', async (req, res) => {
-  try {
-    if (!require('mongoose').Types.ObjectId.isValid(req.params.id)) return res.status(404).json({ error: 'Listing not found' });
-    const listing = await Listing.findById(req.params.id).select('status stock_quantity').lean();
-    if (!listing || listing.status === 'deleted') return res.status(404).json({ error: 'Listing not found' });
-    res.json({ status: listing.status, stock_quantity: listing.stock_quantity });
-  } catch (e) { res.status(500).json({ error: e.message }); }
-});
-
 router.get('/:id', optionalAuth, async (req, res) => {
   try {
     if (!require('mongoose').Types.ObjectId.isValid(req.params.id)) return res.status(404).json({ error: 'Listing not found' });
@@ -200,7 +187,7 @@ router.get('/:id', optionalAuth, async (req, res) => {
     }
 
     const related = await Listing
-      .find({ category: listing.category, _id: { $ne: req.params.id }, status: 'active' })
+      .find({ category: listing.category, _id: { $ne: req.params.id }, status: 'active', stock_quantity: { $gt: 0 } })
       .populate('seller_id', 'full_name')
       .limit(4).lean();
 
