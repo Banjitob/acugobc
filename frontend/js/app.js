@@ -28,7 +28,7 @@ const api = {
     let data;
     try { data = await res.json(); }
     catch { data = { error: 'Server returned an invalid response' }; }
-    if (!res.ok) throw new Error(data.error || 'Request failed');
+    if (!res.ok) throw Object.assign(new Error(data.error || 'Request failed'), data);
     return data;
   },
   get:    (path, auth)       => api.request('GET',    path, null, auth),
@@ -133,7 +133,7 @@ const buyRequests = {
   createFromCart()          { return api.post('/buy-requests', {}); },
   buying(status)             { return api.get(`/buy-requests/buying${status ? '?status=' + encodeURIComponent(status) : ''}`); },
   selling(status)            { return api.get(`/buy-requests/selling${status ? '?status=' + encodeURIComponent(status) : ''}`); },
-  accept(id)                 { return api.post(`/buy-requests/${id}/accept`, {}); },
+  accept(id, body)            { return api.post(`/buy-requests/${id}/accept`, body || {}); },
   decline(id, reason)        { return api.post(`/buy-requests/${id}/decline`, { reason }); },
   group(group)                { return api.get(`/buy-requests/group/${group}`); },
   initPayment(group, delivery_address) { return api.post(`/buy-requests/${group}/initialize-payment`, { delivery_address }); },

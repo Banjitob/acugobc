@@ -45,10 +45,16 @@
   renderFooter();
   if (!auth.requireAuth()) throw new Error('redirect');
 
-  let items = [], subtotal = 0, paying = false, requestGroup = null, deliverySpots = [];
+  let items = [], subtotal = 0, paying = false, requestGroup = null;
 
   function escHtml(s) {
     return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  }
+
+  function formatDeliverySlot(iso) {
+    const d = new Date(iso);
+    if (isNaN(d.getTime())) return '';
+    return d.toLocaleString('en-NG', { weekday: 'short', day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit' });
   }
 
   async function init() {
@@ -82,6 +88,7 @@
       items = requests.map(r => ({
         id: r.listing_id, title: r.listing_title, price: r.listing_price,
         images: r.listing_images, request_id: r.id,
+        spot: r.delivery_spot, requested_delivery_at: r.delivery_scheduled_at, same_hostel: r.same_hostel,
       }));
       if (!items.length) {
         document.getElementById('checkout-content').innerHTML = `
@@ -94,10 +101,6 @@
         return;
       }
       subtotal = items.reduce((s, i) => s + i.price, 0);
-      try {
-        const spotData = await api.get('/auth/delivery-spots');
-        deliverySpots = spotData.spots || [];
-      } catch { deliverySpots = []; }
       renderCheckout();
     } catch (e) {
       document.getElementById('checkout-content').innerHTML = `
@@ -112,8 +115,6 @@
 
   function renderCheckout() {
     const user = auth.getUser();
-    const today = new Date();
-    const minDate = today.toISOString().slice(0, 10);
     document.getElementById('checkout-content').innerHTML = `
       <div class="page-header">
         <h1 class="display" style="font-size:28px;">Pay for your order</h1>
@@ -130,32 +131,24 @@
             <label class="form-label">Phone number <span style="color:var(--red);">*</span></label>
             <input class="form-input" id="f-phone" type="tel" placeholder="e.g. 0803 123 4567">
           </div>
-          <div class="form-group" style="margin-bottom:14px;">
-            <label class="form-label">Meetup spot <span style="color:var(--red);">*</span></label>
-            ${deliverySpots.length ? `
-              <select class="form-select" id="f-spot">
-                <option value="">Select a popular spot on campus</option>
-                ${deliverySpots.map(s => `<option value="${escHtml(s.name)}">${escHtml(s.name)}</option>`).join('')}
-              </select>
-              <span class="form-hint">Ajayi Crowther University — curated list, so the seller always knows exactly where to go.</span>
-            ` : `
-              <input class="form-input" id="f-spot" placeholder="e.g. Main Gate, Faculty of Science">
-              <span class="form-hint">Ajayi Crowther University — no curated spots set up yet, so type where you'd like to meet.</span>
-            `}
-          </div>
-          <div style="display:flex;gap:12px;">
-            <div class="form-group" style="margin-bottom:14px;flex:1;">
-              <label class="form-label">Delivery day <span style="color:var(--red);">*</span></label>
-              <input class="form-input" id="f-date" type="date" min="${minDate}">
-            </div>
-            <div class="form-group" style="margin-bottom:14px;flex:1;">
-              <label class="form-label">Delivery time <span style="color:var(--red);">*</span></label>
-              <input class="form-input" id="f-time" type="time">
-            </div>
-          </div>
           <div class="form-group">
             <label class="form-label">Note for the seller (optional)</label>
             <textarea class="form-textarea" id="f-note" style="min-height:70px;" placeholder="e.g. call me when you're close"></textarea>
+          </div>
+          <div style="margin-top:6px;padding-top:16px;border-top:1px solid var(--border);">
+            <div style="font-weight:700;font-size:13px;margin-bottom:10px;">Meetup arrangements</div>
+            ${items.map(i => `
+              <div style="font-size:12px;color:var(--ink-3);margin-bottom:10px;display:flex;align-items:flex-start;gap:6px;">
+                ${icons.mapPin}
+                <span>
+                  <strong style="color:var(--ink-2);">${escHtml(i.title)}</strong><br>
+                  ${i.same_hostel
+                    ? `You and the seller are in the same hostel — arrange the handoff directly once your order is confirmed.`
+                    : i.spot && i.requested_delivery_at
+                      ? `${escHtml(i.spot)} · ${formatDeliverySlot(i.requested_delivery_at)}`
+                      : `The seller will confirm a meetup spot and time.`}
+                </span>
+              </div>`).join('')}
           </div>
         </div>
 
@@ -181,32 +174,14 @@
   function validateForm() {
     const name  = document.getElementById('f-name').value.trim();
     const phone = document.getElementById('f-phone').value.trim();
-    const spot  = document.getElementById('f-spot').value.trim();
-    const date  = document.getElementById('f-date').value;
-    const time  = document.getElementById('f-time').value;
     if (!name || !phone) {
       toast('Please fill in your name and phone number', 'error');
-      return null;
-    }
-    if (!spot) {
-      toast('Please choose a meetup spot', 'error');
-      return null;
-    }
-    if (!date || !time) {
-      toast('Please choose a delivery day and time', 'error');
-      return null;
-    }
-    const requestedAt = new Date(`${date}T${time}`);
-    if (isNaN(requestedAt.getTime()) || requestedAt < new Date(Date.now() - 5 * 60 * 1000)) {
-      toast('Please choose a delivery time in the future', 'error');
       return null;
     }
     return {
       full_name: name,
       phone,
       campus: 'Ajayi Crowther University',
-      spot,
-      requested_delivery_at: requestedAt.toISOString(),
       note: document.getElementById('f-note').value.trim(),
     };
   }

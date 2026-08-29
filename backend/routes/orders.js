@@ -275,17 +275,11 @@ router.post('/initialize-payment', authMiddleware, async (req, res) => {
 async function buildSplitCheckoutSession({ buyerId, buyerEmail, deliveryContact, listings, source = 'cart', buyRequestGroup = null, req }) {
   if (!deliveryContact?.full_name || !deliveryContact?.phone)
     throw Object.assign(new Error('Full name and phone number are required'), { status: 400 });
-  if (!deliveryContact?.spot || !String(deliveryContact.spot).trim())
-    throw Object.assign(new Error('Please choose a meetup spot'), { status: 400 });
-  if (!deliveryContact?.requested_delivery_at || isNaN(new Date(deliveryContact.requested_delivery_at).getTime()))
-    throw Object.assign(new Error('Please choose a delivery day and time'), { status: 400 });
 
   const checkoutDelivery = {
     full_name: String(deliveryContact.full_name).trim(),
     phone: String(deliveryContact.phone).trim(),
     campus: 'Ajayi Crowther University',
-    spot: String(deliveryContact.spot).trim(),
-    requested_delivery_at: new Date(deliveryContact.requested_delivery_at),
     note: String(deliveryContact.note || '').trim(),
   };
 
@@ -312,10 +306,20 @@ async function buildSplitCheckoutSession({ buyerId, buyerEmail, deliveryContact,
   for (const listing of listings) {
     const amount = Number(listing.price || 0);
     const sid = String(listing.seller_id);
-    if (!grouped.has(sid)) grouped.set(sid, { amount: 0, seller: sellerMap.get(sid), listing_ids: [] });
+    if (!grouped.has(sid)) grouped.set(sid, { amount: 0, seller: sellerMap.get(sid), listing_ids: [], listing_delivery: {} });
     const g = grouped.get(sid);
     g.amount += amount;
     g.listing_ids.push(String(listing._id));
+    // Meetup spot/time (set by the seller at accept time, only when hostels
+    // differ — see buyRequests.js) travels with its listing so the resulting
+    // order carries it without the buyer having to re-enter anything.
+    if (listing._delivery_spot || listing._delivery_scheduled_at) {
+      g.listing_delivery[String(listing._id)] = {
+        spot: listing._delivery_spot || '',
+        requested_delivery_at: listing._delivery_scheduled_at || null,
+        same_hostel: !!listing._same_hostel,
+      };
+    }
   }
 
   // Flat shares preserve each seller's exact 7%→5.5% commission even when
@@ -331,6 +335,7 @@ async function buildSplitCheckoutSession({ buyerId, buyerEmail, deliveryContact,
     intentItems.push({
       seller_id: sid,
       listing_ids: g.listing_ids,
+      listing_delivery: g.listing_delivery,
       amount: Number(g.amount.toFixed(2)),
       commission_percent: commission.commission_percent,
       commission_amount: Number((g.amount * commission.commission_percent / 100).toFixed(2)),
@@ -456,7 +461,12 @@ async function finalizeCheckoutPayment({ payment_reference, buyerId }) {
         platform_fee_percent: item.commission_percent,
         platform_fee_amount: Number((amount * item.commission_percent / 100).toFixed(2)),
         seller_payout_amount: Number((amount * (1 - item.commission_percent / 100)).toFixed(2)),
-        checkout_group, fulfillment: 'delivery', delivery_address: intent.delivery_address,
+        checkout_group, fulfillment: 'delivery',
+        // Base contact info (name/phone/note) comes from the buyer at payment
+        // time; the meetup spot/time — only set when buyer and seller aren't
+        // in the same hostel — was chosen by the SELLER when they accepted,
+        // and travels in per-listing on the intent (see buildSplitCheckoutSession).
+        delivery_address: { ...intent.delivery_address, ...(item.listing_delivery?.[String(listingId)] || {}) },
         delivery_fee: 0, payment_method: 'card', payment_status: 'paid', payment_reference,
         processing_fee_amount: 0, seller_processing_fee_share: 0,
       });

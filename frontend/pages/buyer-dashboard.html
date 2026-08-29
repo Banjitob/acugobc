@@ -490,7 +490,7 @@
             </div>
             ${groupCounts[o.checkout_group] > 1 ? `<div style="font-size:12px;color:var(--ink-3);margin-top:6px;">Part of a ${groupCounts[o.checkout_group]}-item order</div>` : ''}
             ${o.fulfillment === 'delivery' && o.delivery_address
-              ? `<div style="font-size:12px;color:var(--ink-3);margin-top:6px;display:flex;align-items:center;gap:4px;">${icons.truck} Delivery at ${escHtml(o.delivery_address.spot || o.delivery_address.campus || 'Ajayi Crowther University')}${o.delivery_address.requested_delivery_at ? ' · ' + formatDeliverySlot(o.delivery_address.requested_delivery_at) : ''}${o.delivery_address.note ? ' · ' + escHtml(o.delivery_address.note) : ''}</div>`
+              ? `<div style="font-size:12px;color:var(--ink-3);margin-top:6px;display:flex;align-items:center;gap:4px;">${icons.truck} ${o.delivery_address.spot ? `Delivery at ${escHtml(o.delivery_address.spot)}${o.delivery_address.requested_delivery_at ? ' · ' + formatDeliverySlot(o.delivery_address.requested_delivery_at) : ''}` : 'Same hostel as the seller — arrange the handoff directly'}${o.delivery_address.note ? ' · ' + escHtml(o.delivery_address.note) : ''}</div>`
               : (o.meetup_location ? `<div style="font-size:12px;color:var(--ink-3);margin-top:6px;display:flex;align-items:center;gap:4px;">${icons.mapPin} Meetup: ${escHtml(o.meetup_location)}</div>` : '')}
             ${stageMessage}
             ${o.status === 'completed' && !o.buyer_rating ? `<div style="font-size:12px;color:#059669;margin-top:6px;font-weight:600;">✓ Complete — tap ★ to rate</div>` : ''}

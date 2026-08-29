@@ -593,7 +593,9 @@
               <span>${formatDate(r.created_at)}</span>
             </div>
             ${r.status === 'pending' ? `<div style="font-size:12px;color:#b45309;margin-top:6px;font-weight:600;">No payment taken yet — respond within 2 hours or this request expires.</div>` : ''}
+            ${r.status === 'pending' && r.same_hostel === false ? `<div style="font-size:12px;color:var(--ink-3);margin-top:4px;">${escHtml(r.buyer_name || 'This buyer')} is in a different hostel — you'll pick a meetup spot and time when you accept.</div>` : ''}
             ${r.status === 'accepted' ? `<div style="font-size:12px;color:#059669;margin-top:6px;font-weight:600;">Buyer has up to 2 hours to pay. You'll see it here once they do.</div>` : ''}
+            ${r.status === 'accepted' && r.same_hostel === false && r.delivery_spot ? `<div style="font-size:12px;color:var(--ink-3);margin-top:4px;display:flex;align-items:center;gap:4px;">${icons.mapPin} ${escHtml(r.delivery_spot)}${r.delivery_scheduled_at ? ' · ' + formatDeliverySlot(r.delivery_scheduled_at) : ''}</div>` : ''}
             ${r.decline_reason ? `<div style="font-size:12px;color:var(--ink-3);margin-top:6px;">Reason: ${escHtml(r.decline_reason)}</div>` : ''}
           </div>
         </div>
@@ -624,7 +626,7 @@
             ${groupCounts[o.checkout_group] > 1 ? `<div style="font-size:12px;color:var(--ink-3);margin-top:6px;">Part of a ${groupCounts[o.checkout_group]}-item order</div>` : ''}
             ${o.delivery_address ? `
               <div style="font-size:12px;color:var(--ink-3);margin-top:6px;display:flex;align-items:flex-start;gap:4px;">
-                ${icons.truck} <span>${o.delivery_address.full_name} · ${o.delivery_address.phone}<br>${o.delivery_address.spot || o.delivery_address.campus || 'Ajayi Crowther University'}${o.delivery_address.requested_delivery_at ? ` · ${formatDeliverySlot(o.delivery_address.requested_delivery_at)}` : ''}${o.delivery_address.note ? ` — "${o.delivery_address.note}"` : ''}</span>
+                ${icons.truck} <span>${o.delivery_address.full_name} · ${o.delivery_address.phone}<br>${o.delivery_address.spot ? `${escHtml(o.delivery_address.spot)}${o.delivery_address.requested_delivery_at ? ' · ' + formatDeliverySlot(o.delivery_address.requested_delivery_at) : ''}` : 'Same hostel as buyer — arrange the handoff directly'}${o.delivery_address.note ? ` — "${o.delivery_address.note}"` : ''}</span>
               </div>` : ''}
             ${o.status === 'paid' ? `<div style="font-size:12px;color:#b45309;margin-top:6px;font-weight:600;">🔒 Payment received through Paystack Split — accept the order to get started.</div>` : ''}
             ${o.delivery_code && ['confirmed','fulfilled'].includes(o.status) ? `<div style="font-size:12px;color:var(--ink-3);margin-top:6px;display:flex;align-items:center;gap:6px;flex-wrap:wrap;">${icons.shield} Give the buyer this delivery verification code at handoff: <strong style="color:var(--ink);letter-spacing:.12em;">${o.delivery_code}</strong></div>` : ''}
@@ -647,12 +649,97 @@
   }
 
   window.acceptBuyRequest = async (id) => {
+    const r = allRequests.find(x => String(x.id) === String(id));
+    if (r && r.same_hostel === false) {
+      openAcceptSchedulingModal(r);
+      return;
+    }
+    // Same hostel (or unknown — server will tell us if scheduling is actually
+    // required) — try a plain accept first.
     try {
       await buyRequests.accept(id);
       toast('Request accepted — the buyer can now pay.', 'success');
       loadOrders();
-    } catch (e) { toast(e.message, 'error'); }
+    } catch (e) {
+      if (e.requires_scheduling) { openAcceptSchedulingModal(r || { id }); return; }
+      toast(e.message, 'error');
+    }
   };
+
+  let deliverySpotsCache = null;
+  async function openAcceptSchedulingModal(r) {
+    if (!deliverySpotsCache) {
+      try { deliverySpotsCache = (await api.get('/auth/delivery-spots')).spots || []; }
+      catch { deliverySpotsCache = []; }
+    }
+    const today = new Date().toISOString().slice(0, 10);
+    const overlay = document.createElement('div');
+    overlay.className = 'modal-overlay';
+    overlay.innerHTML = `
+      <div class="modal">
+        <div class="modal-header">
+          <div class="modal-title">Where and when?</div>
+          <button class="btn btn-ghost btn-sm" id="asm-close">${icons.x || 'Close'}</button>
+        </div>
+        <div class="modal-body">
+          <p style="font-size:13px;color:var(--ink-3);margin-bottom:16px;">${escHtml(r.buyer_name || 'This buyer')} is in a different hostel from you, so pick a meetup spot and a time — the buyer will see exactly this when they pay.</p>
+          <div class="form-group" style="margin-bottom:14px;">
+            <label class="form-label">Meetup spot <span style="color:var(--red);">*</span></label>
+            ${deliverySpotsCache.length ? `
+              <select class="form-select" id="asm-spot">
+                <option value="">Select a popular spot on campus</option>
+                ${deliverySpotsCache.map(s => `<option value="${escHtml(s.name)}">${escHtml(s.name)}</option>`).join('')}
+              </select>
+            ` : `<input class="form-input" id="asm-spot" placeholder="e.g. Main Gate, Faculty of Science">`}
+          </div>
+          <div style="display:flex;gap:12px;">
+            <div class="form-group" style="margin-bottom:0;flex:1;">
+              <label class="form-label">Day <span style="color:var(--red);">*</span></label>
+              <input class="form-input" id="asm-date" type="date" min="${today}">
+            </div>
+            <div class="form-group" style="margin-bottom:0;flex:1;">
+              <label class="form-label">Time <span style="color:var(--red);">*</span></label>
+              <input class="form-input" id="asm-time" type="time">
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-ghost" id="asm-cancel">Cancel</button>
+          <button class="btn btn-primary" id="asm-confirm">${icons.check} Accept request</button>
+        </div>
+      </div>`;
+    document.body.appendChild(overlay);
+    requestAnimationFrame(() => overlay.classList.add('open'));
+
+    const close = () => { overlay.classList.remove('open'); setTimeout(() => overlay.remove(), 200); };
+    overlay.querySelector('#asm-close').addEventListener('click', close);
+    overlay.querySelector('#asm-cancel').addEventListener('click', close);
+    overlay.addEventListener('click', e => { if (e.target === overlay) close(); });
+
+    overlay.querySelector('#asm-confirm').addEventListener('click', async () => {
+      const spot = overlay.querySelector('#asm-spot').value.trim();
+      const date = overlay.querySelector('#asm-date').value;
+      const time = overlay.querySelector('#asm-time').value;
+      if (!spot) { toast('Please choose a meetup spot', 'error'); return; }
+      if (!date || !time) { toast('Please choose a day and time', 'error'); return; }
+      const delivery_scheduled_at = new Date(`${date}T${time}`);
+      if (isNaN(delivery_scheduled_at.getTime()) || delivery_scheduled_at < new Date(Date.now() - 5 * 60 * 1000)) {
+        toast('Please choose a time in the future', 'error');
+        return;
+      }
+      const btn = overlay.querySelector('#asm-confirm');
+      btn.disabled = true; btn.textContent = 'Accepting…';
+      try {
+        await buyRequests.accept(r.id, { delivery_spot: spot, delivery_scheduled_at: delivery_scheduled_at.toISOString() });
+        toast('Request accepted — the buyer can now pay.', 'success');
+        close();
+        loadOrders();
+      } catch (e) {
+        toast(e.message, 'error');
+        btn.disabled = false; btn.innerHTML = `${icons.check} Accept request`;
+      }
+    });
+  }
 
   window.declineBuyRequest = async (id) => {
     const reason = prompt('Optional: let the buyer know why (e.g. "Out of stock")') || '';
