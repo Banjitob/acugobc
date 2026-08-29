@@ -342,12 +342,6 @@ const buyRequestSchema = new mongoose.Schema({
   responded_at:   { type: Date, default: null },
   payment_deadline_at: { type: Date, default: null },  // buyer must pay by this time once accepted
   order_id:       { type: mongoose.Schema.Types.ObjectId, ref: 'Order', default: null },
-  // Set by the SELLER at accept time, only required when buyer and seller
-  // aren't in the same hostel — see routes/buyRequests.js. Same-hostel
-  // handoffs are left informal; cross-hostel ones need a scheduled spot.
-  same_hostel:    { type: Boolean, default: null },
-  delivery_spot:  { type: String, default: '' },
-  delivery_scheduled_at: { type: Date, default: null },
 }, { timestamps: { createdAt: 'created_at', updatedAt: 'updated_at' } });
 
 buyRequestSchema.index({ buyer_id: 1 });

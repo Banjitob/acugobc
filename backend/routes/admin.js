@@ -963,7 +963,7 @@ const { sendSellerDecisionEmail } = require('../utils/email');
       title: '📣 Admin Notice',
       body: message.trim().slice(0, 100),
       type: 'admin_notification',
-      url: `/pages/messages.html?conv=${conv._id}`,
+      url: `/pages/marketplace.html`,
     }).catch(() => {});
 
     res.json({ success: true, message_id: msg._id });
@@ -1018,7 +1018,7 @@ router.post('/flagged/conversations/:id/unflag', async (req, res) => {
       title: '✅ Conversation Cleared',
       body:  'Your flagged conversation has been reviewed and cleared by an admin. You may continue.',
       type:  'ai_cleared',
-      url:   `/pages/messages.html?conv=${conv._id}`,
+      url:   `/pages/marketplace.html`,
     }).catch(() => {}));
 
     res.json({ success: true });

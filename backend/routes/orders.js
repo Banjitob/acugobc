@@ -6,7 +6,16 @@ const { authMiddleware, sellerApprovalMiddleware } = require('../middleware/auth
 const { notifyUser } = require('../db/push');
 const { generateVerificationCode, verifyDeliveryCode } = require('../utils/deliveryCode');
 const { createRefund, listRefunds, verifyTransaction, initializeTransaction } = require('../utils/paystack');
-const { sendOrderSellerAlertEmail, sendOrderRefundEmail } = require('../utils/email');
+const { sendOrderSellerAlertEmail, sendOrderRefundEmail, sendDeliveryReadyEmail } = require('../utils/email');
+
+// Two hostel names are only considered "the same" when both are known and
+// match — an empty/unset hostel on either side can't be confirmed as a
+// match, so it falls back to requiring the delivery form (the safer default).
+function normalizeHostel(h) { return String(h || '').trim().toLowerCase(); }
+function sameHostel(hostelA, hostelB) {
+  const a = normalizeHostel(hostelA), b = normalizeHostel(hostelB);
+  return !!a && !!b && a === b;
+}
 
 const refundLocks = new Map();
 
@@ -234,6 +243,9 @@ router.get('/selling', sellerApprovalMiddleware, async (req, res) => {
       buyer_id:        o.buyer_id?._id || o.buyer_id,
       buyer_name:      o.buyer_id?.full_name,
       buyer_university:o.buyer_id?.university,
+      // The verification code is only meant to be revealed once the seller
+      // has gone through "mark ready for delivery" — never before.
+      delivery_code:   ['fulfilled', 'completed'].includes(o.status) ? o.delivery_code : undefined,
     })));
   } catch (e) {
     console.error('[orders/selling] failed:', e);
@@ -306,20 +318,10 @@ async function buildSplitCheckoutSession({ buyerId, buyerEmail, deliveryContact,
   for (const listing of listings) {
     const amount = Number(listing.price || 0);
     const sid = String(listing.seller_id);
-    if (!grouped.has(sid)) grouped.set(sid, { amount: 0, seller: sellerMap.get(sid), listing_ids: [], listing_delivery: {} });
+    if (!grouped.has(sid)) grouped.set(sid, { amount: 0, seller: sellerMap.get(sid), listing_ids: [] });
     const g = grouped.get(sid);
     g.amount += amount;
     g.listing_ids.push(String(listing._id));
-    // Meetup spot/time (set by the seller at accept time, only when hostels
-    // differ — see buyRequests.js) travels with its listing so the resulting
-    // order carries it without the buyer having to re-enter anything.
-    if (listing._delivery_spot || listing._delivery_scheduled_at) {
-      g.listing_delivery[String(listing._id)] = {
-        spot: listing._delivery_spot || '',
-        requested_delivery_at: listing._delivery_scheduled_at || null,
-        same_hostel: !!listing._same_hostel,
-      };
-    }
   }
 
   // Flat shares preserve each seller's exact 7%→5.5% commission even when
@@ -335,7 +337,6 @@ async function buildSplitCheckoutSession({ buyerId, buyerEmail, deliveryContact,
     intentItems.push({
       seller_id: sid,
       listing_ids: g.listing_ids,
-      listing_delivery: g.listing_delivery,
       amount: Number(g.amount.toFixed(2)),
       commission_percent: commission.commission_percent,
       commission_amount: Number((g.amount * commission.commission_percent / 100).toFixed(2)),
@@ -461,12 +462,7 @@ async function finalizeCheckoutPayment({ payment_reference, buyerId }) {
         platform_fee_percent: item.commission_percent,
         platform_fee_amount: Number((amount * item.commission_percent / 100).toFixed(2)),
         seller_payout_amount: Number((amount * (1 - item.commission_percent / 100)).toFixed(2)),
-        checkout_group, fulfillment: 'delivery',
-        // Base contact info (name/phone/note) comes from the buyer at payment
-        // time; the meetup spot/time — only set when buyer and seller aren't
-        // in the same hostel — was chosen by the SELLER when they accepted,
-        // and travels in per-listing on the intent (see buildSplitCheckoutSession).
-        delivery_address: { ...intent.delivery_address, ...(item.listing_delivery?.[String(listingId)] || {}) },
+        checkout_group, fulfillment: 'delivery', delivery_address: intent.delivery_address,
         delivery_fee: 0, payment_method: 'card', payment_status: 'paid', payment_reference,
         processing_fee_amount: 0, seller_processing_fee_share: 0,
       });
@@ -729,7 +725,7 @@ router.post('/:id/accept', sellerApprovalMiddleware, async (req, res) => {
       title: 'Seller accepted your order',
       body: 'The seller accepted your item request. Delivery or pickup must happen within the listed timeframe.',
       type: 'order',
-      url: `/pages/messages.html?conv=${order._id}`,
+      url: `/pages/buyer-dashboard.html?tab=orders`,
     }).catch(() => {});
 
     res.json({ success: true, order: { ...order.toObject(), id: order._id } });
@@ -737,8 +733,9 @@ router.post('/:id/accept', sellerApprovalMiddleware, async (req, res) => {
 });
 
 // GET /api/orders/:id/delivery-info
-// Seller uses this before handing over an order. If both parties are registered
-// at the same hostel, expose that fact; otherwise route them into an order-specific chat.
+// Read-only pre-check the seller dashboard calls before showing the "mark
+// ready for delivery" form — tells it whether buyer/seller share a hostel
+// (in which case no spot/time is needed) so the right UI shows up first try.
 router.get('/:id/delivery-info', sellerApprovalMiddleware, async (req, res) => {
   try {
     const order = await Order.findById(req.params.id).lean();
@@ -747,50 +744,20 @@ router.get('/:id/delivery-info', sellerApprovalMiddleware, async (req, res) => {
       return res.status(403).json({ error: 'Only the seller can get delivery info' });
     if (!['confirmed', 'fulfilled'].includes(order.status))
       return res.status(400).json({ error: 'Accept the order before getting delivery info' });
-    if (order.status === 'cancelled')
-      return res.status(400).json({ error: 'This order is no longer active' });
     if (order.delivery_deadline_at && new Date(order.delivery_deadline_at) < new Date())
       return res.status(400).json({ error: 'This order missed the delivery deadline and will be refunded automatically' });
 
     const [seller, buyer, listing] = await Promise.all([
-      User.findById(order.seller_id).select('full_name seller_location_type hostel_name room_number shop_name shop_number shop_address delivery_info').lean(),
-      User.findById(order.buyer_id).select('full_name hostel_name room_number location').lean(),
+      User.findById(order.seller_id).select('full_name hostel_name room_number').lean(),
+      User.findById(order.buyer_id).select('full_name hostel_name room_number').lean(),
       Listing.findById(order.listing_id).select('title').lean(),
     ]);
     if (!seller || !buyer) return res.status(404).json({ error: 'Delivery participants could not be found' });
 
-    const sellerHostel = String(seller.hostel_name || '').trim().toLowerCase();
-    const buyerHostel = String(buyer.hostel_name || '').trim().toLowerCase();
-    const sameHostel = seller.seller_location_type === 'hostel' && !!sellerHostel && !!buyerHostel && sellerHostel === buyerHostel;
-
-    if (sameHostel) {
-      return res.json({
-        mode: 'same_hostel',
-        message: `You and ${buyer.full_name || 'the buyer'} are in the same hostel (${seller.hostel_name}).`,
-        seller: { name: seller.full_name, hostel: seller.hostel_name, room: seller.room_number || '', delivery_info: seller.delivery_info || '' },
-        buyer: { name: buyer.full_name, hostel: buyer.hostel_name, room: buyer.room_number || '' },
-        listing_title: listing?.title || '',
-      });
-    }
-
-    const pair = { listing_id: order.listing_id, buyer_id: order.buyer_id, seller_id: order.seller_id, txn_status: 'pending' };
-    let conversation = await Conversation.findOne(pair).sort({ last_message_at: -1 });
-    if (!conversation) conversation = await Conversation.create({ listing_id: order.listing_id, buyer_id: order.buyer_id, seller_id: order.seller_id, txn_status: 'pending' });
-
-    await notifyUser(String(order.buyer_id), {
-      title: 'Delivery chat opened',
-      body: 'The seller needs to arrange delivery with you. Open the chat to coordinate the handoff.',
-      type: 'message',
-      tag: `delivery-${order._id}`,
-      url: `/pages/messages.html?conv=${conversation._id}`,
-    }).catch(() => {});
-
-    return res.json({
-      mode: 'delivery_chat',
-      message: 'You and the buyer are not in the same hostel. The buyer’s checkout delivery information is shown below. Use the delivery chat to arrange the handoff.',
-      conversation_id: conversation._id,
+    res.json({
+      same_hostel: sameHostel(seller.hostel_name, buyer.hostel_name),
+      seller: { name: seller.full_name, hostel: seller.hostel_name || '', room: seller.room_number || '' },
       buyer: { name: buyer.full_name, hostel: buyer.hostel_name || '', room: buyer.room_number || '', delivery_address: order.delivery_address || null },
-      chat_url: `/pages/messages.html?conv=${conversation._id}`,
       listing_title: listing?.title || '',
     });
   } catch (e) {
@@ -799,31 +766,76 @@ router.get('/:id/delivery-info', sellerApprovalMiddleware, async (req, res) => {
   }
 });
 
-// POST /api/orders/:id/mark-shipped
+// POST /api/orders/:id/mark-shipped — the seller marks the order ready for
+// delivery. If buyer and seller aren't in the same hostel, the seller must
+// supply a meetup spot and day/time here (the "delivery form"); those
+// details are emailed to the buyer. The delivery verification code — used
+// to confirm the handoff actually happened — is only revealed to the seller
+// once this step succeeds, never before.
 router.post('/:id/mark-shipped', sellerApprovalMiddleware, async (req, res) => {
   try {
     const order = await Order.findById(req.params.id);
     if (!order) return res.status(404).json({ error: 'Order not found' });
     if (String(order.seller_id) !== String(req.user.id))
-      return res.status(403).json({ error: 'Only the seller can mark this order as shipped' });
+      return res.status(403).json({ error: 'Only the seller can mark this order ready for delivery' });
     if (order.status === 'cancelled')
       return res.status(400).json({ error: 'This order can no longer be updated' });
+    if (order.status === 'fulfilled')
+      return res.status(400).json({ error: 'This order is already marked ready — the buyer just needs to confirm with the code' });
+    if (order.status !== 'confirmed')
+      return res.status(400).json({ error: 'Accept the order before marking it ready for delivery' });
     if (order.delivery_deadline_at && new Date(order.delivery_deadline_at) < new Date()) {
       return res.status(400).json({ error: 'This order missed the delivery deadline and will be refunded automatically' });
     }
 
+    const [seller, buyer, listing] = await Promise.all([
+      User.findById(order.seller_id).select('full_name hostel_name').lean(),
+      User.findById(order.buyer_id).select('full_name email hostel_name').lean(),
+      Listing.findById(order.listing_id).select('title').lean(),
+    ]);
+    const isSameHostel = sameHostel(seller?.hostel_name, buyer?.hostel_name);
+
+    let delivery_spot = '', delivery_scheduled_at = null;
+    if (!isSameHostel) {
+      delivery_spot = String(req.body?.delivery_spot || '').trim();
+      const raw = req.body?.delivery_scheduled_at;
+      delivery_scheduled_at = raw ? new Date(raw) : null;
+      if (!delivery_spot) return res.status(400).json({ error: 'Please choose a meetup spot — you and the buyer are in different hostels.', requires_scheduling: true, same_hostel: false });
+      if (!delivery_scheduled_at || isNaN(delivery_scheduled_at.getTime())) return res.status(400).json({ error: 'Please choose a delivery day and time.', requires_scheduling: true, same_hostel: false });
+      if (delivery_scheduled_at < new Date(Date.now() - 5 * 60 * 1000)) return res.status(400).json({ error: 'Please choose a delivery time in the future.', requires_scheduling: true, same_hostel: false });
+    }
+
     order.status = 'fulfilled';
     order.delivered_at = new Date();
+    order.delivery_address = {
+      ...(order.delivery_address || {}),
+      same_hostel: isSameHostel,
+      ...(delivery_spot ? { spot: delivery_spot } : {}),
+      ...(delivery_scheduled_at ? { requested_delivery_at: delivery_scheduled_at } : {}),
+    };
     await order.save();
 
     await notifyUser(String(order.buyer_id), {
-      title: 'Seller has fulfilled your order',
-      body: 'The seller has marked the order as fulfilled. Enter the delivery verification code to complete the order.',
+      title: 'Your order is ready for delivery',
+      body: isSameHostel
+        ? 'The seller has your item ready. You\'re both in the same hostel — check your email to arrange the handoff, then enter the code they give you.'
+        : `The seller will meet you at ${delivery_spot}. Check your email for the full details, then enter the code they give you to confirm.`,
       type: 'order',
-      url: `/pages/messages.html?conv=${order._id}`,
+      url: `/pages/buyer-dashboard.html?tab=orders`,
     }).catch(() => {});
 
-    res.json({ success: true, order: { ...order.toObject(), id: order._id } });
+    if (buyer?.email) {
+      await sendDeliveryReadyEmail(buyer.email, {
+        buyerName: buyer.full_name,
+        sellerName: seller?.full_name || 'Your seller',
+        listingTitle: listing?.title || 'your item',
+        sameHostel: isSameHostel,
+        spot: delivery_spot,
+        scheduledAt: delivery_scheduled_at,
+      }).catch(err => console.error('[email] delivery ready failed:', err.message));
+    }
+
+    res.json({ success: true, delivery_code: order.delivery_code, order: { ...order.toObject(), id: order._id } });
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
@@ -872,7 +884,7 @@ router.post('/:id/confirm-delivery', authMiddleware, async (req, res) => {
       title: 'Order completed',
       body: `The buyer confirmed delivery. Your ₦${Number(order.seller_payout_amount || 0).toLocaleString('en-NG')} seller share was allocated through Paystack Split at checkout.`,
       type: 'order',
-      url: `/pages/messages.html?conv=${order._id}`,
+      url: `/pages/seller-dashboard.html?tab=orders`,
     }).catch(() => {});
 
     res.json({

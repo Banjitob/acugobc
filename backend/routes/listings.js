@@ -168,6 +168,19 @@ router.get('/saved', authMiddleware, async (req, res) => {
     res.json({ listings });
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
+// GET /api/listings/:id/stock — lightweight polling endpoint for the listing
+// page's live "N left" indicator. Deliberately minimal (no population, no
+// view-count increment) since it's designed to be called every few seconds
+// while a listing page is open.
+router.get('/:id/stock', async (req, res) => {
+  try {
+    if (!require('mongoose').Types.ObjectId.isValid(req.params.id)) return res.status(404).json({ error: 'Listing not found' });
+    const listing = await Listing.findById(req.params.id).select('status stock_quantity').lean();
+    if (!listing || listing.status === 'deleted') return res.status(404).json({ error: 'Listing not found' });
+    res.json({ status: listing.status, stock_quantity: listing.stock_quantity });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
 router.get('/:id', optionalAuth, async (req, res) => {
   try {
     if (!require('mongoose').Types.ObjectId.isValid(req.params.id)) return res.status(404).json({ error: 'Listing not found' });

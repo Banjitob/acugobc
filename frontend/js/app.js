@@ -412,11 +412,9 @@ function renderFooter() {
 
   const accountLinks = isSeller ? `
     <li><a href="/pages/seller-dashboard.html">Seller dashboard</a></li>
-    <li><a href="/pages/messages.html">Messages</a></li>
     <li><a href="/pages/settings.html">Account settings</a></li>
   ` : `
     <li><a href="/pages/buyer-dashboard.html">My purchases</a></li>
-    <li><a href="/pages/messages.html">Messages</a></li>
     <li><a href="/pages/settings.html">Account settings</a></li>
   `;
 

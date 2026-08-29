@@ -1,6 +1,24 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+<!-- Messaging between buyers and sellers has been disabled — delivery is now
+     coordinated through the structured meetup-spot/time flow in seller and
+     buyer dashboards instead. This page must never render, for any account,
+     for any reason, so the redirect happens as the very first thing in
+     <head>, before any other markup or script loads. -->
+<script>
+  (function () {
+    var token = localStorage.getItem('cm_token');
+    var dest = '/pages/marketplace.html';
+    if (token) {
+      try {
+        var user = JSON.parse(localStorage.getItem('cm_user'));
+        dest = user && user.role === 'seller' ? '/pages/seller-dashboard.html' : '/pages/buyer-dashboard.html';
+      } catch (e) {}
+    }
+    window.location.replace(dest);
+  })();
+</script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <!-- ── SEO ── -->

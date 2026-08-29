@@ -13,15 +13,6 @@ const ordersRouter = require('./orders'); // for the shared buildSplitCheckoutSe
 const RESPONSE_WINDOW_MS = 2 * 60 * 60 * 1000; // seller must accept/decline within 2h
 const PAYMENT_WINDOW_MS  = 2 * 60 * 60 * 1000; // buyer must pay within 2h of acceptance
 
-// Two hostel names are only considered "the same" when both are known and
-// match — an empty/unset hostel on either side can't be confirmed as a
-// match, so it falls back to requiring scheduling (the safer default).
-function normalizeHostel(h) { return String(h || '').trim().toLowerCase(); }
-function sameHostel(hostelA, hostelB) {
-  const a = normalizeHostel(hostelA), b = normalizeHostel(hostelB);
-  return !!a && !!b && a === b;
-}
-
 function shapeRequest(r) {
   return {
     ...r,
@@ -32,13 +23,10 @@ function shapeRequest(r) {
     listing_status: r.listing_id?.status,
     buyer_name:      r.buyer_id?.full_name,
     buyer_university:r.buyer_id?.university,
-    buyer_hostel:    r.buyer_id?.hostel_name || '',
     seller_name:     r.seller_id?.full_name,
-    seller_hostel:   r.seller_id?.hostel_name || '',
     listing_id:      r.listing_id?._id || r.listing_id,
     buyer_id:        r.buyer_id?._id || r.buyer_id,
     seller_id:       r.seller_id?._id || r.seller_id,
-    same_hostel:     r.same_hostel !== null && r.same_hostel !== undefined ? r.same_hostel : sameHostel(r.buyer_id?.hostel_name, r.seller_id?.hostel_name),
   };
 }
 
@@ -138,8 +126,7 @@ router.get('/selling', sellerApprovalMiddleware, async (req, res) => {
     if (req.query.status) filter.status = req.query.status;
     const requests = await BuyRequest.find(filter)
       .populate('listing_id', 'title images price status stock_quantity')
-      .populate('buyer_id', 'full_name university hostel_name')
-      .populate('seller_id', 'hostel_name')
+      .populate('buyer_id', 'full_name university')
       .sort({ created_at: -1 }).lean();
     res.json(requests.map(shapeRequest));
   } catch (e) {
@@ -177,24 +164,10 @@ router.post('/:id/accept', sellerApprovalMiddleware, async (req, res) => {
       User.findById(req.user.id).select('full_name hostel_name').lean(),
       User.findById(reqDoc.buyer_id).select('email hostel_name').lean(),
     ]);
-    const isSameHostel = sameHostel(seller?.hostel_name, buyer?.hostel_name);
-
-    let delivery_spot = '', delivery_scheduled_at = null;
-    if (!isSameHostel) {
-      delivery_spot = String(req.body?.delivery_spot || '').trim();
-      const rawScheduled = req.body?.delivery_scheduled_at;
-      delivery_scheduled_at = rawScheduled ? new Date(rawScheduled) : null;
-      if (!delivery_spot) return res.status(400).json({ error: 'Please choose a meetup spot — you and the buyer are in different hostels.', requires_scheduling: true, same_hostel: false });
-      if (!delivery_scheduled_at || isNaN(delivery_scheduled_at.getTime())) return res.status(400).json({ error: 'Please choose a delivery day and time.', requires_scheduling: true, same_hostel: false });
-      if (delivery_scheduled_at < new Date(Date.now() - 5 * 60 * 1000)) return res.status(400).json({ error: 'Please choose a delivery time in the future.', requires_scheduling: true, same_hostel: false });
-    }
 
     reqDoc.status = 'accepted';
     reqDoc.responded_at = new Date();
     reqDoc.payment_deadline_at = new Date(Date.now() + PAYMENT_WINDOW_MS);
-    reqDoc.same_hostel = isSameHostel;
-    reqDoc.delivery_spot = delivery_spot;
-    reqDoc.delivery_scheduled_at = delivery_scheduled_at;
     await reqDoc.save();
 
     await notifyUser(String(reqDoc.buyer_id), {
@@ -293,24 +266,13 @@ router.post('/:group/initialize-payment', authMiddleware, async (req, res) => {
     const buyer = await User.findById(req.user.id).select('email').lean();
     const delivery_contact = req.body?.delivery_address || req.body?.delivery_contact || {};
 
-    // The meetup spot/time was set by the SELLER at accept time (only when
-    // hostels differ) — attach each listing's own request info so it flows
-    // through to the resulting order without asking the buyer to re-enter it.
-    const listingsWithDelivery = payable.map(r => {
-      const listing = r.listing_id;
-      listing._delivery_spot = r.delivery_spot || '';
-      listing._delivery_scheduled_at = r.delivery_scheduled_at || null;
-      listing._same_hostel = r.same_hostel;
-      return listing;
-    });
-
     let session;
     try {
       session = await ordersRouter.buildSplitCheckoutSession({
         buyerId: req.user.id,
         buyerEmail: buyer?.email,
         deliveryContact: delivery_contact,
-        listings: listingsWithDelivery,
+        listings: payable.map(r => r.listing_id),
         source: 'buy_request',
         buyRequestGroup: req.params.group,
         req,

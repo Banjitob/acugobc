@@ -468,9 +468,9 @@
       const stageMessage = o.status === 'paid'
         ? '<div style="font-size:12px;color:#b45309;margin-top:6px;font-weight:600;">🔒 Waiting for the seller to accept your order.</div>'
         : o.status === 'confirmed'
-          ? '<div style="font-size:12px;color:#b45309;margin-top:6px;font-weight:600;">📦 Seller accepted — waiting for them to ship/hand it over.</div>'
+          ? '<div style="font-size:12px;color:#b45309;margin-top:6px;font-weight:600;">📦 Seller accepted — waiting for them to get it ready for delivery.</div>'
           : o.status === 'fulfilled'
-            ? '<div style="font-size:12px;color:#065f46;margin-top:6px;font-weight:600;">✅ Seller marked this as shipped. Ask them for the code below to confirm you received it.</div>'
+            ? '<div style="font-size:12px;color:#065f46;margin-top:6px;font-weight:600;">✅ Your order is ready. Meet the seller, then enter the code they give you below.</div>'
             : '';
 
       return `

@@ -88,7 +88,6 @@
       items = requests.map(r => ({
         id: r.listing_id, title: r.listing_title, price: r.listing_price,
         images: r.listing_images, request_id: r.id,
-        spot: r.delivery_spot, requested_delivery_at: r.delivery_scheduled_at, same_hostel: r.same_hostel,
       }));
       if (!items.length) {
         document.getElementById('checkout-content').innerHTML = `
@@ -134,21 +133,6 @@
           <div class="form-group">
             <label class="form-label">Note for the seller (optional)</label>
             <textarea class="form-textarea" id="f-note" style="min-height:70px;" placeholder="e.g. call me when you're close"></textarea>
-          </div>
-          <div style="margin-top:6px;padding-top:16px;border-top:1px solid var(--border);">
-            <div style="font-weight:700;font-size:13px;margin-bottom:10px;">Meetup arrangements</div>
-            ${items.map(i => `
-              <div style="font-size:12px;color:var(--ink-3);margin-bottom:10px;display:flex;align-items:flex-start;gap:6px;">
-                ${icons.mapPin}
-                <span>
-                  <strong style="color:var(--ink-2);">${escHtml(i.title)}</strong><br>
-                  ${i.same_hostel
-                    ? `You and the seller are in the same hostel — arrange the handoff directly once your order is confirmed.`
-                    : i.spot && i.requested_delivery_at
-                      ? `${escHtml(i.spot)} · ${formatDeliverySlot(i.requested_delivery_at)}`
-                      : `The seller will confirm a meetup spot and time.`}
-                </span>
-              </div>`).join('')}
           </div>
         </div>
 
