@@ -35,6 +35,9 @@ const userSchema = new mongoose.Schema({
   discoverability_score: { type: Number, default: 100, min: 0, max: 100 },
   listing_credits:  { type: Number, default: 1 },
   successful_sales_count: { type: Number, default: 0, min: 0 },
+  commission_tier:  { type: Number, default: 1, min: 1, max: 4 },
+  commission_percent: { type: Number, default: 7, min: 0, max: 100 },
+  tier_unlocked_at: { type: Date, default: null },
   bank_name:        { type: String, default: '' },
   bank_code:        { type: String, default: '' },
   account_number:   { type: String, default: '' },
@@ -221,10 +224,10 @@ userReportSchema.index({ reporter_id: 1, reported_user_id: 1, status: 1 });
 
 const orderSchema = new mongoose.Schema({
   listing_id:             { type: mongoose.Schema.Types.ObjectId, ref: 'Listing', required: true },
-  quantity:                { type: Number, default: 1, min: 1 },
   buyer_id:               { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
   seller_id:              { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
-  amount:                 { type: Number, required: true },
+  quantity:               { type: Number, default: 1, min: 1 },
+  amount:                 { type: Number, required: true }, // unit price × quantity
   status:                 { type: String, default: 'pending', enum: ['pending','paid','confirmed','completing','fulfilled','completed','cancelled','disputed'] },
   delivery_code:          { type: String, default: null },
   delivery_code_expires_at:{ type: Date, default: null },
@@ -333,8 +336,8 @@ const buyRequestSchema = new mongoose.Schema({
   buyer_id:       { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
   seller_id:      { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
   listing_id:      { type: mongoose.Schema.Types.ObjectId, ref: 'Listing', required: true },
-  amount:         { type: Number, required: true }, // total price captured at request time
   quantity:       { type: Number, default: 1, min: 1 },
+  amount:         { type: Number, required: true }, // unit price × quantity, captured at request time
   status:         { type: String, enum: ['pending','accepted','declined','expired','paid','cancelled'], default: 'pending' },
   request_group:  { type: String, default: null },
   decline_reason: { type: String, default: '' },
@@ -342,12 +345,6 @@ const buyRequestSchema = new mongoose.Schema({
   responded_at:   { type: Date, default: null },
   payment_deadline_at: { type: Date, default: null },  // buyer must pay by this time once accepted
   order_id:       { type: mongoose.Schema.Types.ObjectId, ref: 'Order', default: null },
-  // Set by the SELLER at accept time, only required when buyer and seller
-  // aren't in the same hostel — see routes/buyRequests.js. Same-hostel
-  // handoffs are left informal; cross-hostel ones need a scheduled spot.
-  same_hostel:    { type: Boolean, default: null },
-  delivery_spot:  { type: String, default: '' },
-  delivery_scheduled_at: { type: Date, default: null },
 }, { timestamps: { createdAt: 'created_at', updatedAt: 'updated_at' } });
 
 buyRequestSchema.index({ buyer_id: 1 });
@@ -364,26 +361,6 @@ const broadcastSchema = new mongoose.Schema({
   sent_by:          { type: mongoose.Schema.Types.ObjectId, ref: 'User', default: null },
 }, { timestamps: { createdAt: 'created_at', updatedAt: 'updated_at' } });
 
-
-const platformSettingSchema = new mongoose.Schema({
-  key: { type: String, required: true, unique: true },
-  value: { type: mongoose.Schema.Types.Mixed, default: null },
-}, { timestamps: { createdAt: 'created_at', updatedAt: 'updated_at' } });
-
-const commissionProposalSchema = new mongoose.Schema({
-  proposed_percent: { type: Number, required: true, min: 0, max: 100 },
-  proposed_by: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
-  status: { type: String, enum: ['pending','approved','rejected','cancelled'], default: 'pending' },
-  reason: { type: String, default: '' },
-  decided_at: { type: Date, default: null },
-  votes: [{
-    voter_id: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
-    vote: { type: String, enum: ['agree','disagree'], required: true },
-    voted_at: { type: Date, default: Date.now },
-  }],
-}, { timestamps: { createdAt: 'created_at', updatedAt: 'updated_at' } });
-commissionProposalSchema.index({ status: 1, created_at: -1 });
-
 const User               = mongoose.model('User',               userSchema);
 const Listing            = mongoose.model('Listing',            listingSchema);
 const Waitlist           = mongoose.model('Waitlist',           waitlistSchema);
@@ -398,15 +375,56 @@ const Order              = mongoose.model('Order',              orderSchema);
 const Broadcast          = mongoose.model('Broadcast',          broadcastSchema);
 const CheckoutIntent     = mongoose.model('CheckoutIntent',     checkoutIntentSchema);
 const BuyRequest         = mongoose.model('BuyRequest',         buyRequestSchema);
-const PlatformSetting    = mongoose.model('PlatformSetting',    platformSettingSchema);
-const CommissionProposal = mongoose.model('CommissionProposal', commissionProposalSchema);
 
+// Bixcart's commission is a single static percentage — no more tiered
+// "gamified" rates by sales count. It's stored as a singleton PlatformSetting
+// document so it can be read cheaply and changed only through the admin
+// vote process below (see CommissionProposal).
 const DEFAULT_COMMISSION_PERCENT = 7;
-async function getCurrentCommissionPercent() {
+
+const platformSettingSchema = new mongoose.Schema({
+  key:   { type: String, required: true, unique: true },
+  value: mongoose.Schema.Types.Mixed,
+}, { timestamps: { createdAt: 'created_at', updatedAt: 'updated_at' } });
+
+const PlatformSetting = mongoose.model('PlatformSetting', platformSettingSchema);
+
+async function getCommissionPercent() {
   const setting = await PlatformSetting.findOne({ key: 'commission_percent' }).lean();
-  const n = Number(setting?.value);
-  return Number.isFinite(n) && n >= 0 && n <= 100 ? n : DEFAULT_COMMISSION_PERCENT;
+  const value = setting ? Number(setting.value) : DEFAULT_COMMISSION_PERCENT;
+  return Number.isFinite(value) ? value : DEFAULT_COMMISSION_PERCENT;
 }
+
+async function setCommissionPercent(value) {
+  await PlatformSetting.findOneAndUpdate(
+    { key: 'commission_percent' },
+    { $set: { value: Number(value) } },
+    { upsert: true }
+  );
+}
+
+// A proposal to change the static commission rate. Any admin can propose;
+// every admin (including the proposer, auto-cast as "agree") then votes.
+// The proposal resolves — by majority of votes cast — either once every
+// current admin has voted, or when an admin manually closes it early (see
+// routes/admin.js). Only one proposal may be open at a time.
+const commissionProposalSchema = new mongoose.Schema({
+  proposed_percent: { type: Number, required: true, min: 0, max: 100 },
+  current_percent_at_proposal: { type: Number, required: true },
+  proposed_by:      { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
+  proposed_by_name: { type: String, default: '' },
+  reason:           { type: String, default: '' },
+  status:           { type: String, enum: ['open', 'approved', 'rejected'], default: 'open' },
+  votes: [{
+    admin_id:   { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+    admin_name: { type: String, default: '' },
+    vote:       { type: String, enum: ['agree', 'disagree'] },
+    voted_at:   { type: Date, default: Date.now },
+  }],
+  resolved_at: { type: Date, default: null },
+}, { timestamps: { createdAt: 'created_at', updatedAt: 'updated_at' } });
+
+const CommissionProposal = mongoose.model('CommissionProposal', commissionProposalSchema);
 
 async function connectDb() {
   const uri = process.env.MONGODB_URI;
@@ -436,8 +454,11 @@ module.exports = {
   Broadcast,
   CheckoutIntent,
   BuyRequest,
+  PlatformSetting,
+  CommissionProposal,
   AdminAction,
   UserActivity,
   DEFAULT_COMMISSION_PERCENT,
-  getCurrentCommissionPercent,
+  getCommissionPercent,
+  setCommissionPercent,
 };

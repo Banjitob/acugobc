@@ -233,11 +233,11 @@
           <div style="color:var(--ink-3)">${icons_placeholder_tag}</div>
         </div>
         <div id="credits-bonus-msg"></div>
-        <div style="font-size:13px;color:var(--ink-3);margin-bottom:16px;">Bixcart charges a flat <strong>7%</strong> commission on every completed sale. The rate is the same for every seller and does not decrease based on sales.</div>
+        <div id="credits-bonus-msg"></div>
         <div class="card" style="padding:14px;border-radius:14px;background:var(--bg);border:1px solid var(--border);">
-          <div style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--ink-3);">Platform commission</div>
-          <div style="font-size:18px;font-weight:700;margin-top:6px;">7% flat commission</div>
-          <div style="font-size:12px;color:var(--ink-3);margin-top:6px;">The same rate applies to every seller. No sales-based discount or commission tier.</div>
+          <div style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--ink-3);margin-bottom:8px;">Bixcart commission</div>
+          <div id="seller-commission-title" style="font-size:18px;font-weight:700;">7% per completed sale</div>
+          <div style="font-size:12px;color:var(--ink-3);margin-top:6px;">A single flat rate for every seller — the rest of each sale is yours.</div>
         </div>
       </div>
       <div class="card" style="padding:16px;">
@@ -313,7 +313,7 @@
 
   document.getElementById('credits-num').textContent = 'FREE';
   const bonusEl = document.getElementById('credits-bonus-msg');
-  if (bonusEl) bonusEl.innerHTML = `<div style="font-size:12px;background:#d1fae5;color:#065f46;border-radius:8px;padding:7px 11px;margin-bottom:10px;font-weight:600;">✅ Listings are free. Bixcart charges a flat 7% commission on completed sales.</div>`;
+  if (bonusEl) bonusEl.innerHTML = `<div style="font-size:12px;background:#d1fae5;color:#065f46;border-radius:8px;padding:7px 11px;margin-bottom:10px;font-weight:600;">✅ Listings are free. Bixcart takes a flat 7% commission on completed sales.</div>`;
 
   document.getElementById('greeting').textContent = `Welcome back, ${user?.full_name?.split(' ')[0]}`;
 
@@ -434,6 +434,9 @@
       document.getElementById('stat-views').textContent = views;
       document.getElementById('stat-sold').textContent = sold;
 
+      const commissionPercent = Number(stats.commission_percent || 7);
+      const title = document.getElementById('seller-commission-title');
+      if (title) title.textContent = `${commissionPercent}% per completed sale`;
       renderListings();
     } catch (e) { toast(e.message, 'error'); }
   }
@@ -547,16 +550,14 @@
         <div class="order-card-top">
           <div class="order-img">${r.listing_images?.[0] ? `<img src="${r.listing_images[0]}" alt="">` : icons.package}</div>
           <div class="order-info">
-            <div class="order-title">${escHtml(r.listing_title || 'Listing')}</div>
+            <div class="order-title">${escHtml(r.listing_title || 'Listing')}${r.quantity > 1 ? ` <span style="font-weight:500;color:var(--ink-3);">× ${r.quantity}</span>` : ''}</div>
             <div class="order-meta">
               ${requestStatusBadge(r)}
               <span style="display:flex;align-items:center;gap:4px;">${icons.user} ${r.buyer_id ? `<a href="user-profile.html?id=${r.buyer_id}" style="color:inherit;text-decoration:underline;text-underline-offset:2px;">${escHtml(r.buyer_name || 'Buyer')}</a>` : escHtml(r.buyer_name || 'Buyer')}</span>
               <span>${formatDate(r.created_at)}</span>
             </div>
             ${r.status === 'pending' ? `<div style="font-size:12px;color:#b45309;margin-top:6px;font-weight:600;">No payment taken yet — respond within 2 hours or this request expires.</div>` : ''}
-            ${r.status === 'pending' && r.same_hostel === false ? `<div style="font-size:12px;color:var(--ink-3);margin-top:4px;">${escHtml(r.buyer_name || 'This buyer')} is in a different hostel — you'll pick a meetup spot and time when you accept.</div>` : ''}
             ${r.status === 'accepted' ? `<div style="font-size:12px;color:#059669;margin-top:6px;font-weight:600;">Buyer has up to 2 hours to pay. You'll see it here once they do.</div>` : ''}
-            ${r.status === 'accepted' && r.same_hostel === false && r.delivery_spot ? `<div style="font-size:12px;color:var(--ink-3);margin-top:4px;display:flex;align-items:center;gap:4px;">${icons.mapPin} ${escHtml(r.delivery_spot)}${r.delivery_scheduled_at ? ' · ' + formatDeliverySlot(r.delivery_scheduled_at) : ''}</div>` : ''}
             ${r.decline_reason ? `<div style="font-size:12px;color:var(--ink-3);margin-top:6px;">Reason: ${escHtml(r.decline_reason)}</div>` : ''}
           </div>
         </div>
@@ -578,7 +579,7 @@
         <div class="order-card-top">
           <div class="order-img">${o.listing_images?.[0] ? `<img src="${o.listing_images[0]}" alt="">` : icons.package}</div>
           <div class="order-info">
-            <div class="order-title">${o.listing_title}</div>
+            <div class="order-title">${o.listing_title}${o.quantity > 1 ? ` <span style="font-weight:500;color:var(--ink-3);">× ${o.quantity}</span>` : ''}</div>
             <div class="order-meta">
               ${statusBadge(orderDisplayStatus(o))}
               <span style="display:flex;align-items:center;gap:4px;">${icons.user} ${o.buyer_id ? `<a href="user-profile.html?id=${o.buyer_id}" style="color:inherit;text-decoration:underline;text-underline-offset:2px;">${escHtml(o.buyer_name || 'Buyer')}</a>` : escHtml(o.buyer_name || 'Buyer')}</span>
@@ -590,7 +591,7 @@
                 ${icons.truck} <span>${o.delivery_address.full_name} · ${o.delivery_address.phone}<br>${o.delivery_address.spot ? `${escHtml(o.delivery_address.spot)}${o.delivery_address.requested_delivery_at ? ' · ' + formatDeliverySlot(o.delivery_address.requested_delivery_at) : ''}` : 'Same hostel as buyer — arrange the handoff directly'}${o.delivery_address.note ? ` — "${o.delivery_address.note}"` : ''}</span>
               </div>` : ''}
             ${o.status === 'paid' ? `<div style="font-size:12px;color:#b45309;margin-top:6px;font-weight:600;">🔒 Payment received through Paystack Split — accept the order to get started.</div>` : ''}
-            ${o.delivery_code && ['confirmed','fulfilled'].includes(o.status) ? `<div style="font-size:12px;color:var(--ink-3);margin-top:6px;display:flex;align-items:center;gap:6px;flex-wrap:wrap;">${icons.shield} Give the buyer this delivery verification code at handoff: <strong style="color:var(--ink);letter-spacing:.12em;">${o.delivery_code}</strong></div>` : ''}
+            ${o.status === 'fulfilled' && o.delivery_code ? `<div style="font-size:12px;color:var(--ink-3);margin-top:6px;display:flex;align-items:center;gap:6px;flex-wrap:wrap;">${icons.shield} Give the buyer this delivery verification code at handoff: <strong style="color:var(--ink);letter-spacing:.12em;">${o.delivery_code}</strong></div>` : ''}
             ${o.status === 'fulfilled' ? `<div style="font-size:12px;color:#d69e2e;margin-top:6px;font-weight:600;">⏳ Waiting for buyer to enter the code…</div>` : ''}
           </div>
         </div>
@@ -600,7 +601,7 @@
             ${o.status === 'paid' ? `
               <button class="btn btn-primary btn-sm" onclick="acceptOrder('${o.id}')">${icons.check} Accept</button>
               <button class="btn btn-danger btn-sm" onclick="declineOrder('${o.id}')">Decline</button>` : ''}
-            ${o.status === 'confirmed' ? `<button class="btn btn-primary btn-sm" onclick="getDeliveryInfo('${o.id}')">${icons.truck} Get Delivery Info</button>` : ''}
+            ${o.status === 'confirmed' ? `<button class="btn btn-primary btn-sm" onclick="markReady('${o.id}')">${icons.truck} Mark ready for delivery</button>` : ''}
             ${o.status === 'completed' ? `<span style="font-size:13px;color:#059669;font-weight:600;">${icons.check} Delivered</span>` : ''}
             ${o.status === 'cancelled' ? `<span style="font-size:13px;color:var(--ink-3);font-weight:600;">Cancelled</span>` : ''}
             ${o.buyer_rating ? `<span style="font-size:13px;color:#d69e2e;font-weight:600;">Rated ${'★'.repeat(o.buyer_rating)}</span>` : ''}
@@ -610,129 +611,12 @@
   }
 
   window.acceptBuyRequest = async (id) => {
-    const r = allRequests.find(x => String(x.id) === String(id));
-    if (r && r.same_hostel === false) {
-      openAcceptSchedulingModal(r);
-      return;
-    }
-    // Same hostel (or unknown — server will tell us if scheduling is actually
-    // required) — try a plain accept first.
     try {
       await buyRequests.accept(id);
       toast('Request accepted — the buyer can now pay.', 'success');
       loadOrders();
-    } catch (e) {
-      if (e.requires_scheduling) { openAcceptSchedulingModal(r || { id }); return; }
-      toast(e.message, 'error');
-    }
+    } catch (e) { toast(e.message, 'error'); }
   };
-
-  let deliverySpotsCache = null;
-  function localDateInputValue(d = new Date()) {
-    const y = d.getFullYear(), m = String(d.getMonth()+1).padStart(2,'0'), day = String(d.getDate()).padStart(2,'0');
-    return `${y}-${m}-${day}`;
-  }
-
-  function windowLabel(w) {
-    return ({ '5m':'5 minutes','6h':'6 hours','12h':'12 hours','1d':'1 day','3d':'3 days','7d':'7 days' }[w] || '1 day');
-  }
-
-  async function openAcceptSchedulingModal(r) {
-    if (!deliverySpotsCache) {
-      try { deliverySpotsCache = (await api.get('/auth/delivery-spots')).spots || []; }
-      catch { deliverySpotsCache = []; }
-    }
-    const today = localDateInputValue();
-    const windowMs = ({ '5m': 5, '6h': 360, '12h': 720, '1d': 1440, '3d': 4320, '7d': 10080 }[r.listing_delivery_window || '1d'] || 1440) * 60 * 1000;
-    const deadline = new Date(Date.now() + windowMs);
-    // Only expose calendar dates that have at least one valid delivery time
-    // (07:00–19:00) before the listing's delivery deadline.
-    const maxDate = new Date(deadline);
-    // Find the latest calendar date that still has at least one allowed time
-    // (07:00) before the deadline. This avoids showing a date that can never
-    // produce a valid delivery slot.
-    while (true) {
-      const candidate = new Date(maxDate);
-      candidate.setHours(7, 0, 0, 0);
-      if (candidate <= deadline) break;
-      maxDate.setDate(maxDate.getDate() - 1);
-    }
-    const maxDateValue = localDateInputValue(maxDate);
-    const minTimeToday = new Date();
-    const todayTimeMin = Math.max(7 * 60, minTimeToday.getHours() * 60 + minTimeToday.getMinutes() + 1);
-    const timeMinToday = todayTimeMin <= 19 * 60 ? `${String(Math.floor(todayTimeMin / 60)).padStart(2,'0')}:${String(todayTimeMin % 60).padStart(2,'0')}` : '19:00';
-    const overlay = document.createElement('div');
-    overlay.className = 'modal-overlay';
-    overlay.innerHTML = `
-      <div class="modal">
-        <div class="modal-header">
-          <div class="modal-title">Where and when?</div>
-          <button class="btn btn-ghost btn-sm" id="asm-close">${icons.x || 'Close'}</button>
-        </div>
-        <div class="modal-body">
-          <p style="font-size:13px;color:var(--ink-3);margin-bottom:16px;">${escHtml(r.buyer_name || 'This buyer')} is in a different hostel from you, so pick a meetup spot and a time. This listing allows delivery within <strong>${escHtml(windowLabel(r.listing_delivery_window || '1d'))}</strong>.</p>
-          <div class="form-group" style="margin-bottom:14px;">
-            <label class="form-label">Meetup spot <span style="color:var(--red);">*</span></label>
-            ${deliverySpotsCache.length ? `
-              <select class="form-select" id="asm-spot">
-                <option value="">Select a popular spot on campus</option>
-                ${deliverySpotsCache.map(s => `<option value="${escHtml(s.name)}">${escHtml(s.name)}</option>`).join('')}
-              </select>
-            ` : `<input class="form-input" id="asm-spot" placeholder="e.g. Main Gate, Faculty of Science">`}
-          </div>
-          <div style="display:flex;gap:12px;">
-            <div class="form-group" style="margin-bottom:0;flex:1;">
-              <label class="form-label">Day <span style="color:var(--red);">*</span></label>
-              <input class="form-input" id="asm-date" type="date" min="${today}" max="${maxDateValue}">
-            </div>
-            <div class="form-group" style="margin-bottom:0;flex:1;">
-              <label class="form-label">Time <span style="color:var(--red);">*</span></label>
-              <input class="form-input" id="asm-time" type="time" min="07:00" max="19:00" value="">
-            </div>
-          </div>
-        </div>
-        <div class="modal-footer">
-          <button class="btn btn-ghost" id="asm-cancel">Cancel</button>
-          <button class="btn btn-primary" id="asm-confirm">${icons.check} Accept request</button>
-        </div>
-      </div>`;
-    document.body.appendChild(overlay);
-    requestAnimationFrame(() => overlay.classList.add('open'));
-
-    const close = () => { overlay.classList.remove('open'); setTimeout(() => overlay.remove(), 200); };
-    const dateInput = overlay.querySelector('#asm-date');
-    const timeInput = overlay.querySelector('#asm-time');
-    const updateTimeBounds = () => { timeInput.min = dateInput.value === today ? timeMinToday : '07:00'; timeInput.max = '19:00'; if (timeInput.value && (timeInput.value < timeInput.min || timeInput.value > '19:00')) timeInput.value = ''; };
-    dateInput.addEventListener('change', updateTimeBounds);
-    updateTimeBounds();
-
-    overlay.querySelector('#asm-close').addEventListener('click', close);
-    overlay.querySelector('#asm-cancel').addEventListener('click', close);
-    overlay.addEventListener('click', e => { if (e.target === overlay) close(); });
-
-    overlay.querySelector('#asm-confirm').addEventListener('click', async () => {
-      const spot = overlay.querySelector('#asm-spot').value.trim();
-      const date = overlay.querySelector('#asm-date').value;
-      const time = overlay.querySelector('#asm-time').value;
-      if (!spot) { toast('Please choose a meetup spot', 'error'); return; }
-      if (!date || !time) { toast('Please choose a day and time', 'error'); return; }
-      if (time < '07:00' || time > '19:00') { toast('Delivery time must be between 7:00 AM and 7:00 PM.', 'error'); return; }
-      const delivery_scheduled_at = new Date(`${date}T${time}`);
-      if (isNaN(delivery_scheduled_at.getTime()) || delivery_scheduled_at < new Date()) { toast('Please choose a time in the future', 'error'); return; }
-      if (delivery_scheduled_at > deadline) { toast(`Choose a time within the listing's ${windowLabel(r.listing_delivery_window || '1d')} delivery window.`, 'error'); return; }
-      const btn = overlay.querySelector('#asm-confirm');
-      btn.disabled = true; btn.textContent = 'Accepting…';
-      try {
-        await buyRequests.accept(r.id, { delivery_spot: spot, delivery_scheduled_at: delivery_scheduled_at.toISOString() });
-        toast('Request accepted — the buyer can now pay.', 'success');
-        close();
-        loadOrders();
-      } catch (e) {
-        toast(e.message, 'error');
-        btn.disabled = false; btn.innerHTML = `${icons.check} Accept request`;
-      }
-    });
-  }
 
   window.declineBuyRequest = async (id) => {
     const reason = prompt('Optional: let the buyer know why (e.g. "Out of stock")') || '';
@@ -743,29 +627,144 @@
     } catch (e) { toast(e.message, 'error'); }
   };
 
-  window.getDeliveryInfo = async (id) => {
+  window.markReady = async (id) => {
+    let info;
     try {
-      const info = await api.get(`/orders/${id}/delivery-info`);
-      if (info.mode === 'same_hostel') {
-        const extra = info.seller?.delivery_info ? `\n\nDelivery info: ${info.seller.delivery_info}` : '';
-        const ready = confirm(`${info.message}\n\nBuyer: ${info.buyer?.name || 'Buyer'}\nRoom: ${info.buyer?.room || 'Not provided'}${extra}\n\nWhen you have handed the item to the buyer, click OK to mark the order as delivered/fulfilled. The buyer will then confirm the verification code.`);
-        if (ready) {
-          await api.post(`/orders/${id}/mark-shipped`);
-          toast('Delivery recorded. The buyer can now verify the delivery code.', 'success');
-          loadOrders();
-        }
-      } else if (info.mode === 'delivery_chat') {
-        const d = info.buyer?.delivery_address;
-        const delivery = d ? `\n\nBuyer delivery details:\nName: ${d.full_name || info.buyer?.name || 'Buyer'}\nPhone: ${d.phone || 'Not provided'}\nCampus: ${d.campus || 'Ajayi Crowther University'}\n${d.address ? `Address: ${d.address}\n` : ''}${d.note ? `Note: ${d.note}` : ''}` : '';
-        if (confirm(`${info.message}${delivery}\n\nOpen the delivery chat to coordinate the handoff?`)) {
-          window.location.href = info.chat_url;
-        }
-      }
-    } catch (e) { toast(e.message, 'error'); }
+      info = await api.get(`/orders/${id}/delivery-info`);
+    } catch (e) { toast(e.message, 'error'); return; }
+
+    if (info.same_hostel) {
+      if (!confirm(`You and ${info.buyer?.name || 'the buyer'} are both registered in the same hostel — no meetup needs scheduling.\n\nOnce you've handed the item over (or you're ready to), click OK to mark this order ready. You'll get a code to give the buyer at handoff.`)) return;
+      await submitMarkReady(id, {});
+      return;
+    }
+    openDeliveryFormModal(id, info);
   };
 
-  // Kept as a compatibility alias for any older UI code that may still call it.
-  window.markDelivered = window.getDeliveryInfo;
+  let deliverySpotsCache = null;
+  async function openDeliveryFormModal(orderId, info) {
+    if (!deliverySpotsCache) {
+      try { deliverySpotsCache = (await api.get('/auth/delivery-spots')).spots || []; }
+      catch { deliverySpotsCache = []; }
+    }
+    const now = new Date();
+    const deadline = info.delivery_deadline_at ? new Date(info.delivery_deadline_at) : null;
+    const tomorrow = new Date(now); tomorrow.setDate(tomorrow.getDate() + 1);
+    // Normally the earliest choosable day is tomorrow (today is excluded on
+    // purpose — e.g. delivery window of 3 days starting Friday means Sat,
+    // Sun, Mon are choosable, not Friday itself). If the delivery window is
+    // shorter than a day, fall back to allowing today so there's still a
+    // valid choice before the deadline lapses.
+    const minDateObj = (deadline && deadline < tomorrow) ? now : tomorrow;
+    const minDate = minDateObj.toISOString().slice(0, 10);
+    const maxDate = deadline ? deadline.toISOString().slice(0, 10) : '';
+    const deadlineLabel = deadline ? deadline.toLocaleString('en-NG', { weekday: 'short', day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit' }) : '';
+
+    const overlay = document.createElement('div');
+    overlay.className = 'modal-overlay';
+    overlay.innerHTML = `
+      <div class="modal">
+        <div class="modal-header">
+          <div class="modal-title">Where and when?</div>
+          <button class="btn btn-ghost btn-sm" id="dfm-close">${icons.x || 'Close'}</button>
+        </div>
+        <div class="modal-body">
+          <p style="font-size:13px;color:var(--ink-3);margin-bottom:16px;">${escHtml(info.buyer?.name || 'This buyer')} is in a different hostel from you. Pick a meetup spot and time — we'll email it to them, and you'll get a handoff code once you confirm.</p>
+          <div class="form-group" style="margin-bottom:14px;">
+            <label class="form-label">Meetup spot <span style="color:var(--red);">*</span></label>
+            ${deliverySpotsCache.length ? `
+              <select class="form-select" id="dfm-spot">
+                <option value="">Select a popular spot on campus</option>
+                ${deliverySpotsCache.map(s => `<option value="${escHtml(s.name)}">${escHtml(s.name)}</option>`).join('')}
+              </select>
+            ` : `<input class="form-input" id="dfm-spot" placeholder="e.g. Main Gate, Faculty of Science">`}
+          </div>
+          <div style="display:flex;gap:12px;">
+            <div class="form-group" style="margin-bottom:0;flex:1;">
+              <label class="form-label">Day <span style="color:var(--red);">*</span></label>
+              <input class="form-input" id="dfm-date" type="date" min="${minDate}" ${maxDate ? `max="${maxDate}"` : ''}>
+            </div>
+            <div class="form-group" style="margin-bottom:0;flex:1;">
+              <label class="form-label">Time <span style="color:var(--red);">*</span></label>
+              <input class="form-input" id="dfm-time" type="time" min="07:00" max="19:00">
+            </div>
+          </div>
+          <span class="form-hint">Delivery times run 7am–7pm${deadlineLabel ? `, and must be before your delivery deadline (${deadlineLabel})` : ''}.</span>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-ghost" id="dfm-cancel">Cancel</button>
+          <button class="btn btn-primary" id="dfm-confirm">${icons.check} Mark ready</button>
+        </div>
+      </div>`;
+    document.body.appendChild(overlay);
+    requestAnimationFrame(() => overlay.classList.add('open'));
+
+    const close = () => { overlay.classList.remove('open'); setTimeout(() => overlay.remove(), 200); };
+    overlay.querySelector('#dfm-close').addEventListener('click', close);
+    overlay.querySelector('#dfm-cancel').addEventListener('click', close);
+    overlay.addEventListener('click', e => { if (e.target === overlay) close(); });
+
+    overlay.querySelector('#dfm-confirm').addEventListener('click', async () => {
+      const spot = overlay.querySelector('#dfm-spot').value.trim();
+      const date = overlay.querySelector('#dfm-date').value;
+      const time = overlay.querySelector('#dfm-time').value;
+      if (!spot) { toast('Please choose a meetup spot', 'error'); return; }
+      if (!date || !time) { toast('Please choose a day and time', 'error'); return; }
+      const delivery_scheduled_at = new Date(`${date}T${time}`);
+      if (isNaN(delivery_scheduled_at.getTime()) || delivery_scheduled_at < new Date(Date.now() - 5 * 60 * 1000)) {
+        toast('Please choose a time in the future', 'error');
+        return;
+      }
+      const hour = delivery_scheduled_at.getHours();
+      if (hour < 7 || hour >= 19) {
+        toast('Delivery times are only allowed between 7am and 7pm', 'error');
+        return;
+      }
+      if (deadline && delivery_scheduled_at > deadline) {
+        toast(`Please choose a time before your delivery deadline (${deadlineLabel})`, 'error');
+        return;
+      }
+      const btn = overlay.querySelector('#dfm-confirm');
+      btn.disabled = true; btn.textContent = 'Confirming…';
+      const ok = await submitMarkReady(orderId, { delivery_spot: spot, delivery_scheduled_at: delivery_scheduled_at.toISOString() });
+      if (ok) { close(); }
+      else { btn.disabled = false; btn.innerHTML = `${icons.check} Mark ready`; }
+    });
+  }
+
+  async function submitMarkReady(orderId, body) {
+    try {
+      const result = await api.post(`/orders/${orderId}/mark-shipped`, body);
+      loadOrders();
+      showDeliveryCodeModal(result.delivery_code);
+      return true;
+    } catch (e) { toast(e.message, 'error'); return false; }
+  }
+
+  function showDeliveryCodeModal(code) {
+    const overlay = document.createElement('div');
+    overlay.className = 'modal-overlay';
+    overlay.innerHTML = `
+      <div class="modal">
+        <div class="modal-header">
+          <div class="modal-title">${icons.shield} Handoff code</div>
+          <button class="btn btn-ghost btn-sm" id="dcm-close">${icons.x || 'Close'}</button>
+        </div>
+        <div class="modal-body" style="text-align:center;">
+          <p style="font-size:13px;color:var(--ink-3);margin-bottom:16px;">Give this code to the buyer only when you physically hand over the item. They'll enter it to confirm the delivery.</p>
+          <div style="font-size:32px;font-weight:800;letter-spacing:.2em;background:var(--surface-2);border-radius:var(--radius-md);padding:18px;">${escHtml(code || '—')}</div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-primary w-full" id="dcm-done">Got it</button>
+        </div>
+      </div>`;
+    document.body.appendChild(overlay);
+    requestAnimationFrame(() => overlay.classList.add('open'));
+    const close = () => { overlay.classList.remove('open'); setTimeout(() => overlay.remove(), 200); };
+    overlay.querySelector('#dcm-close').addEventListener('click', close);
+    overlay.querySelector('#dcm-done').addEventListener('click', close);
+    overlay.addEventListener('click', e => { if (e.target === overlay) close(); });
+  }
 
   window.acceptOrder = async (id) => {
     try {
@@ -836,7 +835,6 @@
           <div class="order-sub">Buyer: ${c.other_user?.name || 'Unknown'} · ${formatDate(c.last_message_at)}</div>
         </div>
         <span class="order-status-chip ${chipCls}">${chipLabel}</span>
-        <a href="messages.html?conv=${c.id}" class="btn btn-ghost btn-sm btn-icon" title="Open chat">${icons.messageCircle}</a>
       </div>`;
     }).join('');
   }

@@ -1,7 +1,7 @@
 const mongoose = require('mongoose');
 const express = require('express');
 const router  = express.Router();
-const { User, Listing, Conversation, Message, Order, ConversationReport, UserReport, Broadcast, Hostel, DeliverySpot, AdminAction, UserActivity, PlatformSetting, CommissionProposal, getCurrentCommissionPercent } = require('../db/database');
+const { User, Listing, Conversation, Message, Order, ConversationReport, UserReport, Broadcast, Hostel, DeliverySpot, AdminAction, UserActivity, CommissionProposal, getCommissionPercent, setCommissionPercent } = require('../db/database');
 const { adminMiddleware } = require('../middleware/auth');
 const { notifyUser } = require('../db/push');
 const { sendSellerDecisionEmail } = require('../utils/email');
@@ -25,57 +25,6 @@ async function logAdminAction(req, action, target = null, reason = '', metadata 
   });
 }
 
-
-
-// ── PLATFORM COMMISSION GOVERNANCE ──────────────────────────────────────────
-router.get('/commission', async (req, res) => {
-  try {
-    const [percent, pending, history] = await Promise.all([
-      getCurrentCommissionPercent(),
-      CommissionProposal.findOne({ status: 'pending' }).populate('proposed_by', 'full_name email').sort({ created_at: -1 }).lean(),
-      CommissionProposal.find({ status: { $in: ['approved','rejected','cancelled'] } }).populate('proposed_by', 'full_name email').sort({ decided_at: -1, created_at: -1 }).limit(20).lean(),
-    ]);
-    const format = p => p ? ({ ...p, id: p._id, proposer: p.proposed_by ? { id: p.proposed_by._id, full_name: p.proposed_by.full_name, email: p.proposed_by.email } : null, votes: (p.votes || []).map(v => ({ ...v, id: v._id })) }) : null;
-    res.json({ commission_percent: percent, pending: format(pending), history: history.map(format) });
-  } catch (e) { res.status(500).json({ error: e.message }); }
-});
-
-router.post('/commission/proposals', async (req, res) => {
-  try {
-    const proposed_percent = Number(req.body?.proposed_percent);
-    const reason = String(req.body?.reason || '').trim();
-    if (!Number.isFinite(proposed_percent) || proposed_percent < 0 || proposed_percent > 100) return res.status(400).json({ error: 'Commission must be between 0% and 100%.' });
-    const current = await getCurrentCommissionPercent();
-    if (proposed_percent === current) return res.status(409).json({ error: `Commission is already ${current}%.` });
-    const existing = await CommissionProposal.findOne({ status: 'pending' });
-    if (existing) return res.status(409).json({ error: 'There is already a pending commission change awaiting a vote.' });
-    const proposal = await CommissionProposal.create({ proposed_percent, proposed_by: req.user.id, reason });
-    res.status(201).json({ success: true, proposal: { ...proposal.toObject(), id: proposal._id } });
-  } catch (e) { res.status(500).json({ error: e.message }); }
-});
-
-router.post('/commission/proposals/:id/vote', async (req, res) => {
-  try {
-    const vote = String(req.body?.vote || '').toLowerCase();
-    if (!['agree','disagree'].includes(vote)) return res.status(400).json({ error: 'Vote must be agree or disagree.' });
-    const proposal = await CommissionProposal.findById(req.params.id);
-    if (!proposal || proposal.status !== 'pending') return res.status(404).json({ error: 'Pending commission proposal not found.' });
-    if (String(proposal.proposed_by) === String(req.user.id)) return res.status(403).json({ error: 'The admin who proposed the change cannot cast the required deciding vote.' });
-    if (proposal.votes.some(v => String(v.voter_id) === String(req.user.id))) return res.status(409).json({ error: 'You have already voted on this proposal.' });
-
-    proposal.votes.push({ voter_id: req.user.id, vote, voted_at: new Date() });
-    proposal.status = vote === 'agree' ? 'approved' : 'rejected';
-    proposal.decided_at = new Date();
-    await proposal.save();
-
-    if (vote === 'agree') {
-      const previous_percent = await getCurrentCommissionPercent();
-      await PlatformSetting.findOneAndUpdate({ key: 'commission_percent' }, { $set: { value: proposal.proposed_percent } }, { upsert: true, new: true, setDefaultsOnInsert: true });
-      await logAdminAction(req, 'commission_changed', null, proposal.reason || '', { proposal_id: String(proposal._id), previous_percent, new_percent: proposal.proposed_percent, vote: 'agree' });
-    }
-    res.json({ success: true, status: proposal.status, commission_percent: await getCurrentCommissionPercent() });
-  } catch (e) { res.status(500).json({ error: e.message }); }
-});
 
 // ── STATS ────────────────────────────────────────────────────────────────────
 // GET /api/admin/stats
@@ -282,6 +231,110 @@ router.post('/seller-applications/:id/override', async (req, res) => {
     }
 
     res.json({ success: true, user: { ...seller.toObject(), id: seller._id } });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+// ── COMMISSION RATE (static, admin-vote-gated) ──────────────────────────────
+// Bixcart's commission is a single flat percentage for every seller. It can
+// only change through a vote: an admin proposes a new rate, every other
+// admin votes agree/disagree, and it resolves — by majority of votes cast —
+// either once every current admin has voted, or when an admin closes it
+// early. Only one proposal can be open at a time.
+
+async function finalizeCommissionProposal(proposal) {
+  const agree = proposal.votes.filter(v => v.vote === 'agree').length;
+  const disagree = proposal.votes.filter(v => v.vote === 'disagree').length;
+  // Majority of votes cast decides it; a tie keeps the status quo (rejected).
+  const approved = agree > disagree;
+  proposal.status = approved ? 'approved' : 'rejected';
+  proposal.resolved_at = new Date();
+  await proposal.save();
+  if (approved) await setCommissionPercent(proposal.proposed_percent);
+  return proposal;
+}
+
+router.get('/commission', async (req, res) => {
+  try {
+    const [currentPercent, proposal, adminCount] = await Promise.all([
+      getCommissionPercent(),
+      CommissionProposal.findOne({ status: 'open' }).sort({ created_at: -1 }).lean(),
+      User.countDocuments({ role: 'admin', account_status: { $ne: 'deleted' } }),
+    ]);
+    res.json({
+      current_percent: currentPercent,
+      admin_count: adminCount,
+      proposal: proposal ? { ...proposal, id: proposal._id } : null,
+    });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+router.post('/commission/propose', async (req, res) => {
+  try {
+    const percent = Number(req.body?.percent);
+    if (!Number.isFinite(percent) || percent < 0 || percent > 100)
+      return res.status(400).json({ error: 'Percent must be a number between 0 and 100' });
+
+    const existingOpen = await CommissionProposal.findOne({ status: 'open' });
+    if (existingOpen) return res.status(409).json({ error: 'There is already an open commission proposal — vote on or close that one first.' });
+
+    const currentPercent = await getCommissionPercent();
+    if (Math.abs(percent - currentPercent) < 0.001)
+      return res.status(400).json({ error: `Commission is already ${currentPercent}%` });
+
+    const admin = await User.findById(req.user.id).select('full_name').lean();
+    const proposal = await CommissionProposal.create({
+      proposed_percent: percent,
+      current_percent_at_proposal: currentPercent,
+      proposed_by: req.user.id,
+      proposed_by_name: admin?.full_name || 'Admin',
+      reason: String(req.body?.reason || '').trim(),
+      votes: [{ admin_id: req.user.id, admin_name: admin?.full_name || 'Admin', vote: 'agree' }],
+    });
+
+    await logAdminAction(req, 'commission_proposed', null, String(req.body?.reason || '').trim(), { proposal_id: String(proposal._id), from_percent: currentPercent, to_percent: percent });
+
+    // A single-admin instance resolves immediately — no one else to wait on.
+    const adminCount = await User.countDocuments({ role: 'admin', account_status: { $ne: 'deleted' } });
+    if (proposal.votes.length >= adminCount) await finalizeCommissionProposal(proposal);
+
+    res.status(201).json({ ...proposal.toObject(), id: proposal._id });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+router.post('/commission/:id/vote', async (req, res) => {
+  try {
+    const vote = req.body?.vote;
+    if (!['agree', 'disagree'].includes(vote)) return res.status(400).json({ error: 'Vote must be agree or disagree' });
+
+    const proposal = await CommissionProposal.findById(req.params.id);
+    if (!proposal) return res.status(404).json({ error: 'Proposal not found' });
+    if (proposal.status !== 'open') return res.status(400).json({ error: `This proposal is already ${proposal.status}` });
+
+    const admin = await User.findById(req.user.id).select('full_name').lean();
+    const existingVoteIdx = proposal.votes.findIndex(v => String(v.admin_id) === String(req.user.id));
+    if (existingVoteIdx >= 0) proposal.votes[existingVoteIdx].vote = vote;
+    else proposal.votes.push({ admin_id: req.user.id, admin_name: admin?.full_name || 'Admin', vote });
+    await proposal.save();
+
+    const adminCount = await User.countDocuments({ role: 'admin', account_status: { $ne: 'deleted' } });
+    if (proposal.votes.length >= adminCount) await finalizeCommissionProposal(proposal);
+
+    res.json({ ...proposal.toObject(), id: proposal._id });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+// POST /api/admin/commission/:id/close — finalize early using votes cast so
+// far, for when not every admin is expected to vote.
+router.post('/commission/:id/close', async (req, res) => {
+  try {
+    const proposal = await CommissionProposal.findById(req.params.id);
+    if (!proposal) return res.status(404).json({ error: 'Proposal not found' });
+    if (proposal.status !== 'open') return res.status(400).json({ error: `This proposal is already ${proposal.status}` });
+    if (proposal.votes.length < 2) return res.status(400).json({ error: 'At least one other admin must vote before closing.' });
+
+    await finalizeCommissionProposal(proposal);
+    await logAdminAction(req, proposal.status === 'approved' ? 'commission_changed' : 'commission_change_rejected', null, '', { proposal_id: String(proposal._id), to_percent: proposal.proposed_percent });
+    res.json({ ...proposal.toObject(), id: proposal._id });
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
@@ -1014,7 +1067,7 @@ const { sendSellerDecisionEmail } = require('../utils/email');
       title: '📣 Admin Notice',
       body: message.trim().slice(0, 100),
       type: 'admin_notification',
-      url: `/pages/messages.html?conv=${conv._id}`,
+      url: `/pages/marketplace.html`,
     }).catch(() => {});
 
     res.json({ success: true, message_id: msg._id });
@@ -1069,7 +1122,7 @@ router.post('/flagged/conversations/:id/unflag', async (req, res) => {
       title: '✅ Conversation Cleared',
       body:  'Your flagged conversation has been reviewed and cleared by an admin. You may continue.',
       type:  'ai_cleared',
-      url:   `/pages/messages.html?conv=${conv._id}`,
+      url:   `/pages/marketplace.html`,
     }).catch(() => {}));
 
     res.json({ success: true });

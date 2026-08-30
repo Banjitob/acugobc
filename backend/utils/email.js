@@ -174,6 +174,22 @@ async function sendOrderRefundEmail(to, { buyerName, listingTitle, reason, amoun
   });
 }
 
+async function sendDeliveryReadyEmail(to, { buyerName, sellerName, listingTitle, sameHostel, spot, scheduledAt }) {
+  const whenText = scheduledAt ? new Date(scheduledAt).toLocaleString('en-NG', { weekday: 'long', day: 'numeric', month: 'long', hour: 'numeric', minute: '2-digit' }) : '';
+  await sendMail({
+    to,
+    subject: `Your order is ready — ${listingTitle}`,
+    html: `
+      <div style="font-family:sans-serif;max-width:520px;margin:auto;padding:32px;background:#fafafa;border-radius:12px;">
+        <h2 style="color:#1a1a1a;margin-bottom:8px;">${sellerName} has your item ready</h2>
+        ${sameHostel
+          ? `<p style="color:#555;line-height:1.6;">You and ${sellerName} are registered in the same hostel, so arrange the handoff directly whenever suits you both.</p>`
+          : `<p style="color:#555;line-height:1.6;">${sellerName} will meet you at <strong>${spot}</strong>${whenText ? ` on <strong>${whenText}</strong>` : ''} for <strong>${listingTitle}</strong>.</p>`}
+        <p style="color:#555;line-height:1.6;">When you meet, the seller will give you a short code — enter it in your Bixcart dashboard to confirm the delivery and complete the order.</p>
+      </div>`,
+  });
+}
+
 async function sendSellerApplicationEmail(to, { sellerName, sellerEmail, userId }) {
   const adminUrl = `${getBaseUrl()}/pages/admin.html`;
   await sendMail({

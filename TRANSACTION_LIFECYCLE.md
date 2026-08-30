@@ -13,7 +13,7 @@ Bixcart uses **Paystack Split Payments** for marketplace checkout. Seller bank a
 
 1. Buyer adds one or more listings to the cart.
 2. Bixcart groups cart items by seller.
-3. The backend applies the platform-wide 7% commission rate to the seller group.
+3. The backend calculates each seller's commission tier (7% down to the 5.5% floor).
 4. Bixcart creates a **dynamic flat Paystack Split**:
    - each seller receives their calculated seller share;
    - Bixcart receives the remaining commission share;
@@ -74,6 +74,7 @@ If valid:
 1. Order becomes `completed`.
 2. Listing becomes `sold`.
 3. Seller's successful-sales count is incremented.
+4. The seller's commission tier is recalculated.
 5. The seller share has already been allocated through Paystack Split at checkout; **no second transfer is created**.
 6. Buyer can rate the seller.
 

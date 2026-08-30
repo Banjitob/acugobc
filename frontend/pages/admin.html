@@ -694,7 +694,6 @@ body {
     <button class="admin-nav-item" data-tab="deletion-requests">Account Deletions</button>
     <button class="admin-nav-item admin-only" data-tab="controls">🛡️ Controls</button>
     <button class="admin-nav-item admin-only" data-tab="control-actions">↩ Control Actions</button>
-    <button class="admin-nav-item admin-only" data-tab="commission">💰 Commission</button>
     <button class="admin-nav-item admin-only" data-tab="actions">
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20V10"/><path d="M18 20V4"/><path d="M6 20v-6"/></svg>
       Admin Actions
@@ -720,6 +719,10 @@ body {
     <button class="admin-nav-item" data-tab="delivery-spots">
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
       Delivery Spots
+    </button>
+    <button class="admin-nav-item admin-only" data-tab="commission">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+      Commission
     </button>
     <button class="admin-nav-item" data-tab="messages">
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
@@ -830,13 +833,13 @@ function adminLogout() { adminAuth.clear(); window.location.replace('admin-login
 // ── Tab routing ─────────────────────────────────────────────────────────────
 const isControlUser = () => adminAuth.getUser()?.role === 'control';
 const controlPath = path => isControlUser() ? path.replace(/^\/admin/, '/control') : path;
-const TABS = { overview: 'Overview', commission: 'Commission', controls: 'Controls', 'control-actions': 'Control Actions', 'seller-approvals': 'Seller Approvals', 'deletion-requests': 'Account Deletions', actions: 'Admin Actions', users: 'Users', listings: 'Listings', broadcast: 'Broadcast', hostels: 'Hostels', 'delivery-spots': 'Delivery Spots', messages: 'Conversation Reports', 'user-reports': 'User Reports', flagged: 'AI Flagged' };
+const TABS = { overview: 'Overview', controls: 'Controls', 'control-actions': 'Control Actions', 'seller-approvals': 'Seller Approvals', 'deletion-requests': 'Account Deletions', actions: 'Admin Actions', users: 'Users', listings: 'Listings', broadcast: 'Broadcast', hostels: 'Hostels', 'delivery-spots': 'Delivery Spots', commission: 'Commission', messages: 'Conversation Reports', 'user-reports': 'User Reports', flagged: 'AI Flagged' };
 const ACTION_LABELS = {
   seller_approved: 'Approved seller', seller_rejected: 'Rejected seller',
   seller_override: 'Overrode seller decision',
   user_warned: 'Warned user', user_suspended: 'Suspended user', user_unsuspended: 'Restored user',
   account_deletion_approved: 'Approved account deletion', account_deletion_rejected: 'Rejected account deletion',
-  control_created: 'Created Control account', control_action_reversed: 'Reversed Control action', commission_changed: 'Changed platform commission',
+  control_created: 'Created Control account', control_action_reversed: 'Reversed Control action',
 };
 let currentTab = isControlUser() ? 'seller-approvals' : 'overview';
 
@@ -874,7 +877,6 @@ function switchTab(tab) {
   const content = document.getElementById('admin-content');
   content.innerHTML = '<div class="admin-empty">Loading…</div>';
   if (tab === 'overview')  renderOverview();
-  if (tab === 'commission') renderCommission();
   if (tab === 'controls') renderControls();
   if (tab === 'control-actions') renderControlActions();
   if (tab === 'seller-approvals') renderSellerApprovals();
@@ -885,6 +887,7 @@ function switchTab(tab) {
   if (tab === 'broadcast') renderBroadcast();
   if (tab === 'hostels')   renderHostels();
   if (tab === 'delivery-spots') renderDeliverySpots();
+  if (tab === 'commission') renderCommission();
   if (tab === 'messages')  renderMessages();
   if (tab === 'user-reports') renderUserReports();
   if (tab === 'flagged')   renderFlagged();
@@ -1140,45 +1143,6 @@ window.addEventListener('popstate', () => {
 });
 
 // ══════════════════════════════════════════════════════════════════════════════
-// COMMISSION GOVERNANCE
-// ══════════════════════════════════════════════════════════════════════════════
-async function renderCommission() {
-  const c = document.getElementById('admin-content');
-  c.innerHTML = '<div class="admin-empty">Loading commission settings…</div>';
-  try {
-    const d = await api.get('/admin/commission');
-    const p = d.pending;
-    const userId = adminAuth.getUser()?.id;
-    const isProposer = p && String(p.proposed_by?._id || p.proposed_by?.id || p.proposed_by) === String(userId);
-    c.innerHTML = `
-      <div style="margin-bottom:18px"><div class="section-kicker">Platform fee</div><h2 style="font-size:28px">Commission</h2><p style="color:var(--ink-3);font-size:13px">Bixcart uses one platform-wide commission rate. It is currently <strong>${Number(d.commission_percent).toFixed(1)}%</strong>. Any change requires an Agree/Disagree vote from a second admin.</p></div>
-      <div class="card" style="padding:20px;margin-bottom:18px">
-        <div style="display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap">
-          <div><div style="font-size:12px;color:var(--ink-3)">Current rate</div><div style="font-size:34px;font-weight:800">${Number(d.commission_percent).toFixed(1)}%</div></div>
-          <div style="font-size:13px;color:var(--ink-3);max-width:560px">No game, tier, sales-based discount, or variable commission applies. Every seller is charged the same rate.</div>
-        </div>
-      </div>
-      ${p ? `<div class="card" style="padding:20px;margin-bottom:18px;border:1.5px solid var(--border)">
-        <div style="font-weight:800;font-size:17px;margin-bottom:6px">Pending change: ${Number(p.proposed_percent).toFixed(1)}%</div>
-        <div style="font-size:13px;color:var(--ink-3);margin-bottom:14px">Proposed by ${escHtml(p.proposed_by?.full_name || p.proposed_by?.email || 'Admin')}${p.reason ? ` · ${escHtml(p.reason)}` : ''}</div>
-        ${isProposer ? `<div class="notice notice-info">You proposed this change. A different admin must vote Agree or Disagree before the rate can change.</div>` : `<div style="display:flex;gap:10px;flex-wrap:wrap"><button class="btn btn-primary" onclick="voteCommission('${p.id}','agree')">✓ Agree</button><button class="btn btn-danger" onclick="voteCommission('${p.id}','disagree')">✕ Disagree</button></div>`}
-      </div>` : `<div class="card" style="padding:20px;margin-bottom:18px"><h3 style="margin-bottom:12px">Propose a new rate</h3><div style="display:grid;grid-template-columns:180px 1fr;gap:10px"><input id="commission-rate" class="form-input" type="number" min="0" max="100" step="0.1" value="${Number(d.commission_percent).toFixed(1)}"><input id="commission-reason" class="form-input" placeholder="Reason for the change (optional)"></div><button class="btn btn-primary" style="margin-top:12px" onclick="proposeCommission()">Create vote</button></div>`}
-      <div><h3 style="font-size:17px;margin-bottom:10px">Recent decisions</h3>${(d.history||[]).length ? `<div class="admin-table-wrap"><table class="admin-table"><thead><tr><th>Date</th><th>Proposed by</th><th>Rate</th><th>Decision</th></tr></thead><tbody>${d.history.map(x=>`<tr><td>${fmtTime(x.decided_at || x.created_at)}</td><td>${escHtml(x.proposed_by?.full_name || 'Admin')}</td><td>${Number(x.proposed_percent).toFixed(1)}%</td><td>${escHtml(x.status)}</td></tr>`).join('')}</tbody></table></div>` : '<div class="admin-empty">No commission changes yet.</div>'}</div>`;
-  } catch(e) { c.innerHTML = `<div class="admin-empty">Failed to load commission settings: ${escHtml(e.message)}</div>`; }
-}
-window.proposeCommission = async function() {
-  const rate = Number(document.getElementById('commission-rate')?.value);
-  const reason = document.getElementById('commission-reason')?.value?.trim() || '';
-  if (!Number.isFinite(rate) || rate < 0 || rate > 100) return toast('Enter a valid commission between 0% and 100%.', 'error');
-  try { await api.post('/admin/commission/proposals', { proposed_percent: rate, reason }); toast('Commission change proposed. Another admin must vote.', 'success'); renderCommission(); } catch(e) { toast(e.message, 'error'); }
-};
-window.voteCommission = async function(id, vote) {
-  const word = vote === 'agree' ? 'Agree' : 'Disagree';
-  if (!confirm(`${word} to this commission change?`)) return;
-  try { const r = await api.post(`/admin/commission/proposals/${id}/vote`, { vote }); toast(r.status === 'approved' ? `Commission changed to ${Number(r.commission_percent).toFixed(1)}%.` : 'Proposal rejected.', r.status === 'approved' ? 'success' : 'warning'); renderCommission(); } catch(e) { toast(e.message, 'error'); }
-};
-
-// ══════════════════════════════════════════════════════════════════════════════
 // OVERVIEW
 // ══════════════════════════════════════════════════════════════════════════════
 async function renderOverview() {
@@ -1305,6 +1269,115 @@ async function deleteHostel(id) {
     await api.delete(`/admin/hostels/${id}`);
     toast('Hostel removed', 'success');
     renderHostels();
+  } catch (e) { toast(e.message, 'error'); }
+}
+
+async function renderCommission() {
+  const c = document.getElementById('admin-content');
+  c.innerHTML = `
+    <div style="margin-bottom:18px;">
+      <div class="section-kicker" style="margin-bottom:6px;">Platform settings</div>
+      <h2 style="font-size:28px;letter-spacing:-.5px;">Commission</h2>
+      <p style="color:var(--ink-3);font-size:13px;margin-top:6px;">A single flat rate for every seller. Changing it requires a vote — every admin (or however many vote before it's closed) must agree/disagree.</p>
+    </div>
+    <div id="commission-body">Loading…</div>`;
+
+  try {
+    const data = await api.get('/admin/commission');
+    renderCommissionBody(data);
+  } catch (e) {
+    document.getElementById('commission-body').innerHTML = `<div class="admin-empty">Failed to load: ${escHtml(e.message)}</div>`;
+  }
+}
+
+function renderCommissionBody(data) {
+  const el = document.getElementById('commission-body');
+  const me = adminAuth.getUser();
+  const p = data.proposal;
+
+  let proposalHtml = '';
+  if (p) {
+    const myVote = p.votes.find(v => String(v.admin_id) === String(me?.id));
+    const agree = p.votes.filter(v => v.vote === 'agree').length;
+    const disagree = p.votes.filter(v => v.vote === 'disagree').length;
+    proposalHtml = `
+      <div class="card" style="padding:20px;margin-top:16px;border:1.5px solid var(--accent, #6366f1);">
+        <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;">
+          <div>
+            <div class="section-kicker" style="margin-bottom:4px;">Open proposal</div>
+            <div style="font-size:20px;font-weight:700;">${data.current_percent}% → ${p.proposed_percent}%</div>
+            <div style="font-size:12px;color:var(--ink-3);margin-top:4px;">Proposed by ${escHtml(p.proposed_by_name)}${p.reason ? ` — "${escHtml(p.reason)}"` : ''}</div>
+          </div>
+          <div style="text-align:right;">
+            <div style="font-size:13px;font-weight:600;">${p.votes.length}/${data.admin_count} admins voted</div>
+            <div style="font-size:12px;color:var(--ink-3);">${agree} agree · ${disagree} disagree</div>
+          </div>
+        </div>
+        <div class="admin-table-wrap" style="margin-top:14px;">
+          <table class="admin-table">
+            <thead><tr><th>Admin</th><th>Vote</th></tr></thead>
+            <tbody>${p.votes.map(v => `<tr><td>${escHtml(v.admin_name)}</td><td>${v.vote === 'agree' ? '✅ Agree' : '❌ Disagree'}</td></tr>`).join('')}</tbody>
+          </table>
+        </div>
+        <div style="display:flex;gap:8px;margin-top:16px;flex-wrap:wrap;">
+          ${!myVote ? `
+            <button class="btn btn-primary btn-sm" id="commission-vote-agree">✅ Agree</button>
+            <button class="btn btn-danger btn-sm" id="commission-vote-disagree">❌ Disagree</button>
+          ` : `<span style="font-size:13px;color:var(--ink-3);">You voted: ${myVote.vote === 'agree' ? '✅ Agree' : '❌ Disagree'}</span>`}
+          ${p.votes.length >= 2 ? `<button class="btn btn-ghost btn-sm" id="commission-close" style="margin-left:auto;">Close vote now (tally so far)</button>` : ''}
+        </div>
+      </div>`;
+  }
+
+  el.innerHTML = `
+    <div class="card" style="padding:20px;">
+      <div class="section-kicker" style="margin-bottom:4px;">Current rate</div>
+      <div style="font-size:32px;font-weight:800;">${data.current_percent}%</div>
+      ${!p ? `
+        <div style="margin-top:16px;display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap;">
+          <div class="form-group" style="margin-bottom:0;">
+            <label class="form-label">New percent</label>
+            <input class="form-input" id="commission-propose-percent" type="number" min="0" max="100" step="0.1" style="max-width:120px;" placeholder="${data.current_percent}">
+          </div>
+          <div class="form-group" style="margin-bottom:0;flex:1;min-width:220px;">
+            <label class="form-label">Reason</label>
+            <input class="form-input" id="commission-propose-reason" placeholder="Why change it?">
+          </div>
+          <button class="btn btn-primary" id="commission-propose-btn">Propose change</button>
+        </div>
+        <div style="font-size:12px;color:var(--ink-3);margin-top:8px;">${data.admin_count} admin${data.admin_count === 1 ? '' : 's'} currently active. ${data.admin_count <= 1 ? 'As the only admin, your proposal resolves immediately.' : ''}</div>
+      ` : ''}
+    </div>
+    ${proposalHtml}`;
+
+  document.getElementById('commission-propose-btn')?.addEventListener('click', async () => {
+    const percent = parseFloat(document.getElementById('commission-propose-percent').value);
+    const reason = document.getElementById('commission-propose-reason').value.trim();
+    if (!Number.isFinite(percent) || percent < 0 || percent > 100) { toast('Enter a valid percent', 'error'); return; }
+    try {
+      await api.post('/admin/commission/propose', { percent, reason });
+      toast('Proposal created', 'success');
+      renderCommission();
+    } catch (e) { toast(e.message, 'error'); }
+  });
+
+  document.getElementById('commission-vote-agree')?.addEventListener('click', () => castCommissionVote(p.id, 'agree'));
+  document.getElementById('commission-vote-disagree')?.addEventListener('click', () => castCommissionVote(p.id, 'disagree'));
+  document.getElementById('commission-close')?.addEventListener('click', async () => {
+    if (!confirm('Close voting now and finalize based on votes cast so far?')) return;
+    try {
+      await api.post(`/admin/commission/${p.id}/close`, {});
+      toast('Proposal closed', 'success');
+      renderCommission();
+    } catch (e) { toast(e.message, 'error'); }
+  });
+}
+
+async function castCommissionVote(proposalId, vote) {
+  try {
+    await api.post(`/admin/commission/${proposalId}/vote`, { vote });
+    toast('Vote recorded', 'success');
+    renderCommission();
   } catch (e) { toast(e.message, 'error'); }
 }
 

@@ -269,7 +269,7 @@ npm install web-push
 
 ## Paystack marketplace split setup (Bixcart)
 
-Bixcart now uses Paystack subaccounts and server-controlled dynamic splits for seller payments. You do **not** need to manually create a split group for sellers; the backend creates the split configuration per checkout.
+Bixcart now uses Paystack subaccounts and server-controlled dynamic splits for seller payments. You do **not** need to manually create a split group for each commission tier; the backend creates the split configuration per checkout.
 
 Add these Render environment variables:
 
@@ -280,7 +280,7 @@ Add these Render environment variables:
 The Paystack integration uses:
 
 - One Paystack subaccount per approved seller payout account.
-- A **flat** 7% Bixcart commission for every seller. The rate is platform-wide and not based on seller sales volume.
+- Dynamic **flat** seller shares so each seller's exact 7% → 5.5% Bixcart commission can be respected even when a cart contains multiple sellers.
 - `bearer_type: "all"`, so Paystack transaction fees are shared equally between the Bixcart main account and the participating seller subaccounts.
 - Server-side payment initialization and verification; the browser cannot change the commission/split configuration.
 

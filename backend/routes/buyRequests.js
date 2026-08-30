@@ -13,15 +13,6 @@ const ordersRouter = require('./orders'); // for the shared buildSplitCheckoutSe
 const RESPONSE_WINDOW_MS = 2 * 60 * 60 * 1000; // seller must accept/decline within 2h
 const PAYMENT_WINDOW_MS  = 2 * 60 * 60 * 1000; // buyer must pay within 2h of acceptance
 
-// Two hostel names are only considered "the same" when both are known and
-// match — an empty/unset hostel on either side can't be confirmed as a
-// match, so it falls back to requiring scheduling (the safer default).
-function normalizeHostel(h) { return String(h || '').trim().toLowerCase(); }
-function sameHostel(hostelA, hostelB) {
-  const a = normalizeHostel(hostelA), b = normalizeHostel(hostelB);
-  return !!a && !!b && a === b;
-}
-
 function shapeRequest(r) {
   return {
     ...r,
@@ -30,17 +21,13 @@ function shapeRequest(r) {
     listing_images: r.listing_id?.images || [],
     listing_price:  r.listing_id?.price,
     listing_status: r.listing_id?.status,
-    listing_stock_quantity: Number(r.listing_id?.stock_quantity || 0),
-    listing_delivery_window: r.listing_id?.delivery_window || '1d',
+    quantity:        r.quantity || 1,
     buyer_name:      r.buyer_id?.full_name,
     buyer_university:r.buyer_id?.university,
-    buyer_hostel:    r.buyer_id?.hostel_name || '',
     seller_name:     r.seller_id?.full_name,
-    seller_hostel:   r.seller_id?.hostel_name || '',
     listing_id:      r.listing_id?._id || r.listing_id,
     buyer_id:        r.buyer_id?._id || r.buyer_id,
     seller_id:       r.seller_id?._id || r.seller_id,
-    same_hostel:     r.same_hostel !== null && r.same_hostel !== undefined ? r.same_hostel : sameHostel(r.buyer_id?.hostel_name, r.seller_id?.hostel_name),
   };
 }
 
@@ -52,7 +39,7 @@ router.post('/', authMiddleware, async (req, res) => {
     const cartItems = await CartItem.find({ user_id: req.user.id }).populate('listing_id');
     if (!cartItems.length) return res.status(400).json({ error: 'Your cart is empty' });
 
-    const eligible = cartItems.filter(c => c.listing_id && c.listing_id.status === 'active' && Number(c.listing_id.stock_quantity || 0) >= Math.max(1, Number(c.quantity || 1)));
+    const eligible = cartItems.filter(c => c.listing_id && c.listing_id.status === 'active' && Number(c.listing_id.stock_quantity || 0) >= 1);
     const unavailable = cartItems.filter(c => !eligible.includes(c));
     if (!eligible.length) {
       return res.status(409).json({
@@ -66,15 +53,20 @@ router.post('/', authMiddleware, async (req, res) => {
 
     const request_group = uuidv4();
     const now = new Date();
-    const toCreate = eligible.map(c => ({
-      buyer_id: req.user.id,
-      seller_id: c.listing_id.seller_id,
-      listing_id: c.listing_id._id,
-      quantity: Math.max(1, Number(c.quantity || 1)),
-      amount: Number((Number(c.listing_id.price || 0) * Math.max(1, Number(c.quantity || 1))).toFixed(2)),
-      request_group,
-      response_deadline_at: new Date(now.getTime() + RESPONSE_WINDOW_MS),
-    }));
+    const toCreate = eligible.map(c => {
+      // Stock may have dropped since the item was added to the cart — never
+      // request more units than are actually available right now.
+      const qty = Math.min(Number(c.quantity || 1), Number(c.listing_id.stock_quantity || 1));
+      return {
+        buyer_id: req.user.id,
+        seller_id: c.listing_id.seller_id,
+        listing_id: c.listing_id._id,
+        quantity: qty,
+        amount: Number(c.listing_id.price || 0) * qty,
+        request_group,
+        response_deadline_at: new Date(now.getTime() + RESPONSE_WINDOW_MS),
+      };
+    });
 
     const created = await BuyRequest.insertMany(toCreate);
 
@@ -93,7 +85,7 @@ router.post('/', authMiddleware, async (req, res) => {
     for (const [sid, listings] of bySeller.entries()) {
       const seller = await User.findById(sid).select('email full_name').lean();
       const title = listings.length === 1 ? listings[0].title : `${listings.length} items`;
-      const totalAmount = listings.reduce((s, l) => s + Number(l.price || 0), 0);
+      const totalAmount = toCreate.filter(t => String(t.seller_id) === sid).reduce((s, t) => s + t.amount, 0);
       await notifyUser(sid, {
         title: 'New buy request',
         body: `${buyer?.full_name || 'A buyer'} wants to buy ${title}. Accept or decline within 2 hours — no payment has been taken yet.`,
@@ -127,7 +119,7 @@ router.get('/buying', authMiddleware, async (req, res) => {
     const filter = { buyer_id: req.user.id };
     if (req.query.status) filter.status = req.query.status;
     const requests = await BuyRequest.find(filter)
-      .populate('listing_id', 'title images price status stock_quantity delivery_window')
+      .populate('listing_id', 'title images price status')
       .populate('seller_id', 'full_name')
       .sort({ created_at: -1 }).lean();
     res.json(requests.map(shapeRequest));
@@ -140,9 +132,8 @@ router.get('/selling', sellerApprovalMiddleware, async (req, res) => {
     const filter = { seller_id: req.user.id };
     if (req.query.status) filter.status = req.query.status;
     const requests = await BuyRequest.find(filter)
-      .populate('listing_id', 'title images price status stock_quantity delivery_window')
-      .populate('buyer_id', 'full_name university hostel_name')
-      .populate('seller_id', 'hostel_name')
+      .populate('listing_id', 'title images price status stock_quantity')
+      .populate('buyer_id', 'full_name university')
       .sort({ created_at: -1 }).lean();
     res.json(requests.map(shapeRequest));
   } catch (e) {
@@ -165,53 +156,26 @@ router.post('/:id/accept', sellerApprovalMiddleware, async (req, res) => {
     if (reqDoc.response_deadline_at && new Date(reqDoc.response_deadline_at) < new Date())
       return res.status(400).json({ error: 'This request expired before you responded' });
 
-    // Re-check stock at accept time — it may have sold out to someone else
-    // since the request came in, since the listing stays live throughout.
+    // Re-check stock at accept time — it may have sold out (partly or fully)
+    // to someone else since the request came in, since the listing stays
+    // live throughout.
     const listing = await Listing.findById(reqDoc.listing_id);
-    const requestedQuantity = Math.max(1, Number(reqDoc.quantity || 1));
-    if (!listing || listing.status !== 'active' || Number(listing.stock_quantity || 0) < requestedQuantity) {
+    if (!listing || listing.status !== 'active' || Number(listing.stock_quantity || 0) < Number(reqDoc.quantity || 1)) {
       reqDoc.status = 'declined';
       reqDoc.decline_reason = 'Out of stock';
       reqDoc.responded_at = new Date();
       await reqDoc.save();
-      return res.status(409).json({ error: 'This item is no longer in stock, so the request was automatically declined.' });
+      return res.status(409).json({ error: `Only ${Number(listing?.stock_quantity || 0)} left in stock — not enough for this request, so it was automatically declined.` });
     }
 
     const [seller, buyer] = await Promise.all([
       User.findById(req.user.id).select('full_name hostel_name').lean(),
       User.findById(reqDoc.buyer_id).select('email hostel_name').lean(),
     ]);
-    const isSameHostel = sameHostel(seller?.hostel_name, buyer?.hostel_name);
-
-    let delivery_spot = '', delivery_scheduled_at = null;
-    if (!isSameHostel) {
-      delivery_spot = String(req.body?.delivery_spot || '').trim();
-      const rawScheduled = req.body?.delivery_scheduled_at;
-      delivery_scheduled_at = rawScheduled ? new Date(rawScheduled) : null;
-      if (!delivery_spot) return res.status(400).json({ error: 'Please choose a meetup spot — you and the buyer are in different hostels.', requires_scheduling: true, same_hostel: false });
-      if (!delivery_scheduled_at || isNaN(delivery_scheduled_at.getTime())) return res.status(400).json({ error: 'Please choose a delivery day and time.', requires_scheduling: true, same_hostel: false });
-
-      const now = new Date();
-      const deliveryMs = ({ '5m': 5, '6h': 360, '12h': 720, '1d': 1440, '3d': 4320, '7d': 10080 }[listing.delivery_window || '1d'] || 1440) * 60 * 1000;
-      const earliest = new Date(now.getTime());
-      const latest = new Date(now.getTime() + deliveryMs);
-      const lagosParts = new Intl.DateTimeFormat('en-NG', { timeZone: 'Africa/Lagos', hour: '2-digit', minute: '2-digit', hour12: false }).formatToParts(delivery_scheduled_at);
-      const hours = Number(lagosParts.find(p => p.type === 'hour')?.value || 0);
-      const minutes = Number(lagosParts.find(p => p.type === 'minute')?.value || 0);
-      if (hours < 7 || hours > 19 || (hours === 19 && minutes > 0)) {
-        return res.status(400).json({ error: 'Delivery time must be between 7:00 AM and 7:00 PM.', requires_scheduling: true, same_hostel: false });
-      }
-      if (delivery_scheduled_at < earliest || delivery_scheduled_at > latest) {
-        return res.status(400).json({ error: `Choose a delivery time within the listing's ${listing.delivery_window || '1d'} delivery window.`, requires_scheduling: true, same_hostel: false });
-      }
-    }
 
     reqDoc.status = 'accepted';
     reqDoc.responded_at = new Date();
     reqDoc.payment_deadline_at = new Date(Date.now() + PAYMENT_WINDOW_MS);
-    reqDoc.same_hostel = isSameHostel;
-    reqDoc.delivery_spot = delivery_spot;
-    reqDoc.delivery_scheduled_at = delivery_scheduled_at;
     await reqDoc.save();
 
     await notifyUser(String(reqDoc.buyer_id), {
@@ -275,7 +239,7 @@ router.get('/group/:group', authMiddleware, async (req, res) => {
       buyer_id: req.user.id,
       status: 'accepted',
       payment_deadline_at: { $gt: now },
-    }).populate('listing_id', 'title images price status stock_quantity delivery_window').lean();
+    }).populate('listing_id', 'title images price status stock_quantity').lean();
 
     if (!requests.length) return res.status(404).json({ error: 'No accepted requests to pay for in this group. They may have expired or already been paid.' });
     res.json(requests.map(shapeRequest));
@@ -295,13 +259,13 @@ router.post('/:group/initialize-payment', authMiddleware, async (req, res) => {
       payment_deadline_at: { $gt: now },
     }).populate('listing_id');
 
-    const unavailable = requests.filter(r => !r.listing_id || r.listing_id.status !== 'active' || Number(r.listing_id.stock_quantity || 0) < Math.max(1, Number(r.quantity || 1)));
+    const unavailable = requests.filter(r => !r.listing_id || r.listing_id.status !== 'active' || Number(r.listing_id.stock_quantity || 0) < Number(r.quantity || 1));
     const payable = requests.filter(r => !unavailable.includes(r));
 
     if (!payable.length) {
       return res.status(409).json({
         error: unavailable.length
-          ? 'The item(s) you were about to pay for are no longer available.'
+          ? 'The item(s) you were about to pay for are no longer available in the quantity you requested.'
           : 'Nothing to pay for — accepted requests may have expired.',
         unavailable_ids: unavailable.map(r => r.listing_id?._id).filter(Boolean),
       });
@@ -310,15 +274,12 @@ router.post('/:group/initialize-payment', authMiddleware, async (req, res) => {
     const buyer = await User.findById(req.user.id).select('email').lean();
     const delivery_contact = req.body?.delivery_address || req.body?.delivery_contact || {};
 
-    // The meetup spot/time was set by the SELLER at accept time (only when
-    // hostels differ) — attach each listing's own request info so it flows
-    // through to the resulting order without asking the buyer to re-enter it.
-    const listingsWithDelivery = payable.map(r => {
+    // Each listing carries its own requested quantity through to the
+    // checkout builder, which needs it to compute the correct line amount
+    // and to decrement the right number of units from stock once paid.
+    const listingsWithQty = payable.map(r => {
       const listing = r.listing_id;
-      listing._delivery_spot = r.delivery_spot || '';
-      listing._delivery_scheduled_at = r.delivery_scheduled_at || null;
-      listing._same_hostel = r.same_hostel;
-      listing._quantity = Math.max(1, Number(r.quantity || 1));
+      listing._quantity = Number(r.quantity || 1);
       return listing;
     });
 
@@ -328,7 +289,7 @@ router.post('/:group/initialize-payment', authMiddleware, async (req, res) => {
         buyerId: req.user.id,
         buyerEmail: buyer?.email,
         deliveryContact: delivery_contact,
-        listings: listingsWithDelivery,
+        listings: listingsWithQty,
         source: 'buy_request',
         buyRequestGroup: req.params.group,
         req,

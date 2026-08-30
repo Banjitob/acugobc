@@ -87,8 +87,8 @@
       const requests = await buyRequests.group(requestGroup);
       items = requests.map(r => ({
         id: r.listing_id, title: r.listing_title, price: r.listing_price,
-        images: r.listing_images, request_id: r.id, quantity: Math.max(1, Number(r.quantity || 1)),
-        spot: r.delivery_spot, requested_delivery_at: r.delivery_scheduled_at, same_hostel: r.same_hostel,
+        quantity: r.quantity || 1, line_total: r.amount,
+        images: r.listing_images, request_id: r.id,
       }));
       if (!items.length) {
         document.getElementById('checkout-content').innerHTML = `
@@ -100,7 +100,7 @@
           </div>`;
         return;
       }
-      subtotal = items.reduce((s, i) => s + (Number(i.price || 0) * Number(i.quantity || 1)), 0);
+      subtotal = items.reduce((s, i) => s + (i.line_total ?? i.price), 0);
       renderCheckout();
     } catch (e) {
       document.getElementById('checkout-content').innerHTML = `
@@ -135,21 +135,6 @@
             <label class="form-label">Note for the seller (optional)</label>
             <textarea class="form-textarea" id="f-note" style="min-height:70px;" placeholder="e.g. call me when you're close"></textarea>
           </div>
-          <div style="margin-top:6px;padding-top:16px;border-top:1px solid var(--border);">
-            <div style="font-weight:700;font-size:13px;margin-bottom:10px;">Meetup arrangements</div>
-            ${items.map(i => `
-              <div style="font-size:12px;color:var(--ink-3);margin-bottom:10px;display:flex;align-items:flex-start;gap:6px;">
-                ${icons.mapPin}
-                <span>
-                  <strong style="color:var(--ink-2);">${escHtml(i.title)}</strong><br>
-                  ${i.same_hostel
-                    ? `You and the seller are in the same hostel — arrange the handoff directly once your order is confirmed.`
-                    : i.spot && i.requested_delivery_at
-                      ? `${escHtml(i.spot)} · ${formatDeliverySlot(i.requested_delivery_at)}`
-                      : `The seller will confirm a meetup spot and time.`}
-                </span>
-              </div>`).join('')}
-          </div>
         </div>
 
         <div class="card checkout-summary" style="padding:20px;">
@@ -157,8 +142,8 @@
           ${items.map(i => `
             <div class="co-line">
               <div class="co-line-img">${i.images?.length ? `<img src="${i.images[0]}">` : icons.package}</div>
-              <div class="co-line-title">${i.title}<div style="font-size:11px;color:var(--ink-3);font-weight:500;">Qty: ${i.quantity} · ${formatPrice(i.price)} each</div></div>
-              <div class="co-line-price">${formatPrice(Number(i.price || 0) * Number(i.quantity || 1))}</div>
+              <div class="co-line-title">${i.title}${i.quantity > 1 ? ` × ${i.quantity}` : ''}</div>
+              <div class="co-line-price">${formatPrice(i.line_total ?? i.price)}</div>
             </div>`).join('')}
           <div class="cart-summary-row" style="margin-top:8px;"><span>Subtotal</span><span>${formatPrice(subtotal)}</span></div>
           <div class="cart-summary-row"><span>Delivery</span><span>Free</span></div>
