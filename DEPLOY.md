@@ -1,5 +1,5 @@
 # Campus Market — Deployment Guide
-## Render (Backend + Frontend) + MongoDB Atlas
+## Render (Backend + Frontend) + MongoDB Atlass
 
 ---
 
