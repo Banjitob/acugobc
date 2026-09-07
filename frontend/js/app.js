@@ -51,15 +51,26 @@ const auth = {
   },
   requireBuyer() {
     const u = auth.getUser();
-    if (!u || u.role !== 'buyer') { window.location.href = '/pages/seller-dashboard.html'; return false; }
+    if (!u || (u.role !== 'buyer' && u.role !== 'promoter')) { window.location.href = homeFor(u); return false; }
     return true;
   },
   requireSeller() {
     const u = auth.getUser();
-    if (!u || u.role !== 'seller') { window.location.href = '/pages/buyer-dashboard.html'; return false; }
+    if (!u || u.role !== 'seller') { window.location.href = homeFor(u); return false; }
     return true;
   },
 };
+
+// Where a logged-in user's "home" is, by role — used by guard redirects
+// throughout the app so a mis-routed visitor always lands somewhere sensible
+// for their actual account type, not a hardcoded assumption.
+function homeFor(user) {
+  if (!user) return '/pages/auth.html';
+  if (user.role === 'seller') return '/pages/seller-dashboard.html';
+  if (user.role === 'promoter') return '/pages/promoter-dashboard.html';
+  if (user.role === 'admin' || user.role === 'control') return '/pages/admin.html';
+  return '/pages/marketplace.html';
+}
 
 // ── CART ──
 const cartState = {
@@ -250,7 +261,7 @@ function productCardHTML(listing, saved = false) {
 
   const user = auth.getUser();
   const isOwnListing = user && String(user.id) === String(listing.seller_id);
-  const canAddToCart = listing.status === 'active' && !isOwnListing && user?.role === 'buyer';
+  const canAddToCart = listing.status === 'active' && !isOwnListing && (user?.role === 'buyer' || user?.role === 'promoter');
 
   const discount = listing.original_price && listing.original_price > listing.price
     ? Math.round((1 - listing.price / listing.original_price) * 100) : 0;
