@@ -309,7 +309,9 @@
   // Auth guard — seller only
   if (!auth.isLoggedIn()) { window.location.href = 'auth.html'; }
   const user = auth.getUser();
-  if (user?.role !== 'seller') { window.location.href = 'buyer-dashboard.html'; }
+  if (user?.role !== 'seller') {
+    window.location.href = user?.role === 'promoter' ? 'promoter-dashboard.html' : (user?.role === 'admin' || user?.role === 'control') ? 'admin.html' : 'marketplace.html';
+  }
 
   document.getElementById('credits-num').textContent = 'FREE';
   const bonusEl = document.getElementById('credits-bonus-msg');

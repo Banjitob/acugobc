@@ -88,6 +88,7 @@ router.get('/', optionalAuth, async (req, res) => {
       price_asc:  { price:  1 },
       price_desc: { price: -1 },
       popular:    { views: -1 },
+      bestselling:{ sales_count: -1 },
     };
 
     const skip = (parseInt(page) - 1) * parseInt(limit);

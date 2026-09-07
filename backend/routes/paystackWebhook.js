@@ -2,6 +2,7 @@ const express = require('express');
 const crypto = require('crypto');
 const router = express.Router();
 const ordersRouter = require('./orders');
+const adsRouter = require('./ads');
 
 function validSignature(req) {
   const secret = process.env.PAYSTACK_SECRET_KEY;
@@ -21,7 +22,20 @@ router.post('/', async (req, res) => {
     if (req.body?.event !== 'charge.success') return res.sendStatus(200);
 
     const reference = req.body?.data?.reference;
-    const buyerId = req.body?.data?.metadata?.user_id;
+    const metadata = req.body?.data?.metadata || {};
+
+    // Advertisement payments are a separate, simpler flow (no split, no
+    // order/checkout intent) — route them to their own finalizer.
+    if (metadata.type === 'advertisement') {
+      try {
+        await adsRouter.finalizeAdPayment(reference);
+      } catch (e) {
+        console.error('[paystack-webhook] ad payment finalization failed:', reference, e.message);
+      }
+      return res.sendStatus(200);
+    }
+
+    const buyerId = metadata.user_id;
     if (!reference || !buyerId) return res.sendStatus(200);
 
     try {

@@ -87,7 +87,7 @@
     color: var(--ink-3); display: flex; pointer-events: none;
   }
   /* Role picker */
-  .role-picker { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .role-picker { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
   .role-card {
     border: 2px solid var(--border); border-radius: var(--radius-lg);
     padding: 16px 14px; cursor: pointer; transition: all .15s; text-align: center;
@@ -128,6 +128,13 @@
     .auth-right { padding: 32px 20px; align-items: flex-start; }
     .auth-form-card { max-width: 100%; }
     .form-row { grid-template-columns: 1fr; }
+    .role-picker { grid-template-columns: 1fr 1fr; }
+    .role-card { padding: 12px 8px; }
+    .role-card-desc { display: none; }
+  }
+  @media(max-width: 420px) {
+    .role-picker { grid-template-columns: 1fr; }
+    .role-card-desc { display: block; }
   }
 </style>
 </head>
@@ -241,6 +248,11 @@
                 <div class="role-card-title">Sell</div>
                 <div class="role-card-desc">List items &amp; earn from campus</div>
                 <div id="seller-bonus-badge" style="display:none;margin-top:6px;background:#d1fae5;color:#065f46;font-size:10px;font-weight:700;padding:2px 8px;border-radius:99px;text-align:center;">🎉 Welcome to Bixcart — listings are free!</div>
+              </div>
+              <div class="role-card" data-role="promoter" onclick="selectRole('promoter')">
+                <div class="role-card-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg></div>
+                <div class="role-card-title">Host</div>
+                <div class="role-card-desc">Post & promote campus events</div>
               </div>
             </div>
             <input type="hidden" id="reg-role" required>
@@ -442,6 +454,7 @@
     showOnly('reset-view');
   } else if (getParam('mode') === 'register') {
     showRegister();
+    if (['buyer','seller','promoter'].includes(getParam('role'))) selectRole(getParam('role'));
   }
 
   // Do not automatically redirect users just because a previous session exists.
@@ -465,7 +478,8 @@
       const dest = !data.user.registration_complete
         ? 'register.html'
         : (data.user.role === 'seller' ? 'seller-dashboard.html'
-          : (data.user.role === 'admin' || data.user.role === 'control') ? 'admin.html' : 'buyer-dashboard.html');
+          : data.user.role === 'promoter' ? 'promoter-dashboard.html'
+          : (data.user.role === 'admin' || data.user.role === 'control') ? 'admin.html' : 'marketplace.html');
       setTimeout(() => window.location.replace(dest), 600);
     } catch (err) {
       toast(err.message, 'error');
@@ -476,7 +490,7 @@
   // ── Register ───────────────────────────────────────────────────────────────
   document.getElementById('register-form').addEventListener('submit', async e => {
     e.preventDefault();
-    if (!selectedRole) { toast('Please choose buyer or seller', 'error'); return; }
+    if (!selectedRole) { toast('Please choose buy, sell, or host', 'error'); return; }
 
     const password  = document.getElementById('reg-password').value;
     const confirm   = document.getElementById('reg-confirm-password').value;

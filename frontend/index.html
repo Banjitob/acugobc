@@ -3,6 +3,26 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<!-- Logged-in visitors get sent straight to their real home (marketplace for
+     buyers/promoters, dashboard for sellers) — this page is the public
+     marketing front door, not a home screen for people already signed in.
+     Runs before anything else loads, same pattern as the messages.html block. -->
+<script>
+  (function () {
+    var token = localStorage.getItem('cm_token');
+    if (!token) return;
+    try {
+      var user = JSON.parse(localStorage.getItem('cm_user'));
+      var role = user && user.role;
+      if (!user || !user.registration_complete) { window.location.replace('/pages/register.html'); return; }
+      var dest = role === 'seller' ? '/pages/seller-dashboard.html'
+        : role === 'promoter' ? '/pages/promoter-dashboard.html'
+        : (role === 'admin' || role === 'control') ? '/pages/admin.html'
+        : '/pages/marketplace.html';
+      window.location.replace(dest);
+    } catch (e) {}
+  })();
+</script>
 <!-- ── SEO ── -->
 <meta name="description" content="Bixcart is the trusted peer-to-peer marketplace exclusively for Ajayi Crowther University students. Buy, sell, and swap textbooks, electronics, and more — all on campus.">
 <meta name="robots" content="index, follow">
@@ -186,23 +206,19 @@
 <section class="hero">
   <div class="container hero-inner">
     <h1 class="hero-h1">Everything ACU is<br>buying &amp; selling <em>right now.</em></h1>
-    <p class="hero-sub">The marketplace built exclusively for ACU students — textbooks, electronics, furniture, and more from verified classmates.</p>
+    <p class="hero-sub">The marketplace built exclusively for ACU students — textbooks, electronics, cosmetics, and more from verified classmates.</p>
     <div class="hero-search-wrap" id="buyer-home-search">
       <div class="search-bar-wrap">
         <span style="color:var(--ink-3);display:flex;" id="hero-search-icon"></span>
-        <input class="search-bar-input" id="hero-search-input" type="text" placeholder="Search for textbooks, phones, furniture…" autocomplete="off">
+        <input class="search-bar-input" id="hero-search-input" type="text" placeholder="Search for textbooks, phones, cosmetics…" autocomplete="off">
         <button class="btn btn-accent" id="hero-search-btn" style="border-radius:var(--radius-md);">Search</button>
       </div>
     </div>
     <div class="hero-chips" id="hero-chips"></div>
-    <div id="seller-home-panel" style="display:none;margin-top:24px;max-width:620px;">
-      <div style="display:flex;gap:12px;flex-wrap:wrap;align-items:center;">
-        <a href="pages/seller-dashboard.html" class="btn btn-xl" style="background:white;color:var(--accent);font-weight:700;">Manage my listings</a>
-        <a href="pages/sell.html" class="btn btn-xl" style="background:rgba(255,255,255,.15);color:white;border:1.5px solid rgba(255,255,255,.3);">List a new item</a>
-      </div>
-      <p style="margin:12px 0 0;color:rgba(255,255,255,.68);font-size:13px;">Manage your listings, orders, messages and seller account from your dashboard.</p>
+    <div style="display:flex;gap:18px;flex-wrap:wrap;margin-top:16px;">
+      <a href="pages/sell.html" style="display:inline-flex;align-items:center;gap:6px;font-size:13px;font-weight:600;color:rgba(255,255,255,.75);text-decoration:none;">Got something to sell? List it in under 2 minutes →</a>
+      <a href="pages/events.html" style="display:inline-flex;align-items:center;gap:6px;font-size:13px;font-weight:600;color:rgba(255,255,255,.75);text-decoration:none;">See what's happening on campus →</a>
     </div>
-    <a href="pages/sell.html" id="hero-sell-btn" style="display:inline-flex;align-items:center;gap:6px;margin-top:16px;font-size:13px;font-weight:600;color:rgba(255,255,255,.75);text-decoration:none;">Got something to sell? List it in under 2 minutes →</a>
   </div>
 </section>
 
@@ -212,15 +228,15 @@
     <div class="trust-items">
       <div class="trust-item"><div class="trust-item-icon" id="t1"></div> .edu verified students only</div>
       <div class="trust-item"><div class="trust-item-icon" id="t2"></div> Secure in-app payments</div>
-      <div class="trust-item"><div class="trust-item-icon" id="t3"></div> Direct messaging</div>
-      <div class="trust-item"><div class="trust-item-icon" id="t4"></div> Campus-only meetups</div>
+      <div class="trust-item"><div class="trust-item-icon" id="t3"></div> Scheduled campus meetups</div>
+      <div class="trust-item"><div class="trust-item-icon" id="t4"></div> Delivery verification codes</div>
       <div class="trust-item"><div class="trust-item-icon" id="t5"></div> Buyer &amp; seller protection</div>
     </div>
   </div>
 </div>
 
 <!-- CATEGORIES -->
-<section id="buyer-categories-section" style="padding: 56px 0 40px;">
+<section style="padding: 56px 0 40px;">
   <div class="container">
     <div style="display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:32px;">
       <div>
@@ -238,8 +254,8 @@
   <div class="container">
     <div style="display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:20px;">
       <div>
-        <div class="section-kicker" style="color:var(--red);">Save more</div>
-        <h2 class="section-title-lg" style="font-size:30px;">Today's deals</h2>
+        <div class="section-kicker" style="color:var(--red);">🔥 Save more</div>
+        <h2 class="section-title-lg" style="font-size:30px;">Flash sales</h2>
       </div>
       <a href="pages/marketplace.html?sort=price_asc" class="btn btn-ghost">See all deals</a>
     </div>
@@ -248,7 +264,7 @@
 </section>
 
 <!-- RECOMMENDED FOR YOU -->
-<section id="buyer-recommended-section" style="padding: 20px 0 80px;">
+<section style="padding: 20px 0 60px;">
   <div class="container">
     <div style="display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:32px;">
       <div>
@@ -267,6 +283,21 @@
   </div>
 </section>
 
+<!-- CAMPUS EVENTS TEASER -->
+<section id="events-teaser-section" style="padding: 0 0 80px; display:none;">
+  <div class="container">
+    <div style="display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:24px;">
+      <div>
+        <div class="section-kicker">On campus</div>
+        <h2 class="section-title-lg" style="font-size:30px;">What's happening</h2>
+        <p class="section-sub">Parties, concerts, and workshops hosted by verified ACU promoters.</p>
+      </div>
+      <a href="pages/events.html" class="btn btn-ghost">See all events</a>
+    </div>
+    <div class="grid-3" id="events-teaser-grid"></div>
+  </div>
+</section>
+
 <!-- HOW IT WORKS -->
 <section class="how-section">
   <div class="container">
@@ -279,7 +310,7 @@
 </section>
 
 <!-- CTA BAND -->
-<section class="cta-band" id="buyer-cta-band">
+<section class="cta-band">
   <div style="max-width:600px;">
     <h2>Ready to <em>save money</em> this semester?</h2>
     <p>Join thousands of students already buying and selling on Bixcart. Free forever.</p>
@@ -287,6 +318,7 @@
       <a href="pages/auth.html?mode=register" class="btn btn-xl" style="background:white;color:var(--accent);font-weight:700;">Create free account</a>
       <a href="pages/marketplace.html" class="btn btn-xl" style="background:rgba(255,255,255,.15);color:white;border:1.5px solid rgba(255,255,255,.3);">Browse listings</a>
     </div>
+    <p style="margin-top:20px;font-size:13px;"><a href="pages/sell.html" style="color:rgba(255,255,255,.8);">Want to sell instead?</a> &nbsp;·&nbsp; <a href="pages/auth.html?mode=register&role=promoter" style="color:rgba(255,255,255,.8);">Hosting an event?</a> &nbsp;·&nbsp; <a href="pages/advertise.html" style="color:rgba(255,255,255,.8);">Advertise your business</a></p>
   </div>
 </section>
 
@@ -297,52 +329,19 @@
   renderNav();
   renderFooter();
 
-  // Keep buyer-only and seller-only content separated on the home page.
-  (function() {
-    const u = auth.getUser();
-    const isBuyer = u?.role === 'buyer';
-    const isSeller = u?.role === 'seller';
-
-    const sellBtn = document.getElementById('hero-sell-btn');
-    const sellerPanel = document.getElementById('seller-home-panel');
-    const buyerSearch = document.getElementById('buyer-home-search');
-    const buyerChips = document.getElementById('hero-chips');
-    const buyerCategories = document.getElementById('buyer-categories-section');
-    const buyerDeals = document.getElementById('deals-section');
-    const buyerRecommended = document.getElementById('buyer-recommended-section');
-    const buyerCta = document.getElementById('buyer-cta-band');
-
-    if (isSeller) {
-      if (sellBtn) sellBtn.style.display = 'none';
-      if (sellerPanel) sellerPanel.style.display = '';
-      if (buyerSearch) buyerSearch.style.display = 'none';
-      if (buyerChips) buyerChips.style.display = 'none';
-      if (buyerCategories) buyerCategories.style.display = 'none';
-      if (buyerDeals) buyerDeals.style.display = 'none';
-      if (buyerRecommended) buyerRecommended.style.display = 'none';
-      if (buyerCta) buyerCta.style.display = 'none';
-    } else if (isBuyer) {
-      if (sellBtn) sellBtn.style.display = 'none';
-      if (sellerPanel) sellerPanel.style.display = 'none';
-    } else {
-      // Logged-out visitors can see the public marketplace experience.
-      if (sellerPanel) sellerPanel.style.display = 'none';
-    }
-  })();
-
   // trust icons
-  const tIcons = [icons.shield, icons.dollarSign, icons.messageCircle, icons.mapPinMd, icons.check];
+  const tIcons = [icons.shield, icons.dollarSign, icons.calendar, icons.shield, icons.check];
   tIcons.forEach((ic, i) => { const el = document.getElementById(`t${i+1}`); if(el) el.innerHTML = ic; });
 
   // categories — shared between the hero quick-chips and the full grid below
   const cats = [
     { name: 'Textbooks', icon: 'bookOpen', q: 'Textbooks' },
     { name: 'Electronics', icon: 'cpu', q: 'Electronics' },
-    { name: 'Furniture', icon: 'home', q: 'Furniture' },
+    { name: 'Cosmetics', icon: 'sparkles', q: 'Cosmetics' },
+    { name: 'Jewelry', icon: 'gem', q: 'Jewelry' },
     { name: 'Clothing', icon: 'shirt', q: 'Clothing' },
     { name: 'Sports', icon: 'dumbbell', q: 'Sports' },
     { name: 'Music', icon: 'music', q: 'Music' },
-    { name: 'Transport', icon: 'bike', q: 'Transportation' },
     { name: 'Dorm', icon: 'package', q: 'Dorm Essentials' },
   ];
   document.getElementById('cats-grid').innerHTML = cats.map(c => `
@@ -357,7 +356,7 @@
   const steps = [
     { num: '01', icon: 'shield', title: 'Verify your .edu', desc: 'Sign up with ACU email. This keeps the marketplace safe and exclusive to verified students at your school.' },
     { num: '02', icon: 'package', title: 'List in under 2 mins', desc: 'Take a photo, set your price, add a description. Your listing goes live immediately to students across ACU.' },
-    { num: '03', icon: 'dollarSign', title: 'Meet up & get paid', desc: 'Chat securely in-app, agree on a campus meetup, and complete the transaction with our safe payment system.' },
+    { num: '03', icon: 'dollarSign', title: 'Request, pay & meet up', desc: 'Buyers send a request, sellers accept it, then payment and a scheduled campus meetup complete the deal safely.' },
   ];
   document.getElementById('how-steps').innerHTML = steps.map(s => `
     <div class="how-step">
@@ -402,8 +401,28 @@
     }
   }
 
+  // Happening on campus — light teaser, only shows if there are live events
+  async function loadEventsTeaser() {
+    try {
+      const data = await api.get('/events?limit=3', false);
+      const events = data.events || [];
+      if (!events.length) return; // section stays hidden — no empty state on the landing page
+      document.getElementById('events-teaser-grid').innerHTML = events.map(e => `
+        <a href="pages/event.html?id=${e.id}" class="how-step" style="border-color:var(--border);background:var(--surface);">
+          <div style="width:100%;height:110px;border-radius:var(--radius-md);background:var(--surface-2);overflow:hidden;margin-bottom:14px;display:flex;align-items:center;justify-content:center;color:var(--ink-3);">
+            ${e.banner_image ? `<img src="${e.banner_image}" style="width:100%;height:100%;object-fit:cover;">` : icons.calendar}
+          </div>
+          <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--accent);margin-bottom:6px;">${e.category}</div>
+          <div style="font-size:16px;font-weight:700;color:var(--ink);margin-bottom:6px;">${e.title}</div>
+          <p style="font-size:13px;color:var(--ink-3);">${new Date(e.event_date).toLocaleDateString('en-NG', { day:'numeric', month:'short' })} · ${e.location}</p>
+        </a>`).join('');
+      document.getElementById('events-teaser-section').style.display = '';
+    } catch (e) { /* silent — teaser is optional */ }
+  }
+
   loadDeals();
   loadRecommended();
+  loadEventsTeaser();
 </script>
 </body>
 </html>

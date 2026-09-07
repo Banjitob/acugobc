@@ -4,7 +4,7 @@ const userSchema = new mongoose.Schema({
   email:           { type: String, required: true, unique: true, lowercase: true, trim: true },
   password_hash:   { type: String, required: true },
   full_name:       { type: String, required: true, trim: true },
-  role:            { type: String, required: true, enum: ['buyer', 'seller', 'admin', 'control'] },
+  role:            { type: String, required: true, enum: ['buyer', 'seller', 'promoter', 'admin', 'control'] },
   account_status:  { type: String, enum: ['active', 'warned', 'suspended', 'deletion_pending', 'deleted'], default: 'active' },
   deletion_requested_at: { type: Date, default: null },
   deletion_reason: { type: String, default: '' },
@@ -18,6 +18,13 @@ const userSchema = new mongoose.Schema({
   seller_approval_requested_at: { type: Date, default: null },
   seller_approval_reviewed_at: { type: Date, default: null },
   seller_approval_reviewed_by: { type: mongoose.Schema.Types.ObjectId, ref: 'User', default: null },
+  // Promoter onboarding approval — mirrors the seller approval flow, since
+  // event hosts need the same trust/vetting as sellers before going live.
+  promoter_approval_status: { type: String, enum: ['approved','pending','rejected'], default: 'approved' },
+  promoter_approval_reason: { type: String, default: '' },
+  promoter_approval_requested_at: { type: Date, default: null },
+  promoter_approval_reviewed_at: { type: Date, default: null },
+  promoter_approval_reviewed_by: { type: mongoose.Schema.Types.ObjectId, ref: 'User', default: null },
   warn_reason:     { type: String, default: '' },
   suspend_reason:  { type: String, default: '' },
   warned_at:       { type: Date, default: null },
@@ -101,6 +108,9 @@ const listingSchema = new mongoose.Schema({
   stock_quantity:  { type: Number, default: 1, min: 0 },
   views:           { type: Number, default: 0 },
   saves:           { type: Number, default: 0 },
+  // Incremented once per completed order (not just paid/confirmed) — this is
+  // what powers the marketplace's "Hot Picks" (highest-sales) sort.
+  sales_count:     { type: Number, default: 0 },
   ai_flagged:      { type: Boolean, default: false },
   ai_flag_reason:  { type: String, default: '' },
   ai_flag_category:{ type: String, default: '' },
@@ -403,6 +413,25 @@ async function setCommissionPercent(value) {
   );
 }
 
+// Ad rate card — a simple admin-editable price per day for the paid
+// advertiser system (unlike commission, this doesn't need a vote — it's a
+// rate card, not a revenue split promise to existing sellers).
+const DEFAULT_AD_PRICE_PER_DAY_KOBO = 50000; // NGN 500/day
+
+async function getAdPricePerDayKobo() {
+  const setting = await PlatformSetting.findOne({ key: 'ad_price_per_day_kobo' }).lean();
+  const value = setting ? Number(setting.value) : DEFAULT_AD_PRICE_PER_DAY_KOBO;
+  return Number.isFinite(value) && value > 0 ? value : DEFAULT_AD_PRICE_PER_DAY_KOBO;
+}
+
+async function setAdPricePerDayKobo(value) {
+  await PlatformSetting.findOneAndUpdate(
+    { key: 'ad_price_per_day_kobo' },
+    { $set: { value: Number(value) } },
+    { upsert: true }
+  );
+}
+
 // A proposal to change the static commission rate. Any admin can propose;
 // every admin (including the proposer, auto-cast as "agree") then votes.
 // The proposal resolves — by majority of votes cast — either once every
@@ -425,6 +454,72 @@ const commissionProposalSchema = new mongoose.Schema({
 }, { timestamps: { createdAt: 'created_at', updatedAt: 'updated_at' } });
 
 const CommissionProposal = mongoose.model('CommissionProposal', commissionProposalSchema);
+
+// ── EVENTS ────────────────────────────────────────────────────────────────
+// Hosted by 'promoter' accounts (approved the same way sellers are). This is
+// an announcements/discovery board, not a ticketing system — no payment
+// flows through Bixcart for event entry; price_info is just informational
+// text the promoter writes (e.g. "Free entry", "NGN 2,000 at the gate").
+const eventSchema = new mongoose.Schema({
+  promoter_id:   { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
+  title:         { type: String, required: true, trim: true },
+  description:   { type: String, required: true },
+  category:      { type: String, default: 'Other' }, // Party, Concert, Workshop, Seminar, Sports, Other
+  banner_image:  { type: String, default: null },
+  location:      { type: String, required: true },
+  event_date:    { type: Date, required: true }, // start date/time
+  end_date:      { type: Date, default: null },
+  price_info:    { type: String, default: 'Free entry' },
+  contact_info:  { type: String, default: '' }, // promoter's own contact for THEIR event — exempt from the general off-platform-contact rule
+  status:        { type: String, enum: ['active', 'flagged', 'removed'], default: 'active' },
+  ai_flagged:    { type: Boolean, default: false },
+  ai_flag_reason:{ type: String, default: '' },
+  views:         { type: Number, default: 0 },
+  interested_count: { type: Number, default: 0 },
+}, { timestamps: { createdAt: 'created_at', updatedAt: 'updated_at' } });
+
+eventSchema.index({ promoter_id: 1 });
+eventSchema.index({ event_date: 1 });
+eventSchema.index({ status: 1 });
+
+const eventInterestSchema = new mongoose.Schema({
+  user_id:  { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
+  event_id: { type: mongoose.Schema.Types.ObjectId, ref: 'Event', required: true },
+}, { timestamps: { createdAt: 'created_at', updatedAt: false } });
+
+eventInterestSchema.index({ user_id: 1, event_id: 1 }, { unique: true });
+
+const Event = mongoose.model('Event', eventSchema);
+const EventInterest = mongoose.model('EventInterest', eventInterestSchema);
+
+// ── ADVERTISEMENTS (paid) ─────────────────────────────────────────────────
+// A business (does not need a Bixcart account) submits an ad, pays Bixcart
+// directly through Paystack for a chosen duration, and an admin must still
+// approve the creative before it goes live at the top of the marketplace.
+const advertisementSchema = new mongoose.Schema({
+  business_name:  { type: String, required: true, trim: true },
+  contact_email:  { type: String, required: true, lowercase: true, trim: true },
+  contact_phone:  { type: String, default: '' },
+  title:          { type: String, required: true, trim: true },
+  image_url:      { type: String, required: true },
+  link_url:       { type: String, default: '' },
+  duration_days:  { type: Number, required: true, min: 1 },
+  amount_kobo:    { type: Number, required: true },
+  payment_reference: { type: String, default: null, index: true },
+  payment_status: { type: String, enum: ['pending', 'paid', 'failed'], default: 'pending' },
+  // Content moderation happens after payment (payment doesn't guarantee airtime).
+  review_status:  { type: String, enum: ['pending_review', 'approved', 'rejected'], default: 'pending_review' },
+  rejection_reason: { type: String, default: '' },
+  starts_at:      { type: Date, default: null },
+  ends_at:        { type: Date, default: null },
+  clicks:         { type: Number, default: 0 },
+  impressions:    { type: Number, default: 0 },
+}, { timestamps: { createdAt: 'created_at', updatedAt: 'updated_at' } });
+
+advertisementSchema.index({ review_status: 1, payment_status: 1 });
+advertisementSchema.index({ ends_at: 1 });
+
+const Advertisement = mongoose.model('Advertisement', advertisementSchema);
 
 async function connectDb() {
   const uri = process.env.MONGODB_URI;
@@ -456,9 +551,15 @@ module.exports = {
   BuyRequest,
   PlatformSetting,
   CommissionProposal,
+  Event,
+  EventInterest,
+  Advertisement,
   AdminAction,
   UserActivity,
   DEFAULT_COMMISSION_PERCENT,
   getCommissionPercent,
   setCommissionPercent,
+  DEFAULT_AD_PRICE_PER_DAY_KOBO,
+  getAdPricePerDayKobo,
+  setAdPricePerDayKobo,
 };

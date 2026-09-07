@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="Discover parties, concerts, workshops and more happening around Ajayi Crowther University.">
+<title>Events — Bixcart</title>
+<link rel="stylesheet" href="../css/main.css">
+<style>
+  .events-header { max-width: 1100px; margin: 0 auto; padding: 28px 24px 0; }
+  .events-title { font-family: var(--font-display); font-size: 30px; letter-spacing: -1px; }
+  .events-sub { color: var(--ink-3); font-size: 14px; margin-top: 4px; }
+  .events-body { max-width: 1100px; margin: 0 auto; padding: 20px 24px 48px; }
+  .events-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; margin-top: 18px; }
+  .event-tile { background: var(--surface); border: 1.5px solid var(--border); border-radius: var(--radius-lg); overflow: hidden; display: flex; flex-direction: column; transition: box-shadow .15s, transform .15s; }
+  .event-tile:hover { box-shadow: 0 4px 18px rgba(0,0,0,.07); transform: translateY(-2px); }
+  .event-tile-img { width: 100%; height: 150px; background: var(--surface-2); overflow: hidden; display: flex; align-items: center; justify-content: center; color: var(--ink-3); position: relative; }
+  .event-tile-img img { width: 100%; height: 100%; object-fit: cover; }
+  .event-tile-date { position: absolute; top: 10px; left: 10px; background: rgba(24,21,15,.75); color: white; font-size: 11px; font-weight: 700; padding: 4px 9px; border-radius: 999px; }
+  .event-tile-body { padding: 14px 16px 16px; display: flex; flex-direction: column; gap: 6px; flex: 1; }
+  .event-tile-cat { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; color: var(--accent); }
+  .event-tile-title { font-size: 15px; font-weight: 700; line-height: 1.3; }
+  .event-tile-meta { font-size: 12px; color: var(--ink-3); display: flex; align-items: center; gap: 5px; }
+  .event-tile-footer { display: flex; justify-content: space-between; align-items: center; margin-top: auto; padding-top: 8px; }
+  .event-tile-price { font-size: 12px; font-weight: 600; color: var(--ink-2); }
+  @media(max-width: 900px) { .events-grid { grid-template-columns: repeat(2, 1fr); } }
+  @media(max-width: 600px) {
+    .events-header { padding: 20px 16px 0; }
+    .events-body { padding: 14px 16px 32px; }
+    .events-title { font-size: 24px; }
+    .events-grid { grid-template-columns: 1fr 1fr; gap: 12px; }
+    .event-tile-img { height: 110px; }
+    .event-tile-body { padding: 10px 12px 12px; }
+    .event-tile-title { font-size: 13px; }
+  }
+</style>
+</head>
+<body>
+<nav class="nav"></nav>
+
+<div class="events-header">
+  <div class="events-title">What's happening on campus</div>
+  <div class="events-sub">Parties, concerts, workshops, and more — hosted by verified ACU promoters.</div>
+  <div class="cat-chip-scroll" id="cat-chip-scroll" style="margin-top:16px;"></div>
+</div>
+
+<div class="events-body">
+  <div id="events-container">Loading…</div>
+</div>
+
+<script src="../js/app.js"></script>
+<script>
+  renderNav('Events');
+  renderFooter();
+
+  function escHtml(s) {
+    return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  }
+  function formatEventShort(iso) {
+    const d = new Date(iso);
+    if (isNaN(d.getTime())) return '';
+    return d.toLocaleDateString('en-NG', { day: 'numeric', month: 'short' });
+  }
+  function formatEventFull(iso) {
+    const d = new Date(iso);
+    if (isNaN(d.getTime())) return '';
+    return d.toLocaleString('en-NG', { weekday: 'long', day: 'numeric', month: 'long', hour: 'numeric', minute: '2-digit' });
+  }
+
+  const CATEGORIES = ['All', 'Party', 'Concert', 'Workshop', 'Seminar', 'Sports', 'Other'];
+  let activeCategory = getParam('category') || '';
+
+  document.getElementById('cat-chip-scroll').innerHTML = CATEGORIES.map(c => `
+    <button class="cat-chip ${(activeCategory === c || (c === 'All' && !activeCategory)) ? 'active' : ''}" data-cat="${c === 'All' ? '' : c}">${escHtml(c)}</button>
+  `).join('');
+  document.querySelectorAll('.cat-chip').forEach(btn => {
+    btn.addEventListener('click', () => {
+      activeCategory = btn.dataset.cat;
+      document.querySelectorAll('.cat-chip').forEach(b => b.classList.toggle('active', b === btn));
+      loadEvents();
+    });
+  });
+
+  async function loadEvents() {
+    const el = document.getElementById('events-container');
+    el.innerHTML = '<div class="events-grid">' + Array(6).fill('<div class="skeleton" style="height:220px;border-radius:var(--radius-lg);"></div>').join('') + '</div>';
+    try {
+      const qs = activeCategory ? `?category=${encodeURIComponent(activeCategory)}` : '';
+      const data = await api.get(`/events${qs}`, auth.isLoggedIn());
+      renderEvents(data.events || []);
+    } catch (e) {
+      el.innerHTML = `<div class="empty-state"><h3>Could not load events</h3><p>${escHtml(e.message)}</p></div>`;
+    }
+  }
+
+  function renderEvents(events) {
+    const el = document.getElementById('events-container');
+    if (!events.length) {
+      el.innerHTML = `<div class="empty-state">
+        <div class="empty-state-icon">${icons.calendar}</div>
+        <h3>No events yet</h3>
+        <p>Check back soon, or if you're hosting something, apply as a promoter to post it here.</p>
+      </div>`;
+      return;
+    }
+    el.innerHTML = `<div class="events-grid">${events.map(e => `
+      <a href="event.html?id=${e.id}" class="event-tile">
+        <div class="event-tile-img">
+          ${e.banner_image ? `<img src="${e.banner_image}" alt="">` : icons.calendar}
+          <div class="event-tile-date">${formatEventShort(e.event_date)}</div>
+        </div>
+        <div class="event-tile-body">
+          <div class="event-tile-cat">${escHtml(e.category)}</div>
+          <div class="event-tile-title">${escHtml(e.title)}</div>
+          <div class="event-tile-meta">${icons.mapPin} ${escHtml(e.location)}</div>
+          <div class="event-tile-footer">
+            <div class="event-tile-price">${escHtml(e.price_info)}</div>
+            <div style="font-size:11px;color:var(--ink-3);">${e.interested_count || 0} interested</div>
+          </div>
+        </div>
+      </a>
+    `).join('')}</div>`;
+  }
+
+  loadEvents();
+</script>
+</body>
+</html>

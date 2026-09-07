@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="Advertise your business to ACU students on Bixcart's marketplace.">
+<title>Advertise on Bixcart</title>
+<link rel="stylesheet" href="../css/main.css">
+<style>
+  .adv-wrap { max-width: 560px; margin: 0 auto; padding: 32px 24px 60px; }
+  .adv-title { font-family: var(--font-display); font-size: 28px; letter-spacing: -1px; }
+  .adv-sub { color: var(--ink-3); font-size: 14px; margin-top: 6px; margin-bottom: 24px; }
+  .duration-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-top: 6px; }
+  .duration-opt { border: 1.5px solid var(--border); border-radius: var(--radius-md); padding: 10px; text-align: center; cursor: pointer; font-size: 13px; font-weight: 600; }
+  .duration-opt.selected { border-color: var(--accent); background: rgba(200,82,42,.06); color: var(--accent); }
+  .price-box { background: var(--surface); border: 1.5px solid var(--border); border-radius: var(--radius-lg); padding: 18px; margin: 20px 0; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; }
+  .price-total { font-family: var(--font-display); font-size: 26px; letter-spacing: -1px; }
+  @media(max-width: 600px) {
+    .adv-wrap { padding: 20px 16px 48px; }
+    .adv-title { font-size: 22px; }
+    .duration-grid { grid-template-columns: repeat(2, 1fr); }
+    .price-box { flex-direction: column; align-items: stretch; text-align: center; }
+    .price-box .btn { width: 100%; }
+  }
+</style>
+</head>
+<body>
+<nav class="nav"></nav>
+
+<div class="adv-wrap" id="adv-wrap">
+  <div class="adv-title">Advertise on Bixcart</div>
+  <div class="adv-sub">Put your business in front of every ACU student browsing the marketplace. Submit your ad, pay securely, and it goes live once approved.</div>
+
+  <form id="adv-form">
+    <div class="form-group" style="margin-bottom:14px;">
+      <label class="form-label">Business name <span style="color:var(--red);">*</span></label>
+      <input class="form-input" id="a-business" placeholder="e.g. Campus Bites Restaurant">
+    </div>
+    <div class="form-group" style="margin-bottom:14px;">
+      <label class="form-label">Ad title <span style="color:var(--red);">*</span></label>
+      <input class="form-input" id="a-title" placeholder="e.g. 20% off this week only">
+    </div>
+    <div style="display:flex;gap:10px;">
+      <div class="form-group" style="margin-bottom:14px;flex:1;">
+        <label class="form-label">Contact email <span style="color:var(--red);">*</span></label>
+        <input class="form-input" id="a-email" type="email" placeholder="you@business.com">
+      </div>
+      <div class="form-group" style="margin-bottom:14px;flex:1;">
+        <label class="form-label">Contact phone</label>
+        <input class="form-input" id="a-phone" type="tel" placeholder="080...">
+      </div>
+    </div>
+    <div class="form-group" style="margin-bottom:14px;">
+      <label class="form-label">Link (optional)</label>
+      <input class="form-input" id="a-link" placeholder="https://your-site.com or a WhatsApp link">
+    </div>
+    <div class="form-group" style="margin-bottom:14px;">
+      <label class="form-label">Ad image <span style="color:var(--red);">*</span></label>
+      <input type="file" id="a-file" accept="image/*">
+      <span class="form-hint">Landscape banner works best (e.g. 1200×375px).</span>
+      <div id="a-preview" style="margin-top:8px;"></div>
+    </div>
+    <div class="form-group" style="margin-bottom:0;">
+      <label class="form-label">How many days?</label>
+      <div class="duration-grid" id="duration-grid">
+        <div class="duration-opt" data-days="3">3 days</div>
+        <div class="duration-opt selected" data-days="7">7 days</div>
+        <div class="duration-opt" data-days="14">14 days</div>
+        <div class="duration-opt" data-days="30">30 days</div>
+      </div>
+    </div>
+
+    <div class="price-box">
+      <div>
+        <div style="font-size:12px;color:var(--ink-3);">Total for <span id="days-label">7</span> days</div>
+        <div class="price-total" id="price-total">—</div>
+      </div>
+      <button class="btn btn-accent btn-lg" type="submit" id="pay-btn">Pay & submit</button>
+    </div>
+    <p style="font-size:12px;color:var(--ink-3);">Your ad only goes live after Bixcart reviews the content. If it's not approved, you'll be refunded in full.</p>
+  </form>
+</div>
+
+<script src="../js/app.js"></script>
+<script>
+  renderNav('');
+  renderFooter();
+
+  let pricePerDayKobo = 50000; // fallback, replaced once fetched
+  let selectedDays = 7;
+  let imageFile = null;
+
+  async function loadPrice() {
+    try {
+      const data = await api.get('/ads/price', false);
+      if (data?.price_per_day_kobo) pricePerDayKobo = data.price_per_day_kobo;
+    } catch (_) { /* keep fallback if this fails */ }
+    updatePrice();
+  }
+
+  function updatePrice() {
+    const total = (pricePerDayKobo * selectedDays) / 100;
+    document.getElementById('price-total').textContent = `₦${total.toLocaleString('en-NG')}`;
+    document.getElementById('days-label').textContent = selectedDays;
+  }
+
+  document.querySelectorAll('.duration-opt').forEach(opt => {
+    opt.addEventListener('click', () => {
+      document.querySelectorAll('.duration-opt').forEach(o => o.classList.remove('selected'));
+      opt.classList.add('selected');
+      selectedDays = parseInt(opt.dataset.days, 10);
+      updatePrice();
+    });
+  });
+
+  document.getElementById('a-file').addEventListener('change', (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    if (file.size > 8 * 1024 * 1024) { toast('Image too large (max 8MB)', 'error'); e.target.value = ''; return; }
+    imageFile = file;
+    document.getElementById('a-preview').innerHTML = `<img src="${URL.createObjectURL(file)}" style="max-width:100%;max-height:140px;border-radius:var(--radius-md);">`;
+  });
+
+  // ── Handle Paystack redirect back ──
+  const params = new URLSearchParams(window.location.search);
+  if (params.get('payment') === 'success' && params.get('reference')) {
+    document.getElementById('adv-wrap').innerHTML = `
+      <div class="empty-state">
+        <div class="empty-state-icon">${icons.loader}</div>
+        <h3>Confirming your payment…</h3>
+      </div>`;
+    api.get(`/ads/verify/${encodeURIComponent(params.get('reference'))}`, false)
+      .then(() => {
+        document.getElementById('adv-wrap').innerHTML = `
+          <div class="empty-state">
+            <div class="empty-state-icon" style="background:var(--green-bg);color:var(--green);">${icons.check}</div>
+            <h3>Payment received!</h3>
+            <p>Your ad is now with our team for review. You'll get an email at the address you provided once it's approved and live.</p>
+            <a href="/pages/marketplace.html" class="btn btn-accent">Browse Bixcart</a>
+          </div>`;
+      })
+      .catch(e => {
+        document.getElementById('adv-wrap').innerHTML = `
+          <div class="empty-state">
+            <div class="empty-state-icon" style="background:var(--red-bg);color:var(--red);">${icons.alertCircle || icons.x}</div>
+            <h3>We couldn't confirm your payment</h3>
+            <p>${e.message || 'Please contact support with your Paystack reference.'}</p>
+          </div>`;
+      });
+  } else {
+    loadPrice();
+    document.getElementById('adv-form').addEventListener('submit', submitAd);
+  }
+
+  async function submitAd(e) {
+    e.preventDefault();
+    const business_name = document.getElementById('a-business').value.trim();
+    const title = document.getElementById('a-title').value.trim();
+    const contact_email = document.getElementById('a-email').value.trim();
+    const contact_phone = document.getElementById('a-phone').value.trim();
+    const link_url = document.getElementById('a-link').value.trim();
+
+    if (!business_name || !title || !contact_email) { toast('Please fill in the required fields', 'error'); return; }
+    if (!imageFile) { toast('Please upload an ad image', 'error'); return; }
+
+    const btn = document.getElementById('pay-btn');
+    btn.disabled = true; btn.textContent = 'Starting payment…';
+
+    const formData = new FormData();
+    formData.append('business_name', business_name);
+    formData.append('title', title);
+    formData.append('contact_email', contact_email);
+    formData.append('contact_phone', contact_phone);
+    formData.append('link_url', link_url);
+    formData.append('duration_days', selectedDays);
+    formData.append('image', imageFile);
+
+    try {
+      const res = await fetch('/api/ads/submit', { method: 'POST', body: formData });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Could not start payment');
+      window.location.href = data.authorization_url;
+    } catch (err) {
+      toast(err.message, 'error');
+      btn.disabled = false; btn.textContent = 'Pay & submit';
+    }
+  }
+</script>
+</body>
+</html>

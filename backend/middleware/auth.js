@@ -62,4 +62,19 @@ function sellerApprovalMiddleware(req, res, next) {
   });
 }
 
-module.exports = { authMiddleware, optionalAuth, adminMiddleware, controlMiddleware, sellerApprovalMiddleware };
+function promoterApprovalMiddleware(req, res, next) {
+  authMiddleware(req, res, async () => {
+    try {
+      const { User } = require('../db/database');
+      const user = await User.findById(req.user.id).select('role promoter_approval_status account_status').lean();
+      if (!user) return res.status(404).json({ error: 'User not found' });
+      if (user.role !== 'promoter') return res.status(403).json({ error: 'Promoter access required' });
+      if (['suspended','deletion_pending','deleted'].includes(user.account_status)) return res.status(403).json({ code: 'ACCOUNT_UNAVAILABLE', error: user.account_status === 'deletion_pending' ? 'Your account deletion request is awaiting admin approval.' : 'Your account is unavailable.' });
+      if (user.promoter_approval_status === 'pending') return res.status(403).json({ code: 'PROMOTER_APPROVAL_PENDING', error: 'Your promoter account is awaiting admin approval. Please allow up to 6 hours.' });
+      if (user.promoter_approval_status === 'rejected') return res.status(403).json({ code: 'PROMOTER_APPROVAL_REJECTED', error: 'Your promoter application was rejected.' });
+      next();
+    } catch (e) { res.status(500).json({ error: e.message }); }
+  });
+}
+
+module.exports = { authMiddleware, optionalAuth, adminMiddleware, controlMiddleware, sellerApprovalMiddleware, promoterApprovalMiddleware };

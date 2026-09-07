@@ -297,21 +297,24 @@ function renderNav(activePage = '') {
 
   const isBuyer = user?.role === 'buyer';
   const isSeller = user?.role === 'seller';
+  const isPromoter = user?.role === 'promoter';
 
-  // Sellers can browse the marketplace too, but seller accounts do not get buyer actions.
+  // Sellers/promoters can browse the marketplace too, but their accounts do not get buyer actions.
   const links = [
     { href: '/pages/marketplace.html', label: 'Browse', icon: icons.search },
+    { href: '/pages/events.html', label: 'Events', icon: icons.calendar },
   ];
   if (isSeller) links.push({ href: '/pages/sell.html', label: 'Sell', icon: icons.plus });
+  if (isPromoter) links.push({ href: '/pages/promoter-dashboard.html', label: 'Host', icon: icons.plus });
 
   const linksHTML = links.map(l =>
     `<li><a href="${l.href}" class="${activePage === l.label ? 'active' : ''}">${l.icon} ${l.label}</a></li>`
   ).join('');
 
-  const dashHref = isSeller ? '/pages/seller-dashboard.html' : '/pages/buyer-dashboard.html';
+  const dashHref = isSeller ? '/pages/seller-dashboard.html' : isPromoter ? '/pages/promoter-dashboard.html' : '/pages/buyer-dashboard.html';
 
   const authHTML = user ? `
-    ${isBuyer ? `
+    ${(isBuyer || isPromoter) ? `
     <a href="/pages/cart.html" class="btn btn-surface btn-icon" title="Cart" aria-label="Cart" id="nav-cart-btn" style="position:relative;display:inline-flex">
       ${icons.shoppingBag}
       <span id="nav-cart-badge" style="display:none;position:absolute;top:-4px;right:-4px;min-width:17px;height:17px;padding:0 4px;border-radius:9px;background:var(--accent);color:#fff;font-size:10px;font-weight:700;align-items:center;justify-content:center;line-height:1;border:1.5px solid var(--bg);"></span>
@@ -333,10 +336,23 @@ function renderNav(activePage = '') {
 
   navEl.innerHTML = `
     <a href="/" class="nav-logo">Bix<span>cart</span></a>
+    <button class="nav-hamburger" id="nav-hamburger" aria-label="Menu">${icons.list}</button>
     <ul class="nav-links">${linksHTML}</ul>
+    <ul class="nav-mobile-links" id="nav-mobile-links">${linksHTML}</ul>
     <div class="nav-spacer"></div>
     <div class="nav-actions">${authHTML}</div>
   `;
+
+  document.getElementById('nav-hamburger')?.addEventListener('click', (e) => {
+    e.stopPropagation();
+    document.getElementById('nav-mobile-links')?.classList.toggle('open');
+  });
+  document.addEventListener('click', e => {
+    const mobileMenu = document.getElementById('nav-mobile-links');
+    if (mobileMenu && mobileMenu.classList.contains('open') && !mobileMenu.contains(e.target) && e.target.id !== 'nav-hamburger') {
+      mobileMenu.classList.remove('open');
+    }
+  });
 
   // Close menu on outside click
   if (user) {
@@ -346,7 +362,7 @@ function renderNav(activePage = '') {
     }, { once: false });
 
     // Refresh cart badge now that the element exists
-    if (isBuyer) setTimeout(refreshCartBadge, 0);
+    if (isBuyer || isPromoter) setTimeout(refreshCartBadge, 0);
   }
 }
 
@@ -489,6 +505,11 @@ const icons = {
   cpu:           `<svg ${iconSize} viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="16" height="16" rx="2"/><rect x="9" y="9" width="6" height="6"/><line x1="9" y1="1" x2="9" y2="4"/><line x1="15" y1="1" x2="15" y2="4"/><line x1="9" y1="20" x2="9" y2="23"/><line x1="15" y1="20" x2="15" y2="23"/><line x1="20" y1="9" x2="23" y2="9"/><line x1="20" y1="14" x2="23" y2="14"/><line x1="1" y1="9" x2="4" y2="9"/><line x1="1" y1="14" x2="4" y2="14"/></svg>`,
   home:          `<svg ${iconSize} viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>`,
   bike:          `<svg ${iconSize} viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18.5" cy="17.5" r="3.5"/><circle cx="5.5" cy="17.5" r="3.5"/><circle cx="15" cy="5" r="1"/><path d="M12 17.5V14l-3-3 4-3 2 3h2"/></svg>`,
+  sparkles:      `<svg ${iconSize} viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v4M12 17v4M3 12h4M17 12h4M5.6 5.6l2.8 2.8M15.6 15.6l2.8 2.8M18.4 5.6l-2.8 2.8M8.4 15.6l-2.8 2.8"/></svg>`,
+  gem:           `<svg ${iconSize} viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3h12l4 6-10 12L2 9z"/><path d="M11 3 8 9l4 12 4-12-3-6"/><path d="M2 9h20"/></svg>`,
+  megaphone:     `<svg ${iconSize} viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11v3a1 1 0 0 0 1 1h1l3 6h2l-1-6h3l6 4V6l-6 4H8L5 8H4a1 1 0 0 0-1 1z"/></svg>`,
+  calendar:      `<svg ${iconSize} viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>`,
+  flame:         `<svg ${iconSize} viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 17a2.5 2.5 0 0 0 2.5-2.5c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7.5 7.5 0 1 1-15 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"/></svg>`,
   music:         `<svg ${iconSize} viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>`,
   shirt:         `<svg ${iconSize} viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.38 3.46 16 2a4 4 0 0 1-8 0L3.62 3.46a2 2 0 0 0-1.34 2.23l.58 3.57a1 1 0 0 0 .99.84H6v10c0 1.1.9 2 2 2h8a2 2 0 0 0 2-2V10h2.15a1 1 0 0 0 .99-.84l.58-3.57a2 2 0 0 0-1.34-2.23z"/></svg>`,
   dumbbell:      `<svg ${iconSize} viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6.5 6.5 11 11"/><path d="m21 21-1-1"/><path d="m3 3 1 1"/><path d="m18 22 4-4"/><path d="m2 6 4-4"/><path d="m3 10 7-7"/><path d="m14 21 7-7"/></svg>`,

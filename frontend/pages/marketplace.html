@@ -37,6 +37,16 @@
 <title>Browse Listings — Bixcart ACU Marketplace</title>
 <link rel="stylesheet" href="../css/main.css">
 <style>
+  .ad-banner { position: relative; width: 100%; height: 100px; border-radius: var(--radius-lg); overflow: hidden; margin-bottom: 20px; background: var(--surface-2); display: none; }
+  .ad-banner.has-ad { display: block; }
+  .ad-banner-link { display: block; width: 100%; height: 100%; }
+  .ad-banner img { width: 100%; height: 100%; object-fit: cover; }
+  .ad-banner-tag { position: absolute; top: 8px; left: 8px; background: rgba(24,21,15,.6); color: white; font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: .05em; padding: 3px 8px; border-radius: 999px; }
+  .ad-banner-dots { position: absolute; bottom: 8px; right: 10px; display: flex; gap: 4px; }
+  .ad-banner-dot { width: 6px; height: 6px; border-radius: 50%; background: rgba(255,255,255,.5); }
+  .ad-banner-dot.active { background: white; }
+  @media(max-width: 600px) { .ad-banner { height: 70px; margin-bottom: 14px; } }
+</style>
   .market-layout { display: grid; grid-template-columns: 256px 1fr; gap: 28px; align-items: start; }
   .filter-panel {
     background: var(--surface); border: 1.5px solid var(--border);
@@ -140,6 +150,9 @@
 <div class="page">
   <div class="container">
 
+    <!-- Sponsored ad banner -->
+    <div id="ad-banner-slot"></div>
+
     <!-- Page header -->
     <div style="margin-bottom:24px;">
       <h1 class="market-page-title" style="font-family:var(--font-display);font-size:36px;letter-spacing:-1px;margin-bottom:6px;">Marketplace</h1>
@@ -155,6 +168,15 @@
 
     <!-- Quick category scroller -->
     <div class="cat-chip-scroll" id="cat-chip-scroll"></div>
+
+    <!-- Hot Picks — highest-selling items, hidden entirely if no real sales data yet -->
+    <div id="hot-picks-section" style="display:none;margin:20px 0 28px;">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;">
+        <span id="hot-picks-icon" style="color:#e0532a;display:flex;"></span>
+        <h2 style="font-family:var(--font-display);font-size:20px;letter-spacing:-.5px;">Hot Picks</h2>
+      </div>
+      <div class="product-scroll" id="hot-picks-scroll"></div>
+    </div>
 
     <button class="btn btn-surface mobile-filter-toggle" id="filter-toggle" onclick="toggleFilterPanel()">
   Filters
@@ -245,15 +267,58 @@
   document.getElementById('grid-view-btn').innerHTML = icons.grid;
   document.getElementById('list-view-btn').innerHTML = icons.list;
 
+  // ── Sponsored ad banner ──────────────────────────────────────────────────
+  let adBannerTimer = null;
+  async function loadAdBanner() {
+    try {
+      const ads = await api.get('/ads/active', false);
+      if (!ads.length) return;
+      const slot = document.getElementById('ad-banner-slot');
+      slot.classList.add('has-ad');
+      let idx = 0;
+      const showAd = (i) => {
+        const ad = ads[i];
+        api.post(`/ads/${ad.id}/impression`, {}, false).catch(() => {});
+        slot.innerHTML = `
+          <div class="ad-banner has-ad">
+            <a class="ad-banner-link" href="${ad.link_url || '#'}" target="${ad.link_url ? '_blank' : '_self'}" rel="noopener" onclick="fetch('/api/ads/${ad.id}/click',{method:'POST'})">
+              <img src="${ad.image_url}" alt="${ad.title.replace(/"/g,'&quot;')}">
+            </a>
+            <span class="ad-banner-tag">Sponsored</span>
+            ${ads.length > 1 ? `<div class="ad-banner-dots">${ads.map((_, j) => `<span class="ad-banner-dot ${j === i ? 'active' : ''}"></span>`).join('')}</div>` : ''}
+          </div>`;
+      };
+      showAd(0);
+      if (ads.length > 1) {
+        adBannerTimer = setInterval(() => { idx = (idx + 1) % ads.length; showAd(idx); }, 6000);
+      }
+    } catch (_) { /* no ads is a normal, silent state */ }
+  }
+  loadAdBanner();
+
+  // ── Hot Picks — only real, sold-at-least-once items; never fabricated ──
+  async function loadHotPicks() {
+    document.getElementById('hot-picks-icon').innerHTML = icons.flame;
+    try {
+      const data = await api.get('/listings?limit=20&sort=bestselling', false);
+      const hot = (data.listings || []).filter(l => (l.sales_count || 0) >= 1).slice(0, 10);
+      if (!hot.length) return; // stays hidden — no fake "hot" items on a fresh marketplace
+      document.getElementById('hot-picks-scroll').innerHTML = hot.map(l => productCardHTML(l)).join('');
+      document.getElementById('hot-picks-section').style.display = '';
+    } catch (_) { /* silent — section is optional */ }
+  }
+  loadHotPicks();
+
+
   const CATEGORIES = [
     { name: 'All', icon: 'grid' },
     { name: 'Textbooks', icon: 'bookOpen' },
     { name: 'Electronics', icon: 'cpu' },
-    { name: 'Furniture', icon: 'home' },
+    { name: 'Cosmetics', icon: 'sparkles' },
+    { name: 'Jewelry', icon: 'gem' },
     { name: 'Clothing', icon: 'shirt' },
     { name: 'Sports', icon: 'dumbbell' },
     { name: 'Music', icon: 'music' },
-    { name: 'Transportation', icon: 'bike' },
     { name: 'Dorm Essentials', icon: 'package' },
   ];
   const CONDITIONS = ['New', 'Like New', 'Good', 'Fair'];

@@ -13,7 +13,11 @@
     if (token) {
       try {
         var user = JSON.parse(localStorage.getItem('cm_user'));
-        dest = user && user.role === 'seller' ? '/pages/seller-dashboard.html' : '/pages/buyer-dashboard.html';
+        var role = user && user.role;
+        dest = role === 'seller' ? '/pages/seller-dashboard.html'
+          : role === 'promoter' ? '/pages/promoter-dashboard.html'
+          : (role === 'admin' || role === 'control') ? '/pages/admin.html'
+          : '/pages/marketplace.html';
       } catch (e) {}
     }
     window.location.replace(dest);

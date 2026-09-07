@@ -218,6 +218,19 @@ async function sendSellerDecisionEmail(to, { sellerName, approved, reason = '' }
   });
 }
 
+async function sendPromoterDecisionEmail(to, { promoterName, approved, reason = '' }) {
+  const subject = approved ? 'Your Bixcart promoter account was approved' : 'Your Bixcart promoter application was rejected';
+  await sendMail({
+    to,
+    subject,
+    html: `<div style="font-family:sans-serif;max-width:520px;margin:auto;padding:32px;background:#fafafa;border-radius:12px;">
+      <h2 style="color:#1a1a1a;margin-bottom:8px;">Promoter application ${approved ? 'approved' : 'rejected'}</h2>
+      <p style="color:#555;line-height:1.6;">Hi ${promoterName}, your Bixcart promoter application has been <strong>${approved ? 'approved' : 'rejected'}</strong>.</p>
+      ${approved ? '<p style="color:#555;line-height:1.6;">Your promoter account is now active. You can sign in and start posting events.</p>' : `<p style="color:#555;line-height:1.6;"><strong>Reason:</strong> ${reason}</p>`}
+    </div>`,
+  });
+}
+
 module.exports = {
   sendVerificationEmail,
   sendPasswordResetEmail,
@@ -227,5 +240,6 @@ module.exports = {
   sendOrderRefundEmail,
   sendSellerApplicationEmail,
   sendSellerDecisionEmail,
+  sendPromoterDecisionEmail,
   verifyTransport,
 };

@@ -75,8 +75,8 @@ router.post('/register', authLimiter, async (req, res) => {
     if (!email || !password || !confirm_password || !full_name || !role)
       return res.status(400).json({ error: 'All fields are required' });
 
-    if (!['buyer', 'seller'].includes(role))
-      return res.status(400).json({ error: 'Role must be buyer or seller' });
+    if (!['buyer', 'seller', 'promoter'].includes(role))
+      return res.status(400).json({ error: 'Role must be buyer, seller, or promoter' });
 
     const normalizedEmail = String(email).trim().toLowerCase();
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalizedEmail))
@@ -102,6 +102,8 @@ router.post('/register', authLimiter, async (req, res) => {
       role,
       seller_approval_status: role === 'seller' ? 'pending' : 'approved',
       seller_approval_reason: '',
+      promoter_approval_status: role === 'promoter' ? 'pending' : 'approved',
+      promoter_approval_reason: '',
       password_hash:         bcrypt.hashSync(password, 12),
       registration_complete: false,
       email_verified:        false,
@@ -408,6 +410,16 @@ router.put('/complete-registration', authMiddleware, async (req, res) => {
       update.seller_approval_requested_at = new Date();
       update.seller_approval_reviewed_at = null;
       update.seller_approval_reviewed_by = null;
+    } else if (current.role === 'promoter') {
+      update.business_name = '';
+      update.shop_name = '';
+      update.shop_number = '';
+      update.shop_address = '';
+      update.promoter_approval_status = 'pending';
+      update.promoter_approval_reason = '';
+      update.promoter_approval_requested_at = new Date();
+      update.promoter_approval_reviewed_at = null;
+      update.promoter_approval_reviewed_by = null;
     } else {
       update.business_name = '';
       update.shop_name = '';

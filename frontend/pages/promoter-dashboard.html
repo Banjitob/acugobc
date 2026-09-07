@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>Promoter Dashboard — Bixcart</title>
+<link rel="stylesheet" href="../css/main.css">
+<style>
+  .dash-header-inner { max-width: 1000px; margin: 0 auto; padding: 24px; display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
+  .dash-greeting { font-family: var(--font-display); font-size: 26px; letter-spacing: -1px; }
+  .dash-sub { font-size: 13px; color: var(--ink-3); margin-top: 2px; }
+  .dash-body { max-width: 1000px; margin: 0 auto; padding: 0 24px 40px; }
+  .stats-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; margin-bottom: 24px; }
+  .stat-card { background: var(--surface); border: 1.5px solid var(--border); border-radius: var(--radius-lg); padding: 18px; }
+  .stat-label { font-size: 11px; text-transform: uppercase; letter-spacing: .06em; color: var(--ink-3); margin-bottom: 6px; }
+  .stat-value { font-family: var(--font-display); font-size: 28px; letter-spacing: -1px; }
+  .event-card { display: flex; gap: 14px; padding: 16px 0; border-bottom: 1px solid var(--border); align-items: flex-start; }
+  .event-card:last-child { border-bottom: none; }
+  .event-thumb { width: 72px; height: 72px; border-radius: var(--radius-md); background: var(--surface-2); flex-shrink: 0; overflow: hidden; display: flex; align-items: center; justify-content: center; color: var(--ink-3); }
+  .event-thumb img { width: 100%; height: 100%; object-fit: cover; }
+  .event-info { flex: 1; min-width: 0; }
+  .event-title { font-size: 15px; font-weight: 700; }
+  .event-meta { font-size: 12px; color: var(--ink-3); margin-top: 3px; display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+  .event-status-chip { font-size: 10px; font-weight: 700; padding: 2px 8px; border-radius: 999px; text-transform: uppercase; }
+  .chip-active { background: #d1fae5; color: #065f46; }
+  .chip-flagged { background: #fef3c7; color: #92400e; }
+  .chip-removed { background: #fee2e2; color: #991b1b; }
+  .event-actions { display: flex; gap: 6px; flex-shrink: 0; }
+  @media(max-width: 640px) {
+    .dash-header-inner { padding: 18px 16px; }
+    .dash-body { padding: 0 16px 32px; }
+    .stats-row { grid-template-columns: repeat(3, 1fr); gap: 8px; }
+    .stat-card { padding: 12px; }
+    .stat-value { font-size: 20px; }
+    .event-card { gap: 10px; }
+    .event-thumb { width: 56px; height: 56px; }
+    .event-actions { flex-direction: column; }
+  }
+</style>
+</head>
+<body>
+<nav class="nav"></nav>
+
+<div class="dash-header" style="background:var(--surface);border-bottom:1.5px solid var(--border);">
+  <div class="dash-header-inner">
+    <div>
+      <div class="dash-greeting" id="greeting">Your events</div>
+      <div class="dash-sub">Post and manage events for the ACU community</div>
+    </div>
+    <button class="btn btn-primary" id="create-event-btn">+ New event</button>
+  </div>
+</div>
+
+<div class="dash-body">
+  <div class="stats-row">
+    <div class="stat-card"><div class="stat-label">Total events</div><div class="stat-value" id="stat-total">—</div></div>
+    <div class="stat-card"><div class="stat-label">Upcoming</div><div class="stat-value" id="stat-upcoming">—</div></div>
+    <div class="stat-card"><div class="stat-label">Total interested</div><div class="stat-value" id="stat-interested">—</div></div>
+  </div>
+
+  <div class="card" style="padding:0 20px;" id="events-container">Loading…</div>
+</div>
+
+<script src="../js/app.js"></script>
+<script>
+  if (!auth.requireAuth()) throw new Error('redirect');
+  renderNav('Host');
+  renderFooter();
+
+  const user = auth.getUser();
+  if (user && user.role !== 'promoter') {
+    window.location.replace(user.role === 'seller' ? 'seller-dashboard.html' : (user.role === 'admin' || user.role === 'control') ? 'admin.html' : 'marketplace.html');
+  }
+  document.getElementById('greeting').textContent = `Hey, ${(user?.full_name || 'there').split(' ')[0]}`;
+
+  function escHtml(s) {
+    return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  }
+  function formatEventDate(iso) {
+    const d = new Date(iso);
+    if (isNaN(d.getTime())) return '';
+    return d.toLocaleString('en-NG', { weekday: 'short', day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit' });
+  }
+
+  const CATEGORIES = ['Party', 'Concert', 'Workshop', 'Seminar', 'Sports', 'Other'];
+  let myEvents = [];
+
+  async function loadEvents() {
+    const el = document.getElementById('events-container');
+    el.innerHTML = '<div style="padding:40px;text-align:center;color:var(--ink-3);">Loading…</div>';
+    try {
+      myEvents = await api.get('/events/mine');
+      renderStats();
+      renderEvents();
+    } catch (e) {
+      el.innerHTML = `<div style="padding:32px;text-align:center;color:var(--ink-3);">Could not load your events.<br><small>${escHtml(e.message || 'Please try again.')}</small><br><button class="btn btn-secondary" style="margin-top:12px;" onclick="loadEvents()">Retry</button></div>`;
+    }
+  }
+
+  function renderStats() {
+    const now = new Date();
+    document.getElementById('stat-total').textContent = myEvents.filter(e => e.status !== 'removed').length;
+    document.getElementById('stat-upcoming').textContent = myEvents.filter(e => e.status === 'active' && new Date(e.event_date) > now).length;
+    document.getElementById('stat-interested').textContent = myEvents.reduce((s, e) => s + (e.interested_count || 0), 0);
+  }
+
+  function renderEvents() {
+    const el = document.getElementById('events-container');
+    const visible = myEvents.filter(e => e.status !== 'removed');
+    if (!visible.length) {
+      el.innerHTML = `<div style="padding:40px;text-align:center;color:var(--ink-3);">
+        <div style="margin-bottom:10px;">${icons.calendar}</div>
+        No events yet — create your first one.
+      </div>`;
+      return;
+    }
+    el.innerHTML = visible.map(e => `
+      <div class="event-card">
+        <div class="event-thumb">${e.banner_image ? `<img src="${e.banner_image}" alt="">` : icons.calendar}</div>
+        <div class="event-info">
+          <div class="event-title">${escHtml(e.title)}</div>
+          <div class="event-meta">
+            <span class="event-status-chip chip-${e.status}">${e.status === 'active' ? 'Live' : e.status === 'flagged' ? 'Under review' : e.status}</span>
+            <span>${formatEventDate(e.event_date)}</span>
+            <span>${escHtml(e.location)}</span>
+            <span>${e.interested_count || 0} interested</span>
+          </div>
+          ${e.status === 'flagged' ? `<div style="font-size:12px;color:#92400e;margin-top:4px;">Hidden pending admin review${e.ai_flag_reason ? ': ' + escHtml(e.ai_flag_reason) : ''}</div>` : ''}
+        </div>
+        <div class="event-actions">
+          <button class="btn btn-ghost btn-sm" onclick="openEventModal('${e.id}')">Edit</button>
+          <button class="btn btn-danger btn-sm" onclick="deleteEvent('${e.id}')">Delete</button>
+        </div>
+      </div>
+    `).join('');
+  }
+
+  window.deleteEvent = async (id) => {
+    if (!confirm('Remove this event? This cannot be undone.')) return;
+    try {
+      await api.delete(`/events/${id}`);
+      toast('Event removed', 'success');
+      loadEvents();
+    } catch (e) { toast(e.message, 'error'); }
+  };
+
+  // ── Create / edit modal ─────────────────────────────────────────────────
+  let editingId = null;
+  let bannerUrl = null;
+
+  document.getElementById('create-event-btn').addEventListener('click', () => openEventModal());
+
+  window.openEventModal = (id) => {
+    editingId = id || null;
+    const existing = id ? myEvents.find(e => e.id === id) : null;
+    bannerUrl = existing?.banner_image || null;
+
+    const today = new Date().toISOString().slice(0, 10);
+    const overlay = document.createElement('div');
+    overlay.className = 'modal-overlay';
+    overlay.innerHTML = `
+      <div class="modal" style="max-width:520px;">
+        <div class="modal-header">
+          <div class="modal-title">${existing ? 'Edit event' : 'New event'}</div>
+          <button class="btn btn-ghost btn-sm" id="em-close">${icons.x}</button>
+        </div>
+        <div class="modal-body" style="max-height:70vh;overflow-y:auto;">
+          <div class="form-group" style="margin-bottom:12px;">
+            <label class="form-label">Title <span style="color:var(--red);">*</span></label>
+            <input class="form-input" id="em-title" value="${existing ? escHtml(existing.title) : ''}" placeholder="e.g. Freshers' Night Party">
+          </div>
+          <div class="form-group" style="margin-bottom:12px;">
+            <label class="form-label">Description <span style="color:var(--red);">*</span></label>
+            <textarea class="form-textarea" id="em-desc" style="min-height:90px;" placeholder="What's it about, who's it for...">${existing ? escHtml(existing.description) : ''}</textarea>
+          </div>
+          <div style="display:flex;gap:10px;">
+            <div class="form-group" style="margin-bottom:12px;flex:1;">
+              <label class="form-label">Category</label>
+              <select class="form-select" id="em-category">
+                ${CATEGORIES.map(c => `<option value="${c}" ${existing?.category === c ? 'selected' : ''}>${c}</option>`).join('')}
+              </select>
+            </div>
+            <div class="form-group" style="margin-bottom:12px;flex:1;">
+              <label class="form-label">Price / entry</label>
+              <input class="form-input" id="em-price" value="${existing ? escHtml(existing.price_info) : 'Free entry'}" placeholder="e.g. Free entry, NGN 2,000 at the gate">
+            </div>
+          </div>
+          <div class="form-group" style="margin-bottom:12px;">
+            <label class="form-label">Location <span style="color:var(--red);">*</span></label>
+            <input class="form-input" id="em-location" value="${existing ? escHtml(existing.location) : ''}" placeholder="e.g. Student Union Building">
+          </div>
+          <div style="display:flex;gap:10px;">
+            <div class="form-group" style="margin-bottom:12px;flex:1;">
+              <label class="form-label">Date <span style="color:var(--red);">*</span></label>
+              <input class="form-input" id="em-date" type="date" min="${today}" value="${existing ? new Date(existing.event_date).toISOString().slice(0,10) : ''}">
+            </div>
+            <div class="form-group" style="margin-bottom:12px;flex:1;">
+              <label class="form-label">Time <span style="color:var(--red);">*</span></label>
+              <input class="form-input" id="em-time" type="time" value="${existing ? new Date(existing.event_date).toISOString().slice(11,16) : ''}">
+            </div>
+          </div>
+          <div class="form-group" style="margin-bottom:12px;">
+            <label class="form-label">Contact (optional)</label>
+            <input class="form-input" id="em-contact" value="${existing ? escHtml(existing.contact_info) : ''}" placeholder="Phone or social handle for this event">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Banner image (optional)</label>
+            <input type="file" id="em-file" accept="image/*">
+            <div id="em-preview" style="margin-top:8px;">${bannerUrl ? `<img src="${bannerUrl}" style="max-width:100%;max-height:120px;border-radius:var(--radius-md);">` : ''}</div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-ghost" id="em-cancel">Cancel</button>
+          <button class="btn btn-primary" id="em-save">${existing ? 'Save changes' : 'Create event'}</button>
+        </div>
+      </div>`;
+    document.body.appendChild(overlay);
+    requestAnimationFrame(() => overlay.classList.add('open'));
+
+    const close = () => { overlay.classList.remove('open'); setTimeout(() => overlay.remove(), 200); };
+    overlay.querySelector('#em-close').addEventListener('click', close);
+    overlay.querySelector('#em-cancel').addEventListener('click', close);
+    overlay.addEventListener('click', e => { if (e.target === overlay) close(); });
+
+    overlay.querySelector('#em-file').addEventListener('change', async (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+      if (file.size > 5 * 1024 * 1024) { toast('Image too large (max 5MB)', 'error'); return; }
+      const formData = new FormData();
+      formData.append('image', file);
+      try {
+        const token = localStorage.getItem('cm_token');
+        const res = await fetch('/api/uploads/image', { method: 'POST', headers: { Authorization: `Bearer ${token}` }, body: formData });
+        const data = await res.json();
+        if (!res.ok) { toast(data.error || 'Upload failed', 'error'); return; }
+        bannerUrl = data.url;
+        overlay.querySelector('#em-preview').innerHTML = `<img src="${bannerUrl}" style="max-width:100%;max-height:120px;border-radius:var(--radius-md);">`;
+      } catch (err) { toast('Upload failed', 'error'); }
+    });
+
+    overlay.querySelector('#em-save').addEventListener('click', async () => {
+      const title = overlay.querySelector('#em-title').value.trim();
+      const description = overlay.querySelector('#em-desc').value.trim();
+      const category = overlay.querySelector('#em-category').value;
+      const price_info = overlay.querySelector('#em-price').value.trim();
+      const location = overlay.querySelector('#em-location').value.trim();
+      const date = overlay.querySelector('#em-date').value;
+      const time = overlay.querySelector('#em-time').value;
+      const contact_info = overlay.querySelector('#em-contact').value.trim();
+
+      if (!title || !description || !location) { toast('Please fill in title, description, and location', 'error'); return; }
+      if (!date || !time) { toast('Please choose a date and time', 'error'); return; }
+      const event_date = new Date(`${date}T${time}`);
+      if (isNaN(event_date.getTime())) { toast('Invalid date/time', 'error'); return; }
+
+      const btn = overlay.querySelector('#em-save');
+      btn.disabled = true; btn.textContent = 'Saving…';
+      const payload = { title, description, category, price_info, location, event_date: event_date.toISOString(), contact_info, banner_image: bannerUrl };
+      try {
+        if (editingId) await api.put(`/events/${editingId}`, payload);
+        else await api.post('/events', payload);
+        toast(editingId ? 'Event updated' : 'Event created — live once reviewed', 'success');
+        close();
+        loadEvents();
+      } catch (e) {
+        toast(e.message, 'error');
+        btn.disabled = false; btn.textContent = editingId ? 'Save changes' : 'Create event';
+      }
+    });
+  };
+
+  loadEvents();
+</script>
+</body>
+</html>

@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>Event — Bixcart</title>
+<link rel="stylesheet" href="../css/main.css">
+<style>
+  .ev-wrap { max-width: 720px; margin: 0 auto; padding: 24px; }
+  .ev-banner { width: 100%; height: 260px; border-radius: var(--radius-lg); background: var(--surface-2); overflow: hidden; display: flex; align-items: center; justify-content: center; color: var(--ink-3); margin-bottom: 20px; }
+  .ev-banner img { width: 100%; height: 100%; object-fit: cover; }
+  .ev-cat { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; color: var(--accent); margin-bottom: 6px; }
+  .ev-title { font-family: var(--font-display); font-size: 28px; letter-spacing: -1px; margin-bottom: 12px; }
+  .ev-meta-row { display: flex; align-items: center; gap: 8px; font-size: 14px; color: var(--ink-2); margin-bottom: 8px; }
+  .ev-desc { font-size: 14px; line-height: 1.7; color: var(--ink-2); margin: 20px 0; white-space: pre-wrap; }
+  .ev-actions { display: flex; gap: 10px; margin-top: 20px; flex-wrap: wrap; }
+  @media(max-width: 600px) {
+    .ev-wrap { padding: 16px; }
+    .ev-banner { height: 180px; }
+    .ev-title { font-size: 22px; }
+  }
+</style>
+</head>
+<body>
+<nav class="nav"></nav>
+<div class="ev-wrap" id="ev-wrap">Loading…</div>
+
+<script src="../js/app.js"></script>
+<script>
+  renderNav('Events');
+  renderFooter();
+
+  function escHtml(s) {
+    return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  }
+  function formatEventFull(iso) {
+    const d = new Date(iso);
+    if (isNaN(d.getTime())) return '';
+    return d.toLocaleString('en-NG', { weekday: 'long', day: 'numeric', month: 'long', hour: 'numeric', minute: '2-digit' });
+  }
+
+  let currentEvent = null;
+
+  async function loadEvent() {
+    const id = getParam('id');
+    if (!id) { window.location.href = 'events.html'; return; }
+    try {
+      currentEvent = await api.get(`/events/${id}`, auth.isLoggedIn());
+      render();
+    } catch (e) {
+      document.getElementById('ev-wrap').innerHTML = `
+        <div class="empty-state">
+          <div class="empty-state-icon">${icons.alertCircle}</div>
+          <h3>Event not found</h3>
+          <p>${escHtml(e.message || 'This event may have been removed.')}</p>
+          <a href="events.html" class="btn btn-primary">Back to events</a>
+        </div>`;
+    }
+  }
+
+  function render() {
+    const ev = currentEvent;
+    document.getElementById('ev-wrap').innerHTML = `
+      <div class="ev-banner">${ev.banner_image ? `<img src="${ev.banner_image}" alt="">` : icons.calendar}</div>
+      <div class="ev-cat">${escHtml(ev.category)}</div>
+      <div class="ev-title">${escHtml(ev.title)}</div>
+      <div class="ev-meta-row">${icons.calendar} ${formatEventFull(ev.event_date)}</div>
+      <div class="ev-meta-row">${icons.mapPin} ${escHtml(ev.location)}</div>
+      <div class="ev-meta-row">${icons.tag} ${escHtml(ev.price_info)}</div>
+      ${ev.promoter_name ? `<div class="ev-meta-row">${icons.user} Hosted by ${escHtml(ev.promoter_name)}</div>` : ''}
+      <div class="ev-desc">${escHtml(ev.description)}</div>
+      ${ev.contact_info ? `<div class="ev-meta-row" style="font-weight:600;">${icons.send} Contact: ${escHtml(ev.contact_info)}</div>` : ''}
+      <div class="ev-actions">
+        <button class="btn ${ev.interested ? 'btn-accent' : 'btn-primary'}" id="interest-btn">${ev.interested ? icons.check + ' Interested' : "I'm interested"} (${ev.interested_count || 0})</button>
+        <a href="events.html" class="btn btn-ghost">Back to events</a>
+      </div>`;
+
+    document.getElementById('interest-btn').addEventListener('click', toggleInterest);
+  }
+
+  async function toggleInterest() {
+    if (!auth.requireAuth()) return;
+    const btn = document.getElementById('interest-btn');
+    btn.disabled = true;
+    try {
+      const result = await api.post(`/events/${currentEvent.id}/interest`, {});
+      currentEvent.interested = result.interested;
+      currentEvent.interested_count = (currentEvent.interested_count || 0) + (result.interested ? 1 : -1);
+      render();
+    } catch (e) { toast(e.message, 'error'); }
+    finally { btn.disabled = false; }
+  }
+
+  loadEvent();
+</script>
+</body>
+</html>

@@ -17,7 +17,7 @@ async function notifyUser(userId, payload) {
 
   const vapidPublic  = process.env.VAPID_PUBLIC_KEY;
   const vapidPrivate = process.env.VAPID_PRIVATE_KEY;
-  const vapidEmail   = process.env.VAPID_EMAIL || 'mailto:admin@bixcart.app';
+  const vapidEmail   = process.env.VAPID_EMAIL || 'mailto:olabanjitobi02@gmail.com';
 
   if (!vapidPublic || !vapidPrivate) {
     console.warn('[push] VAPID keys not set — push notifications disabled. Set VAPID_PUBLIC_KEY, VAPID_PRIVATE_KEY, VAPID_EMAIL in .env');

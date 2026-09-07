@@ -683,6 +683,7 @@ router.post('/:id/mark-complete', authMiddleware, async (req, res) => {
 
     if (buyerDone && sellerDone) {
       update.status = 'completed';
+      update.completed_at = new Date();
       // Stock was already decremented (and marked 'sold' if exhausted) when
       // this order was created — completion doesn't touch listing stock again.
     } else {
@@ -690,6 +691,12 @@ router.post('/:id/mark-complete', authMiddleware, async (req, res) => {
     }
 
     const updated = await Order.findByIdAndUpdate(req.params.id, { $set: update }, { new: true });
+
+    if (buyerDone && sellerDone) {
+      await User.findByIdAndUpdate(order.seller_id, { $inc: { successful_sales_count: 1 } }).catch(() => {});
+      await Listing.findByIdAndUpdate(order.listing_id, { $inc: { sales_count: 1 } }).catch(() => {});
+    }
+
     res.json({ ...updated.toObject(), id: updated._id, needs_rating: isBuyer && buyerDone && sellerDone });
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
@@ -898,6 +905,9 @@ router.post('/:id/confirm-delivery', authMiddleware, async (req, res) => {
       sellerUser.successful_sales_count = Number(sellerUser.successful_sales_count || 0) + 1;
       await sellerUser.save();
     }
+    // Powers the marketplace's "Hot Picks" sort — completed sales only, not
+    // just paid/confirmed ones.
+    await Listing.findByIdAndUpdate(order.listing_id, { $inc: { sales_count: 1 } }).catch(() => {});
 
     await notifyUser(String(order.seller_id), {
       title: 'Order completed',

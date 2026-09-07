@@ -360,7 +360,7 @@
   if (!auth.isLoggedIn()) { window.location.replace('auth.html?mode=register'); }
   const user = auth.getUser();
   if (user?.registration_complete) {
-    window.location.replace(user.role === 'seller' ? 'seller-dashboard.html' : 'buyer-dashboard.html');
+    window.location.replace(user.role === 'seller' ? 'seller-dashboard.html' : user.role === 'promoter' ? 'promoter-dashboard.html' : 'marketplace.html');
   }
 
   // ── Email verification wall ────────────────────────────────────────────────
@@ -414,7 +414,8 @@
   document.getElementById('icon-nin').innerHTML     = icons.user;
   document.getElementById('info-icon').innerHTML    = icons.info;
   document.getElementById('done-check-icon').innerHTML = `<div style="width:64px;height:64px;border-radius:50%;background:rgba(34,197,94,.1);display:flex;align-items:center;justify-content:center;margin:0 auto;">${icons.check.replace('width="18" height="18"','width="28" height="28"')}</div>`;
-  document.getElementById('dashboard-link').href = user?.role === 'seller' ? 'seller-dashboard.html' : 'buyer-dashboard.html';
+  document.getElementById('dashboard-link').href = user?.role === 'seller' ? 'seller-dashboard.html' : user?.role === 'promoter' ? 'promoter-dashboard.html' : 'marketplace.html';
+  if (!user?.role || (user.role !== 'seller' && user.role !== 'promoter')) document.getElementById('dashboard-link').textContent = 'Start browsing';
 
   // Adjust for role
   if (user?.role === 'seller') {

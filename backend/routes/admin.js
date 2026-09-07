@@ -1,10 +1,11 @@
 const mongoose = require('mongoose');
 const express = require('express');
 const router  = express.Router();
-const { User, Listing, Conversation, Message, Order, ConversationReport, UserReport, Broadcast, Hostel, DeliverySpot, AdminAction, UserActivity, CommissionProposal, getCommissionPercent, setCommissionPercent } = require('../db/database');
+const { User, Listing, Conversation, Message, Order, ConversationReport, UserReport, Broadcast, Hostel, DeliverySpot, AdminAction, UserActivity, CommissionProposal, getCommissionPercent, setCommissionPercent, Event, Advertisement, getAdPricePerDayKobo, setAdPricePerDayKobo } = require('../db/database');
 const { adminMiddleware } = require('../middleware/auth');
 const { notifyUser } = require('../db/push');
-const { sendSellerDecisionEmail } = require('../utils/email');
+const { sendSellerDecisionEmail, sendPromoterDecisionEmail } = require('../utils/email');
+const { createRefund } = require('../utils/paystack');
 
 // All admin routes require admin role
 router.use(adminMiddleware);
@@ -114,6 +115,68 @@ router.post('/seller-applications/:id/reject', async (req, res) => {
     sendSellerDecisionEmail(seller.email, { sellerName: seller.full_name, approved: false, reason }).catch(err => console.error('[email] seller rejection email failed:', err.message));
 
     res.json({ success: true, user: { ...seller.toObject(), id: seller._id } });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+// ── PROMOTER APPLICATIONS (events) ──────────────────────────────────────────
+// Mirrors the seller-applications workflow above — promoters get the same
+// admin vetting before they can post events.
+router.get('/promoter-applications', async (req, res) => {
+  try {
+    const { status = 'pending', page = 1, limit = 20 } = req.query;
+    const filter = { role: 'promoter' };
+    if (status !== 'all') filter.promoter_approval_status = status;
+    const skip = (parseInt(page) - 1) * parseInt(limit);
+    const [total, promoters] = await Promise.all([
+      User.countDocuments(filter),
+      User.find(filter).select('-password_hash -push_subscriptions -used_payment_refs').sort({ promoter_approval_requested_at: -1, created_at: -1 }).skip(skip).limit(parseInt(limit)).lean(),
+    ]);
+    res.json({ promoters: promoters.map(u => ({ ...u, id: u._id })), total, page: parseInt(page), pages: Math.ceil(total / parseInt(limit)) });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+router.post('/promoter-applications/:id/approve', async (req, res) => {
+  try {
+    if (!mongoose.Types.ObjectId.isValid(req.params.id)) return res.status(400).json({ error: 'Invalid promoter ID' });
+    const promoter = await User.findOne({ _id: req.params.id, role: 'promoter' });
+    if (!promoter) return res.status(404).json({ error: 'Promoter not found' });
+    if (!promoter.registration_complete) return res.status(400).json({ error: 'Promoter has not completed registration' });
+    if (promoter.promoter_approval_status === 'approved') return res.status(409).json({ error: 'Promoter is already approved' });
+
+    promoter.promoter_approval_status = 'approved';
+    promoter.promoter_approval_reason = '';
+    promoter.promoter_approval_reviewed_at = new Date();
+    promoter.promoter_approval_reviewed_by = req.user.id;
+    await promoter.save();
+
+    await logAdminAction(req, 'promoter_approved', promoter, '', { application_id: String(promoter._id), previous_status: 'pending', previous_reason: '', previous_reviewed_by: null }, true);
+    await notifyUser(String(promoter._id), { title: '✅ Promoter account approved', body: 'Your Bixcart promoter account has been approved. You can now sign in and start posting events.', type: 'promoter_approval', url: '/pages/promoter-dashboard.html' }).catch(() => {});
+    sendPromoterDecisionEmail(promoter.email, { promoterName: promoter.full_name, approved: true }).catch(err => console.error('[email] promoter approval email failed:', err.message));
+
+    res.json({ success: true, user: { ...promoter.toObject(), id: promoter._id } });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+router.post('/promoter-applications/:id/reject', async (req, res) => {
+  try {
+    const reason = String(req.body?.reason || '').trim();
+    if (!reason) return res.status(400).json({ error: 'Rejection reason is required' });
+    if (!mongoose.Types.ObjectId.isValid(req.params.id)) return res.status(400).json({ error: 'Invalid promoter ID' });
+    const promoter = await User.findOne({ _id: req.params.id, role: 'promoter' });
+    if (!promoter) return res.status(404).json({ error: 'Promoter not found' });
+    if (promoter.promoter_approval_status === 'approved') return res.status(409).json({ error: 'Approved promoters cannot be rejected from this workflow' });
+
+    promoter.promoter_approval_status = 'rejected';
+    promoter.promoter_approval_reason = reason;
+    promoter.promoter_approval_reviewed_at = new Date();
+    promoter.promoter_approval_reviewed_by = req.user.id;
+    await promoter.save();
+
+    await logAdminAction(req, 'promoter_rejected', promoter, reason, { application_id: String(promoter._id), previous_status: 'pending', previous_reason: '', previous_reviewed_by: null }, true);
+    await notifyUser(String(promoter._id), { title: 'Promoter application rejected', body: `Your promoter application was rejected. Reason: ${reason}`, type: 'promoter_approval', url: '/pages/auth.html' }).catch(() => {});
+    sendPromoterDecisionEmail(promoter.email, { promoterName: promoter.full_name, approved: false, reason }).catch(err => console.error('[email] promoter rejection email failed:', err.message));
+
+    res.json({ success: true, user: { ...promoter.toObject(), id: promoter._id } });
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
@@ -231,6 +294,121 @@ router.post('/seller-applications/:id/override', async (req, res) => {
     }
 
     res.json({ success: true, user: { ...seller.toObject(), id: seller._id } });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+// ── EVENTS (moderation) ──────────────────────────────────────────────────────
+router.get('/events', async (req, res) => {
+  try {
+    const { status = 'flagged' } = req.query;
+    const filter = status === 'all' ? {} : { status };
+    const events = await Event.find(filter).populate('promoter_id', 'full_name email').sort({ created_at: -1 }).lean();
+    res.json(events.map(e => ({ ...e, id: e._id })));
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+router.post('/events/:id/clear', async (req, res) => {
+  try {
+    const event = await Event.findById(req.params.id);
+    if (!event) return res.status(404).json({ error: 'Event not found' });
+    event.status = 'active';
+    event.ai_flagged = false;
+    await event.save();
+    await logAdminAction(req, 'event_cleared', null, '', { event_id: String(event._id), title: event.title });
+    await notifyUser(String(event.promoter_id), { title: '✅ Event Cleared', body: `Your event "${event.title}" was reviewed and cleared by an admin. It's live again.`, type: 'ai_cleared', url: '/pages/promoter-dashboard.html' }).catch(() => {});
+    res.json({ ...event.toObject(), id: event._id });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+router.post('/events/:id/remove', async (req, res) => {
+  try {
+    const reason = String(req.body?.reason || '').trim();
+    const event = await Event.findById(req.params.id);
+    if (!event) return res.status(404).json({ error: 'Event not found' });
+    event.status = 'removed';
+    await event.save();
+    await logAdminAction(req, 'event_removed', null, reason, { event_id: String(event._id), title: event.title });
+    await notifyUser(String(event.promoter_id), { title: 'Event Removed', body: `Your event "${event.title}" was removed by an admin.${reason ? ' Reason: ' + reason : ''}`, type: 'ai_flag', url: '/pages/promoter-dashboard.html' }).catch(() => {});
+    res.json({ success: true });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+// ── ADVERTISEMENTS ───────────────────────────────────────────────────────────
+// Paid ads are only reviewed after payment succeeds (payment_status:'paid').
+// Approving sets the live window; rejecting refunds the advertiser in full.
+router.get('/ads', async (req, res) => {
+  try {
+    const { status = 'pending_review' } = req.query;
+    const filter = { payment_status: 'paid' };
+    if (status !== 'all') filter.review_status = status;
+    const ads = await Advertisement.find(filter).sort({ created_at: -1 }).lean();
+    res.json(ads.map(a => ({ ...a, id: a._id })));
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+router.post('/ads/:id/approve', async (req, res) => {
+  try {
+    const ad = await Advertisement.findById(req.params.id);
+    if (!ad) return res.status(404).json({ error: 'Ad not found' });
+    if (ad.payment_status !== 'paid') return res.status(400).json({ error: 'This ad has not been paid for yet' });
+    if (ad.review_status !== 'pending_review') return res.status(400).json({ error: `This ad is already ${ad.review_status}` });
+
+    const now = new Date();
+    ad.review_status = 'approved';
+    ad.starts_at = now;
+    ad.ends_at = new Date(now.getTime() + ad.duration_days * 24 * 60 * 60 * 1000);
+    await ad.save();
+
+    await logAdminAction(req, 'ad_approved', null, '', { ad_id: String(ad._id), business_name: ad.business_name, duration_days: ad.duration_days });
+    res.json({ ...ad.toObject(), id: ad._id });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+router.post('/ads/:id/reject', async (req, res) => {
+  try {
+    const reason = String(req.body?.reason || '').trim();
+    if (!reason) return res.status(400).json({ error: 'A reason is required' });
+    const ad = await Advertisement.findById(req.params.id);
+    if (!ad) return res.status(404).json({ error: 'Ad not found' });
+    if (ad.review_status !== 'pending_review') return res.status(400).json({ error: `This ad is already ${ad.review_status}` });
+
+    ad.review_status = 'rejected';
+    ad.rejection_reason = reason;
+    await ad.save();
+
+    // Rejected ads are refunded in full — payment never guaranteed airtime.
+    let refunded = false;
+    if (ad.payment_status === 'paid' && ad.payment_reference) {
+      try {
+        await createRefund({
+          transaction: ad.payment_reference,
+          amount: Number(ad.amount_kobo) / 100,
+          customer_note: 'Your Bixcart ad submission was not approved for display.',
+          merchant_note: `Ad rejected: ${reason}`,
+        });
+        refunded = true;
+      } catch (e) { console.error('[ads/reject] refund failed:', e.message); }
+    }
+
+    await logAdminAction(req, 'ad_rejected', null, reason, { ad_id: String(ad._id), business_name: ad.business_name, refunded });
+    res.json({ ...ad.toObject(), id: ad._id, refunded });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+router.get('/ads/price', async (req, res) => {
+  try {
+    const priceKobo = await getAdPricePerDayKobo();
+    res.json({ price_per_day_kobo: priceKobo, price_per_day_naira: priceKobo / 100 });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+router.post('/ads/price', async (req, res) => {
+  try {
+    const naira = Number(req.body?.price_per_day_naira);
+    if (!Number.isFinite(naira) || naira <= 0) return res.status(400).json({ error: 'Enter a valid price in Naira' });
+    await setAdPricePerDayKobo(Math.round(naira * 100));
+    await logAdminAction(req, 'ad_price_changed', null, '', { new_price_naira: naira });
+    res.json({ success: true, price_per_day_naira: naira });
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 

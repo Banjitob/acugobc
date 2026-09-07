@@ -4,7 +4,7 @@ const router = express.Router();
 const { User, Listing, Conversation, Message, Order, ConversationReport, UserReport, AdminAction } = require('../db/database');
 const { controlMiddleware } = require('../middleware/auth');
 const { notifyUser } = require('../db/push');
-const { sendSellerDecisionEmail } = require('../utils/email');
+const { sendSellerDecisionEmail, sendPromoterDecisionEmail } = require('../utils/email');
 
 router.use(controlMiddleware);
 
@@ -69,6 +69,55 @@ router.post('/seller-applications/:id/reject', async (req, res) => {
     await notifyUser(String(seller._id), { title: 'Seller application rejected', body: `Your seller application was rejected. Reason: ${reason}`, type: 'seller_approval', url: '/pages/auth.html' }).catch(() => {});
     sendSellerDecisionEmail(seller.email, { sellerName: seller.full_name, approved: false, reason }).catch(() => {});
     res.json({ success: true, user: { ...seller.toObject(), id: seller._id } });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+// Promoter applications — same vetting workflow as sellers above.
+router.get('/promoter-applications', async (req, res) => {
+  try {
+    const { status = 'pending', page = 1, limit = 20 } = req.query;
+    const filter = { role: 'promoter' };
+    if (status !== 'all') filter.promoter_approval_status = status;
+    const skip = (parseInt(page) - 1) * parseInt(limit);
+    const [total, promoters] = await Promise.all([
+      User.countDocuments(filter),
+      User.find(filter).select('-password_hash -push_subscriptions -used_payment_refs').sort({ promoter_approval_requested_at: -1, created_at: -1 }).skip(skip).limit(parseInt(limit)).lean(),
+    ]);
+    res.json({ promoters: promoters.map(u => ({ ...u, id: u._id })), total, page: parseInt(page), pages: Math.ceil(total / parseInt(limit)) });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+router.post('/promoter-applications/:id/approve', async (req, res) => {
+  try {
+    if (!mongoose.Types.ObjectId.isValid(req.params.id)) return res.status(400).json({ error: 'Invalid promoter ID' });
+    const promoter = await User.findOne({ _id: req.params.id, role: 'promoter' });
+    if (!promoter) return res.status(404).json({ error: 'Promoter not found' });
+    if (!promoter.registration_complete) return res.status(400).json({ error: 'Promoter has not completed registration' });
+    if (promoter.promoter_approval_status === 'approved') return res.status(409).json({ error: 'Promoter is already approved' });
+    const previous = { status: promoter.promoter_approval_status, reason: promoter.promoter_approval_reason || '', reviewed_by: promoter.promoter_approval_reviewed_by ? String(promoter.promoter_approval_reviewed_by) : null };
+    promoter.promoter_approval_status = 'approved'; promoter.promoter_approval_reason = ''; promoter.promoter_approval_reviewed_at = new Date(); promoter.promoter_approval_reviewed_by = req.user.id;
+    await promoter.save();
+    await logControlAction(req, 'promoter_approved', promoter, '', { application_id: String(promoter._id), previous_status: previous.status, previous_reason: previous.reason, previous_reviewed_by: previous.reviewed_by }, true);
+    await notifyUser(String(promoter._id), { title: '✅ Promoter account approved', body: 'Your Bixcart promoter account has been approved. You can now sign in and start posting events.', type: 'promoter_approval', url: '/pages/promoter-dashboard.html' }).catch(() => {});
+    sendPromoterDecisionEmail(promoter.email, { promoterName: promoter.full_name, approved: true }).catch(() => {});
+    res.json({ success: true, user: { ...promoter.toObject(), id: promoter._id } });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+router.post('/promoter-applications/:id/reject', async (req, res) => {
+  try {
+    const reason = String(req.body?.reason || '').trim();
+    if (!reason) return res.status(400).json({ error: 'Rejection reason is required' });
+    const promoter = await User.findOne({ _id: req.params.id, role: 'promoter' });
+    if (!promoter) return res.status(404).json({ error: 'Promoter not found' });
+    if (promoter.promoter_approval_status === 'approved') return res.status(409).json({ error: 'Approved promoters cannot be rejected from this workflow' });
+    const previous = { status: promoter.promoter_approval_status, reason: promoter.promoter_approval_reason || '', reviewed_by: promoter.promoter_approval_reviewed_by ? String(promoter.promoter_approval_reviewed_by) : null };
+    promoter.promoter_approval_status = 'rejected'; promoter.promoter_approval_reason = reason; promoter.promoter_approval_reviewed_at = new Date(); promoter.promoter_approval_reviewed_by = req.user.id;
+    await promoter.save();
+    await logControlAction(req, 'promoter_rejected', promoter, reason, { application_id: String(promoter._id), previous_status: previous.status, previous_reason: previous.reason, previous_reviewed_by: previous.reviewed_by }, true);
+    await notifyUser(String(promoter._id), { title: 'Promoter application rejected', body: `Your promoter application was rejected. Reason: ${reason}`, type: 'promoter_approval', url: '/pages/auth.html' }).catch(() => {});
+    sendPromoterDecisionEmail(promoter.email, { promoterName: promoter.full_name, approved: false, reason }).catch(() => {});
+    res.json({ success: true, user: { ...promoter.toObject(), id: promoter._id } });
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
